@@ -3,8 +3,8 @@
 
 
 #include "list"
-#include "cv.h"
-#include "cxtypes.h"
+#include "opencv/cv.h"
+#include "opencv/cxcore.h"
 
 //! Type of chain codes
 typedef unsigned char t_chainCode;

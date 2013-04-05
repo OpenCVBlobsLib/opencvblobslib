@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cvblobslib", "cvblobslib.vcxproj", "{B1544B19-DB8B-6C7B-7FB8-FD398DAB96E1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvblobslib", "cvblobslib.vcxproj", "{B1544B19-DB8B-6C7B-7FB8-FD398DAB96E1}"
 EndProject
 Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32

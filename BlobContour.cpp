@@ -1,5 +1,5 @@
 #include "BlobContour.h"
-#include "cxcore.h"
+#include "opencv/cxcore.h"
 
 CBlobContour::CBlobContour()
 {
