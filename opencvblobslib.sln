@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvblobslib", "cvblobslib.vcxproj", "{B1544B19-DB8B-6C7B-7FB8-FD398DAB96E1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvblobslib", "opencvblobslib.vcxproj", "{2F324F0B-0990-A667-53E2-24F6FF44D52B}"
 EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
@@ -13,10 +13,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B1544B19-DB8B-6C7B-7FB8-FD398DAB96E1}.Debug|Win32.ActiveCfg = Debug|Win32
-		{B1544B19-DB8B-6C7B-7FB8-FD398DAB96E1}.Debug|Win32.Build.0 = Debug|Win32
-		{B1544B19-DB8B-6C7B-7FB8-FD398DAB96E1}.Release|Win32.ActiveCfg = Release|Win32
-		{B1544B19-DB8B-6C7B-7FB8-FD398DAB96E1}.Release|Win32.Build.0 = Release|Win32
+		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Debug|Win32.Build.0 = Debug|Win32
+		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Release|Win32.ActiveCfg = Release|Win32
+		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
