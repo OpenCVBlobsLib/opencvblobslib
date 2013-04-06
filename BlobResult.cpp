@@ -11,6 +11,7 @@ MODIFICACIONS (Modificació, Autor, Data):
 #include <stdio.h>
 #include <functional>
 #include <algorithm>
+#include "opencv2/opencv.hpp"
 #include "BlobResult.h"
 
 //! Show errors functions: only works for windows releases
@@ -107,7 +108,9 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 
 	if( !success ) throw EXCEPCIO_CALCUL_BLOBS;
 }
-
+CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
+	CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
+}
 /**
 - FUNCIÓ: CBlobResult
 - FUNCIONALITAT: Constructor de còpia. Inicialitza la seqüència de blobs 

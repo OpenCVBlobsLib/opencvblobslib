@@ -22,6 +22,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include "BlobLibraryConfiguration.h"
 #include <math.h>
 #include "opencv/cxcore.h"
+#include <opencv2/opencv.hpp>
 
 #ifdef MATRIXCV_ACTIU
 	#include "matrixCV.h"
@@ -73,17 +74,17 @@ MODIFICATIONS (Modification, Author, Date):
 	on them. Also, the class provides functions to filter the blobs using
 	some criteria.
 */
+using namespace cv;
 class CBlobResult  
 {
 public:
 
-	//! constructor estandard, crea un conjunt buit de blobs
 	//! Standard constructor, it creates an empty set of blobs
 	CBlobResult();
-	//! constructor a partir d'una imatge
 	//! Image constructor, it creates an object with the blobs of the image
 	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor);
-	//! constructor de còpia
+	//!OpenCV2 interface
+	CBlobResult(Mat source, Mat mask, uchar backgroundColor);
 	//! Copy constructor
 	CBlobResult( const CBlobResult &source );
 	//! Destructor
@@ -96,7 +97,6 @@ public:
 	//! Addition operator to concatenate two sets of blobs
 	CBlobResult operator+( const CBlobResult& source ) const;
 	
-	//! Afegeix un blob al conjunt
 	//! Adds a blob to the set of blobs
 	void AddBlob( CBlob *blob );
 
@@ -163,7 +163,6 @@ private:
 
 protected:
 
-	//! Vector amb els blobs
 	//! Vector with all the blobs
 	Blob_vector		m_blobs;
 };

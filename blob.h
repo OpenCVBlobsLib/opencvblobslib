@@ -19,6 +19,7 @@ MODIFICATIONS (Modification, Author, Date):
 #define CBLOB_INSPECTA_INCLUDED
 
 #include "opencv\cxcore.h"
+#include "opencv2\opencv.hpp"
 #include "BlobLibraryConfiguration.h"
 #include "BlobContour.h"
 
@@ -32,7 +33,7 @@ MODIFICATIONS (Modification, Author, Date):
 //! Type of labelled images
 typedef unsigned int t_labelType;
 
-
+using namespace cv;
 //! Blob class
 class CBlob
 {
@@ -73,6 +74,8 @@ public:
 	}
 	//! > 0 for extern blobs, 0 if not
 	int	  Exterior( IplImage *mask, bool xBorder = true, bool yBorder = true );
+	//! opencv2 Interface
+	int	  Exterior( Mat mask, bool xBorder = true, bool yBorder = true );
 	//! Compute blob's area
 	double Area();
 	//! Compute blob's perimeter
@@ -82,13 +85,17 @@ public:
 
 	//! Compute extern perimeter 
 	double ExternPerimeter( IplImage *mask, bool xBorder  = true, bool yBorder = true );
-	
+	//! opencv2 interface
+	double ExternPerimeter( Mat mask, bool xBorder  = true, bool yBorder = true );
 	//! Get mean grey color
 	double Mean( IplImage *image );
-
+	//! opencv2 interface
+	double Mean(Mat image );
+	//!opencv2 interface
 	//! Get standard deviation grey color
 	double StdDev( IplImage *image );
-
+	//! opencv2 interface
+	double StdDev( Mat image );
 	//! Indica si el blob està buit ( no té cap info associada )
 	//! Shows if the blob has associated information
 	bool IsEmpty();
@@ -99,8 +106,9 @@ public:
 
 	//! Pinta l'interior d'un blob d'un color determinat
 	//! Paints the blob in an image
-	void FillBlob( IplImage *imatge, CvScalar color, int offsetX = 0, int offsetY = 0 );
-
+	void FillBlob( IplImage *image, CvScalar color, int offsetX = 0, int offsetY = 0 );
+	//! opencv2 interface
+	void FillBlob( Mat image, CvScalar color, int offsetX = 0, int offsetY = 0 );
 	//! Join a blob to current one (add's contour
 	void JoinBlob( CBlob *blob );
 

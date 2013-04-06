@@ -225,6 +225,10 @@ int	CBlob::Exterior(IplImage *mask, bool xBorder /* = true */, bool yBorder /* =
 	
 	return 0;	 
 }
+int	CBlob::Exterior(Mat mask, bool xBorder /* = true */, bool yBorder /* = true */)
+{
+	return Exterior(&(IplImage) mask, xBorder, yBorder);	 
+}
 /**
 - FUNCIÓ: ExternPerimeter
 - FUNCIONALITAT: Get extern perimeter (perimeter touching image borders)
@@ -374,7 +378,9 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 	
 	return m_externPerimeter;
 }
-
+double CBlob::ExternPerimeter( Mat maskImage, bool xBorder /* = true */, bool yBorder /* = true */){
+	return ExternPerimeter( &(IplImage) maskImage, xBorder /* = true */, yBorder /* = true */);
+}
 //! Compute blob's moment (p,q up to MAX_CALCULATED_MOMENTS)
 double CBlob::Moment(int p, int q)
 {
@@ -458,7 +464,9 @@ double CBlob::Mean( IplImage *image )
 
 	return m_meanGray;
 }
-
+double CBlob::Mean(Mat image ){
+	return Mean(&(IplImage)image);
+}
 double CBlob::StdDev( IplImage *image )
 {
 	// it is calculated?
@@ -471,6 +479,9 @@ double CBlob::StdDev( IplImage *image )
 	Mean( image );
 
 	return m_stdDevGray;
+}
+double CBlob::StdDev(Mat image){
+	return StdDev(&(IplImage)image);
 }
 /**
 - FUNCIÓ: GetBoundingBox
@@ -646,11 +657,13 @@ CvBox2D CBlob::GetEllipse()
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-void CBlob::FillBlob( IplImage *imatge, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/) 					  
+void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/) 					  
 {
-	cvDrawContours( imatge, m_externalContour.GetContourPoints(), color, color,0, CV_FILLED, 8 );
+	cvDrawContours( image, m_externalContour.GetContourPoints(), color, color,0, CV_FILLED, 8 );
 }
-
+void CBlob::FillBlob( Mat image, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/){
+	FillBlob(&(IplImage)image,color,offsetX,offsetY);
+}
 
 /**
 - FUNCTION: GetConvexHull
