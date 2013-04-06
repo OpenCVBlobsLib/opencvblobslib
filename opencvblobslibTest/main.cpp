@@ -6,8 +6,8 @@ using namespace cv;
 using namespace std;
 
 int main(){
-	Mat source = Mat::ones(1600,1600,CV_8UC1)*255;
-	Mat out = Mat::zeros(1600,1600,CV_8UC1);
+	Mat source = Mat::ones(2*1600,2*1600,CV_8UC1)*255;
+	Mat out = Mat::zeros(2*1600,2*1600,CV_8UC1);
 	int64 time;
 	namedWindow("Blobs",CV_GUI_NORMAL+CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
 	time = getTickCount();
