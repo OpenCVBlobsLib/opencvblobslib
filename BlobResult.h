@@ -23,6 +23,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include <math.h>
 #include "opencv/cxcore.h"
 #include <opencv2/opencv.hpp>
+#include <opencv2/opencv_modules.hpp>
 
 #ifdef MATRIXCV_ACTIU
 	#include "matrixCV.h"
@@ -83,7 +84,7 @@ public:
 	CBlobResult();
 	//! Image constructor, it creates an object with the blobs of the image
 	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor);
-	//!OpenCV2 interface
+	//! OpenCV2 interface
 	CBlobResult(Mat source, Mat mask, uchar backgroundColor);
 	//! Copy constructor
 	CBlobResult( const CBlobResult &source );
@@ -160,6 +161,27 @@ private:
 	void DoFilter(CBlobResult &dst,
 				int filterAction, funcio_calculBlob *evaluador, 
 				int condition, double lowLimit, double highLimit = 0) const;
+
+	class threadMessage{
+	public:
+	Mat image;
+	Mat mask;
+	uchar backColor;
+	int offset;
+	CBlobResult *res;
+	threadMessage(Mat img,Mat msk,uchar backgroundCol,int off):image(img),mask(msk),backColor(backgroundCol),offset(off),res(NULL){}
+	threadMessage():image(Mat()),mask(Mat()),res(NULL){}
+	~threadMessage(){ if(res!=NULL) delete res;}
+	threadMessage& operator=(threadMessage &o){image=o.image;mask=o.mask;backColor=o.backColor;offset=o.offset; return *this;}
+	};
+	/*class threadMessage{
+	public:
+		CBlobResult& instance;
+		int id;
+		threadMessage(CBlobResult &inst,int i):instance(inst),id(i){}
+		~threadMessage(){}
+	};*/
+	static void* thread_componentLabeling(threadMessage *msg);
 
 protected:
 

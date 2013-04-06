@@ -11,9 +11,10 @@ MODIFICACIONS (Modificació, Autor, Data):
 #include <stdio.h>
 #include <functional>
 #include <algorithm>
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
+#include <opencv2/opencv_modules.hpp>
 #include "BlobResult.h"
-
+#include <pthread.h>
 //! Show errors functions: only works for windows releases
 #ifdef _SHOW_ERRORS
 	#include <afx.h>			//suport per a CStrings
@@ -108,8 +109,56 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 
 	if( !success ) throw EXCEPCIO_CALCUL_BLOBS;
 }
+/**
+- FUNCTION: CBlobResult
+- FUNCTIONALITY: Constructor from an image. Fills an object with all the blobs in
+	the image, OPENCV 2 interface
+- PARAMETERS:
+	- source: Mat to extract the blobs from, CV_8UC1
+	- mask: optional mask to apply. The blobs will be extracted where the mask is
+			not 0. All the neighbouring blobs where the mask is 0 will be extern blobs
+- RESULT:
+	- object with all the blobs in the image. It throws an EXCEPCIO_CALCUL_BLOBS
+	  if some error appears in the BlobAnalysis function
+- RESTRICTIONS:
+- AUTHOR: Saverio Murgia & Luca Nardelli
+- CREATION DATE: 06-04-2013.
+- MODIFICATION: Date. Author. Description.
+*/
 CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
-	CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
+	//CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
+	if(!mask.data)
+		mask = Mat_<uchar>::zeros(source.size());
+	int numCores = pthread_num_processors_np();
+	pthread_t *tIds = new pthread_t[numCores];
+	Mat* splitSource = new Mat[numCores];
+	Mat* splitMask = new Mat[numCores];
+	CBlobResult **res = new CBlobResult*[numCores];
+	Rect roi;
+	Size sz = source.size();
+	threadMessage *mess = new threadMessage[numCores];
+	for(int i=0;i<numCores;i++){
+		roi = Rect(0,i*sz.height/numCores,sz.width,sz.height/numCores);
+		mask(roi).setTo(255);
+		mess[i].operator =(threadMessage(source,mask.clone(),0,i*sz.height/numCores));
+		mask.setTo(0);
+		pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
+	}
+	CBlobResult r;
+	for(int i=0;i<numCores;i++){
+		CBlobResult *re = new CBlobResult();
+		pthread_join(tIds[i],0);
+		/*CBlobResult r = *res[i];
+		for(int p =0;p<r.GetNumBlobs();p++)
+			m_blobs.push_back(r.GetBlob(p));*/
+		r = r+*mess[i].res;
+	}
+	delete [] mess;
+	delete [] res;
+	delete [] splitSource;
+	delete [] splitMask;
+	delete [] tIds;
+	*this = r;
 }
 /**
 - FUNCIÓ: CBlobResult
@@ -943,4 +992,22 @@ void CBlobResult::PrintBlobs( char *nom_fitxer ) const
 	}
 	fclose( fitxer_sortida );
 
+}
+
+/**
+- FUNCTION: thread_componentLabeling
+- FUNCTIONALITY: Static function needed to create many component labeling threads from the constructor
+- PARAMETERS:
+	- msg: pointer to thread message, which contains the binary image, the mask and the background color
+- RESULT:
+	- returns the CBlobResult created.
+- RESTRICTIONS:
+- AUTHOR: Saverio Murgia & Luca Nardelli
+- CREATION DATE: 06-04-2013.
+- MODIFICATION: Date. Author. Description.
+*/
+void* CBlobResult::thread_componentLabeling( threadMessage *msg )
+{
+	msg->res = new CBlobResult(&(IplImage)msg->image,&(IplImage)msg->mask,msg->backColor);
+	return msg;
 }

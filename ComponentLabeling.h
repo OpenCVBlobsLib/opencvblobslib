@@ -27,4 +27,6 @@ CvPoint tracer( IplImage *image, IplImage *mask, CvPoint P, bool *visitedPoints,
 				unsigned char backgroundColor, short &movement );
 				
 
+
+
 #endif	//!_CLASSE_BLOBRESULT_INCLUDED
