@@ -1,5 +1,6 @@
 #include "BlobResult.h"
 #include <opencv2/opencv.hpp>
+#include <pthread.h>
 
 using namespace cv;
 using namespace std;
@@ -14,8 +15,9 @@ int main(){
 	for(int i=0;i<res.GetNumBlobs();i++){
 		res.GetBlob(i)->FillBlob(out,Scalar(10*i+10));
 	}
+	double elapsed = (getTickCount()-time)/getTickFrequency();
 	imshow("Blobs",out);
-	cout <<"Interfaccia MultiThread: "<<(getTickCount()-time)/getTickFrequency();
+	cout <<"Interfaccia MultiThread: "<<elapsed;
 	waitKey();
 
 	time = getTickCount();
@@ -23,8 +25,24 @@ int main(){
 	for(int i=0;i<res.GetNumBlobs();i++){
 		res.GetBlob(i)->FillBlob(out,Scalar(10*i+10));
 	}
+	elapsed = (getTickCount()-time)/getTickFrequency();
 	imshow("Blobs",out);
-	cout <<"Interfaccia SingleThread: "<<(getTickCount()-time)/getTickFrequency();
+	cout <<endl<<"Interfaccia SingleThread: "<<elapsed<<endl;
+	waitKey();
+
+	Rect roi;
+	Size sz = source.size();
+	int numCores = pthread_num_processors_np();
+	roi = Rect(0,0,sz.width,sz.height/numCores);
+
+	time = getTickCount();
+	res=CBlobResult(&(IplImage)(source(roi)),NULL,0);
+	for(int i=0;i<res.GetNumBlobs();i++){
+		res.GetBlob(i)->FillBlob(out(roi),Scalar(10*i+10));
+	}
+	elapsed = (getTickCount()-time)/getTickFrequency();
+	imshow("Blobs",out);
+	cout <<endl<<"Interfaccia SingleThread con una sola sezione dell'immagine: "<<4*elapsed<<endl;
 	waitKey();
 	//cout <<"Premere un tasto per terminare..."<<endl;
 	//cin.get();
