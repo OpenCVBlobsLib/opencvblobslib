@@ -34,6 +34,7 @@ int main(){
 	Size sz = source.size();
 	int numCores = pthread_num_processors_np();
 	roi = Rect(0,0,sz.width,sz.height/numCores);
+	cout<<endl<<"rows "<<sz.height/numCores;
 
 	time = getTickCount();
 	res=CBlobResult(&(IplImage)(source(roi)),NULL,0);
@@ -42,7 +43,21 @@ int main(){
 	}
 	elapsed = (getTickCount()-time)/getTickFrequency();
 	imshow("Blobs",out);
-	cout <<endl<<"Interfaccia SingleThread con una sola sezione dell'immagine: "<<4*elapsed<<endl;
+	cout <<endl<<"Interfaccia SingleThread con una sola sezione dell'immagine: "<<elapsed<<endl;
+	waitKey();
+
+	time = getTickCount();
+	for(int i = 0;i<4;i++){
+		Mat mask = Mat_<uchar>::zeros(source.size());
+		Rect roi;
+		Size sz = source.size();
+		Rect(0,0,sz.width,sz.height/numCores);
+		mask(roi).setTo(255);
+		mask.clone();
+		mask.setTo(0);
+	}
+	elapsed = (getTickCount()-time)/getTickFrequency();
+	cout <<endl<<"4 volte creazione maschera: "<<elapsed<<endl;
 	waitKey();
 	//cout <<"Premere un tasto per terminare..."<<endl;
 	//cin.get();

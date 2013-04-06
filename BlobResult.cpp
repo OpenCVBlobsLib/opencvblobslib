@@ -146,7 +146,7 @@ CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
 	}
 	CBlobResult r;
 	for(int i=0;i<numCores;i++){
-		CBlobResult *re = new CBlobResult();
+		//CBlobResult *re = new CBlobResult();
 		pthread_join(tIds[i],0);
 		/*CBlobResult r = *res[i];
 		for(int p =0;p<r.GetNumBlobs();p++)
