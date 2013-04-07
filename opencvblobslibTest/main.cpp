@@ -21,6 +21,7 @@ int main(){
 	moveWindow("BlobsST",700,200);
 	RNG random;
 	CBlobResult res;
+	stringstream s;
 	for(int j=0;j<10;j++){
 		time = getTickCount();
 		res=CBlobResult(source,Mat(),0);
@@ -28,14 +29,19 @@ int main(){
 		cout<<endl<<"NumblobsMT: "<<res.GetNumBlobs()<<endl;
 		cout <<"Interfaccia MultiThread: "<<elapsed<<endl;
 		medMT+=elapsed;
+
+		cout<<endl<<"Informazioni blob prima join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
+		res.GetBlob(0)->JoinBlob(res.GetBlob(2));
+		res.GetBlob(0)->JoinBlob(res.GetBlob(4));
+		cout<<endl<<"Informazioni blob dopo join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
+		//res.PrintBlobs("prova.txt");
+
 		for(int i=0;i<res.GetNumBlobs();i++){
 			res.GetBlob(i)->FillBlob(outMT,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
-			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
-			cout<<i<<": "<<res.GetBlob(i)->GetID()<<endl;
-		}
-		for(int i=0;i<2;i++){
-			res.GetBlob(i)->FillBlob(outMT,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
-			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
+			rectangle(outMT,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
+			s<<i;
+			putText(outMT,s.str(),Point(res.GetBlob(i)->GetBoundingBox().x+res.GetBlob(i)->GetBoundingBox().width*0.5,res.GetBlob(i)->GetBoundingBox().y+res.GetBlob(i)->GetBoundingBox().height*0.5),1.6,10,CV_RGB(255,255,255),3);
+			s.str("");
 		}
 		imshow("BlobsMT",outMT);
 		waitKey(1);
@@ -47,10 +53,10 @@ int main(){
 		elapsed = (getTickCount()-time)/getTickFrequency();
 		cout <<endl<<"Interfaccia SingleThread: "<<elapsed<<endl;
 		medST+=elapsed;
+
 		for(int i=0;i<res.GetNumBlobs();i++){
 			res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
 			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
-			cout<<i<<": "<<res.GetBlob(i)->GetID()<<endl;
 		}
 		res=CBlobResult(&(IplImage)source,NULL,0);
 		imshow("BlobsST",out);

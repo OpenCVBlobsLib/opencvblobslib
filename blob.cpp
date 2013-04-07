@@ -715,5 +715,4 @@ void CBlob::JoinBlob( CBlob *blob )
 		CV_WRITE_SEQ_ELEM( chainCode, writer );
 	}	
 	cvEndWriteSeq( &writer );
-
 }
