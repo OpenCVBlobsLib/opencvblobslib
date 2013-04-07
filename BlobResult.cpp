@@ -141,10 +141,8 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 		pthread_join(tIds[i],0);
 		//r = r+*mess[i].res;
 	}
-	CBlobResult temp_result, temp_result_following;
+	CBlobResult temp_result;
 	for(int i=0;i<numCores-1;i++){
-		temp_result = *mess[i].res;
-		temp_result_following = *mess[i+1].res;
 		bool found = false;
 		unsigned int last_found_label=0;
 		for(int c=0;c<sz.width;c++){
@@ -523,7 +521,69 @@ double CBlobResult::GetNumber( int indexBlob, funcio_calculBlob *evaluador ) con
 	return (*evaluador)( *m_blobs[indexBlob] );
 }
 
+/**
+- FUNCIÓ: Filter (const version)
+- FUNCIONALITAT: Filtra els blobs de la classe i deixa el resultat amb només 
+			   els blobs que han passat el filtre.
+			   El filtrat es basa en especificar condicions sobre un resultat dels blobs
+			   i seleccionar (o excloure) aquells blobs que no compleixen una determinada
+			   condicio
+- PARÀMETRES:
+	- dst: variable per deixar els blobs filtrats
+	- filterAction:	acció de filtrat. Incloure els blobs trobats (B_INCLUDE),
+				    o excloure els blobs trobats (B_EXCLUDE)
+	- evaluador: Funció per evaluar els blobs (qualsevol objecte derivat de COperadorBlob
+	- Condition: tipus de condició que ha de superar la mesura (FilterType) 
+				 sobre cada blob per a ser considerat.
+				    B_EQUAL,B_NOT_EQUAL,B_GREATER,B_LESS,B_GREATER_OR_EQUAL,
+				    B_LESS_OR_EQUAL,B_INSIDE,B_OUTSIDE
+	- LowLimit:  valor numèric per a la comparació (Condition) de la mesura (FilterType)
+	- HighLimit: valor numèric per a la comparació (Condition) de la mesura (FilterType)
+				 (només té sentit per a aquelles condicions que tenen dos valors 
+				 (B_INSIDE, per exemple).
+- RESULTAT:
+	- Deixa els blobs resultants del filtrat a destination
+- RESTRICCIONS:
+- AUTOR: Ricard Borràs
+- DATA DE CREACIÓ: 25-05-2005.
+- MODIFICACIÓ: Data. Autor. Descripció.
+*/
+/**
+- FUNCTION: Filter (const version)
+- FUNCTIONALITY: Get some blobs from the class based on conditions on measures
+				 of the blobs. 
+- PARAMETERS:
+	- dst: where to store the selected blobs
+	- filterAction:	B_INCLUDE: include the blobs which pass the filter in the result 
+				    B_EXCLUDE: exclude the blobs which pass the filter in the result 
+	- evaluador: Object to evaluate the blob
+	- Condition: How to decide if  the result returned by evaluador on each blob
+				 is included or not. It can be:
+				    B_EQUAL,B_NOT_EQUAL,B_GREATER,B_LESS,B_GREATER_OR_EQUAL,
+				    B_LESS_OR_EQUAL,B_INSIDE,B_OUTSIDE
+	- LowLimit:  numerical value to evaluate the Condition on evaluador(blob)
+	- HighLimit: numerical value to evaluate the Condition on evaluador(blob).
+				 Only useful for B_INSIDE and B_OUTSIDE
+- RESULT:
+	- It returns on dst the blobs that accomplish (B_INCLUDE) or discards (B_EXCLUDE)
+	  the Condition on the result returned by evaluador on each blob
+- RESTRICTIONS:
+- AUTHOR: Ricard Borràs
+- CREATION DATE: 25-05-2005.
+- MODIFICATION: Date. Author. Description.
+*/
 /////////////////////////// FILTRAT DE BLOBS ////////////////////////////////////
+void CBlobResult::Filter(CBlobResult &dst, 
+						 int filterAction, 
+						 funcio_calculBlob *evaluador, 
+						 int condition, 
+						 double lowLimit, double highLimit /*=0*/) const
+							
+{
+	// do the job
+	DoFilter(dst, filterAction, evaluador, condition, lowLimit, highLimit );
+}
+
 
 /**
 - FUNCIÓ: Filter
@@ -554,68 +614,6 @@ double CBlobResult::GetNumber( int indexBlob, funcio_calculBlob *evaluador ) con
 */
 /**
 - FUNCTION: Filter
-- FUNCTIONALITY: Get some blobs from the class based on conditions on measures
-				 of the blobs. 
-- PARAMETERS:
-	- dst: where to store the selected blobs
-	- filterAction:	B_INCLUDE: include the blobs which pass the filter in the result 
-				    B_EXCLUDE: exclude the blobs which pass the filter in the result 
-	- evaluador: Object to evaluate the blob
-	- Condition: How to decide if  the result returned by evaluador on each blob
-				 is included or not. It can be:
-				    B_EQUAL,B_NOT_EQUAL,B_GREATER,B_LESS,B_GREATER_OR_EQUAL,
-				    B_LESS_OR_EQUAL,B_INSIDE,B_OUTSIDE
-	- LowLimit:  numerical value to evaluate the Condition on evaluador(blob)
-	- HighLimit: numerical value to evaluate the Condition on evaluador(blob).
-				 Only useful for B_INSIDE and B_OUTSIDE
-- RESULT:
-	- It returns on dst the blobs that accomplish (B_INCLUDE) or discards (B_EXCLUDE)
-	  the Condition on the result returned by evaluador on each blob
-- RESTRICTIONS:
-- AUTHOR: Ricard Borràs
-- CREATION DATE: 25-05-2005.
-- MODIFICATION: Date. Author. Description.
-*/
-void CBlobResult::Filter(CBlobResult &dst, 
-						 int filterAction, 
-						 funcio_calculBlob *evaluador, 
-						 int condition, 
-						 double lowLimit, double highLimit /*=0*/) const
-							
-{
-	// do the job
-	DoFilter(dst, filterAction, evaluador, condition, lowLimit, highLimit );
-}
-
-/**
-- FUNCIÓ: Filter (const version)
-- FUNCIONALITAT: Filtra els blobs de la classe i deixa el resultat amb només 
-			   els blobs que han passat el filtre.
-			   El filtrat es basa en especificar condicions sobre un resultat dels blobs
-			   i seleccionar (o excloure) aquells blobs que no compleixen una determinada
-			   condicio
-- PARÀMETRES:
-	- dst: variable per deixar els blobs filtrats
-	- filterAction:	acció de filtrat. Incloure els blobs trobats (B_INCLUDE),
-				    o excloure els blobs trobats (B_EXCLUDE)
-	- evaluador: Funció per evaluar els blobs (qualsevol objecte derivat de COperadorBlob
-	- Condition: tipus de condició que ha de superar la mesura (FilterType) 
-				 sobre cada blob per a ser considerat.
-				    B_EQUAL,B_NOT_EQUAL,B_GREATER,B_LESS,B_GREATER_OR_EQUAL,
-				    B_LESS_OR_EQUAL,B_INSIDE,B_OUTSIDE
-	- LowLimit:  valor numèric per a la comparació (Condition) de la mesura (FilterType)
-	- HighLimit: valor numèric per a la comparació (Condition) de la mesura (FilterType)
-				 (només té sentit per a aquelles condicions que tenen dos valors 
-				 (B_INSIDE, per exemple).
-- RESULTAT:
-	- Deixa els blobs resultants del filtrat a destination
-- RESTRICCIONS:
-- AUTOR: Ricard Borràs
-- DATA DE CREACIÓ: 25-05-2005.
-- MODIFICACIÓ: Data. Autor. Descripció.
-*/
-/**
-- FUNCTION: Filter (const version)
 - FUNCTIONALITY: Get some blobs from the class based on conditions on measures
 				 of the blobs. 
 - PARAMETERS:
