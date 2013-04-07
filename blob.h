@@ -72,6 +72,9 @@ public:
 	{
 		return m_id;
 	}
+	void SetID(t_labelType newID){
+		m_id=newID;
+	}
 	//! > 0 for extern blobs, 0 if not
 	int	  Exterior( IplImage *mask, bool xBorder = true, bool yBorder = true );
 	//! opencv2 Interface

@@ -347,7 +347,7 @@ CBlobResult CBlobResult::operator+( const CBlobResult& source ) const
 {	
 	//creem el resultat a partir dels blobs actuals
 	CBlobResult resultat( *this );
-	
+
 	// reservem memòria per als nous blobs
 	resultat.m_blobs.resize( resultat.GetNumBlobs() + source.GetNumBlobs() );
 

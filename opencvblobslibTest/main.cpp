@@ -10,7 +10,8 @@ int main(){
 	Mat source = Mat::ones(3200,3200,CV_8UC1)*255;
 	Rect roi1 = Rect(800,0,1600,3200);
 	source(roi1).setTo(0);
-	Mat_<Vec3b> out = Mat_<Vec3b>::zeros(2*1600,2*1600);
+	Mat_<Vec3b> out = Mat_<Vec3b>::zeros(3200,3200);
+	Mat_<Vec3b> outMT = Mat_<Vec3b>::zeros(3200,3200);
 	double medST=0,medMT=0;
 	int64 time;
 	double elapsed;
@@ -24,13 +25,19 @@ int main(){
 		time = getTickCount();
 		res=CBlobResult(source,Mat(),0);
 		elapsed = (getTickCount()-time)/getTickFrequency();
-		cout <<"Interfaccia MultiThread: "<<elapsed;
+		cout<<endl<<"NumblobsMT: "<<res.GetNumBlobs()<<endl;
+		cout <<"Interfaccia MultiThread: "<<elapsed<<endl;
 		medMT+=elapsed;
 		for(int i=0;i<res.GetNumBlobs();i++){
-			res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
+			res.GetBlob(i)->FillBlob(outMT,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
+			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
+			cout<<i<<": "<<res.GetBlob(i)->GetID()<<endl;
+		}
+		for(int i=0;i<2;i++){
+			res.GetBlob(i)->FillBlob(outMT,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
 			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
 		}
-		imshow("BlobsMT",out);
+		imshow("BlobsMT",outMT);
 		waitKey(1);
 
 		out.setTo(0);
@@ -43,7 +50,9 @@ int main(){
 		for(int i=0;i<res.GetNumBlobs();i++){
 			res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
 			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
+			cout<<i<<": "<<res.GetBlob(i)->GetID()<<endl;
 		}
+		res=CBlobResult(&(IplImage)source,NULL,0);
 		imshow("BlobsST",out);
 		waitKey(1);
 	}
