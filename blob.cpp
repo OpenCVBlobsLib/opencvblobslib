@@ -716,3 +716,33 @@ void CBlob::JoinBlob( CBlob *blob )
 	}	
 	cvEndWriteSeq( &writer );
 }
+
+vector<Point> CBlob::getPointsTouchingBorder( int border )
+{
+	vector<Point> points;
+	CvPoint pt;
+	CvSeqReader reader;
+	cvStartReadSeq(m_externalContour.GetContourPoints(),&reader);
+	for(int i=0;i< m_externalContour.GetContourPoints()->total;i++){
+		CV_READ_SEQ_ELEM(pt,reader);
+		switch(border){
+		case 0:	//Top
+			if(pt.y == 0)
+				points.push_back(Point(pt));
+			break;
+		case 1: // Right
+			if(pt.x == m_originalImageSize.width-1 )
+				points.push_back(Point(pt));
+			break;
+		case 2: // Bottom
+			if(pt.y == m_originalImageSize.height-1 )
+				points.push_back(Point(pt));
+			break;
+		case 4: // Left
+			if(pt.x == 0 )
+				points.push_back(Point(pt));
+			break;
+		}
+	}
+	return points;
+}

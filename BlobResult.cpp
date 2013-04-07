@@ -130,7 +130,7 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	pthread_t *tIds = new pthread_t[numCores];
 	Size sz = source.size();
 	int roiHeight = sz.height/numCores;
-	//Mat_<int> labels = Mat_<int>::zeros(source.size());
+	Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
 	threadMessage *mess = new threadMessage[numCores];
 	for(int i=0;i<numCores;i++){
 		mess[i].operator =(threadMessage(source,mask,0,i*roiHeight,roiHeight));
@@ -167,13 +167,14 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	for(int i=0;i<numCores;i++){
 		r = r+*mess[i].res;
 	}
-	/*
+	
 	//Per il join disegno su una Mat i soli contorni dei blobs, poi itero a cavallo delle linee di separazione per fare gli eventuali join
-	for(int i=0;i<r.GetNumBlobs();i++){
-		cvDrawContours(&(IplImage)labels,r.GetBlob(i)->GetExternalContour()->GetContourPoints(),Scalar(i),Scalar(),255,1);
-	}
-	int upperLabelOld=-1,lowerLabelOld=-1;
+	
+	/*int upperLabelOld=-1,lowerLabelOld=-1;
 	for(int i=1;i<numCores;i++){
+		for(int j=0;j<r.GetNumBlobs();j++){
+			cvDrawContours(&(IplImage)labels,r.GetBlob(j)->GetExternalContour()->GetContourPoints(),Scalar(j),Scalar(),255,1);
+		}
 		for(int j=0;j<sz.width;j++){
 			int upperLabel = labels.at<int>(i*roiHeight-1,j),lowerLabel = labels.at<int>(i*roiHeight,j);
 			if(upperLabel != -1 && lowerLabel != -1 && upperLabel!=upperLabelOld && lowerLabel!=lowerLabelOld){

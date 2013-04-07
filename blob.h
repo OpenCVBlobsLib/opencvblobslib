@@ -143,7 +143,10 @@ public:
 
 	//Shifts the blob by (x,y) 
 	void ShiftBlob(int x,int y){ m_externalContour.ShiftBlobContour(x,y);}
-
+	/*
+	Border: 0 = top, 1 = right, 2 = bottom, 3 = left
+	*/
+	vector<Point> getPointsTouchingBorder(int border);
 private:
 	
 	//! Deallocates all contours
