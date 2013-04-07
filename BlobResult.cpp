@@ -153,8 +153,8 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 			if(prev_label!=0 & following_label!=0 & (!found | prev_label!=last_found_label)){
 				found=true;
 				last_found_label=prev_label;
-				CBlob *nextBlob = mess[i+1].res->GetBlob(following_label-1);
-				CBlob *prevBlob = mess[i].res->GetBlob(prev_label-1);
+				CBlob *nextBlob = mess[i+1].res->GetBlobByID(following_label);
+				CBlob *prevBlob = mess[i].res->GetBlobByID(prev_label);
 				//CBlob joinedBlob(nextBlob);
 				//joinedBlob.JoinBlob(prevBlob);
 				//temp_result_following.AddBlob(prevBlob);
