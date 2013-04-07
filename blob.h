@@ -179,6 +179,8 @@ private:
 	CvBox2D m_ellipse;
 	//! Sizes from image where blob is extracted
 	CvSize m_originalImageSize;
+	public: CvSize OriginalImageSize() const { return m_originalImageSize; }
+	public: void OriginalImageSize(int width, int height) { m_originalImageSize.width = width; m_originalImageSize.height = height; }
 };
 
 #endif //CBLOB_INSPECTA_INCLUDED

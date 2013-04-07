@@ -83,9 +83,9 @@ public:
 	//! Standard constructor, it creates an empty set of blobs
 	CBlobResult();
 	//! Image constructor, it creates an object with the blobs of the image
-	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor, Mat labelled=Mat());
+	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor, Mat &labelled=Mat());
 	//! OpenCV2 interface
-	CBlobResult(Mat source, Mat mask, uchar backgroundColor);
+	CBlobResult(Mat &source, Mat &mask, uchar backgroundColor);
 	//! Copy constructor
 	CBlobResult( const CBlobResult &source );
 	//! Destructor
@@ -171,7 +171,7 @@ private:
 	int origin;
 	int height;
 	CBlobResult *res;
-	threadMessage(Mat img,Mat msk,uchar backgroundCol,int org,int hei):image(img),mask(msk),backColor(backgroundCol),origin(org),height(hei),res(NULL){}
+	threadMessage(Mat &img,Mat &msk,uchar backgroundCol,int org,int hei):image(img),mask(msk),backColor(backgroundCol),origin(org),height(hei),res(NULL){}
 	threadMessage():image(Mat()),mask(Mat()),res(NULL){}
 	~threadMessage(){ if(res!=NULL) delete res;}
 	threadMessage& operator=(threadMessage &o){image=o.image;mask=o.mask;backColor=o.backColor;res=o.res;origin=o.origin;height=o.height; return *this;}

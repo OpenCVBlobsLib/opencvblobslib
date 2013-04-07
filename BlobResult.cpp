@@ -94,7 +94,7 @@ CBlobResult::CBlobResult()
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor ,Mat labelled)
+CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor ,Mat &labelled)
 {
 	bool success;
 	try
@@ -124,7 +124,7 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 - CREATION DATE: 06-04-2013.
 - MODIFICATION: Date. Author. Description.
 */
-CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
+CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	//CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
 	int numCores = pthread_num_processors_np();
 	pthread_t *tIds = new pthread_t[numCores];
@@ -139,6 +139,34 @@ CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
 	CBlobResult r;
 	for(int i=0;i<numCores;i++){
 		pthread_join(tIds[i],0);
+		//r = r+*mess[i].res;
+	}
+	CBlobResult temp_result, temp_result_following;
+	for(int i=0;i<numCores-1;i++){
+		temp_result = *mess[i].res;
+		temp_result_following = *mess[i+1].res;
+		bool found = false;
+		unsigned int last_found_label=0;
+		for(int c=0;c<sz.width;c++){
+			unsigned int prev_label = mess[i].labels.at<unsigned int>(sz.height/numCores-1,c);
+			unsigned int following_label = mess[i+1].labels.at<unsigned int>(0,c);
+			if(prev_label!=0 & following_label!=0 & (!found | prev_label!=last_found_label)){
+				found=true;
+				last_found_label=prev_label;
+				CBlob *nextBlob = mess[i+1].res->GetBlob(following_label-1);
+				CBlob *prevBlob = mess[i].res->GetBlob(prev_label-1);
+				//CBlob joinedBlob(nextBlob);
+				//joinedBlob.JoinBlob(prevBlob);
+				//temp_result_following.AddBlob(prevBlob);
+				//nextBlob->JoinBlob(prevBlob);
+				//mess[i+1].res->GetBlob(following_label-1)->JoinBlob(mess[i].res->GetBlob(prev_label-1));
+			}
+			else{
+				if(prev_label==0 | following_label==0)found=false;
+			}
+		}
+	}
+	for(int i=0;i<numCores;i++){
 		r = r+*mess[i].res;
 	}
 	/*
@@ -1015,9 +1043,11 @@ void* CBlobResult::thread_componentLabeling( threadMessage *msg )
 		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->labels);
 	//Devo sommare l'offset di ogni punto
 	int numBlobs = msg->res->GetNumBlobs();
+	int numCores = pthread_num_processors_np();
 	for(int i=0;i<numBlobs;i++){
 		CBlob *curBlob = msg->res->GetBlob(i);
 		curBlob->ShiftBlob(0,msg->origin);
+		curBlob->OriginalImageSize(curBlob->OriginalImageSize().width,curBlob->OriginalImageSize().height*numCores);
 	}
 	//std::cout <<"Tempo Thread: "<<(getTickCount()-time)/getTickFrequency()<<std::endl;
 	return msg;

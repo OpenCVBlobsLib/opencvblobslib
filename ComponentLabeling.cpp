@@ -93,7 +93,7 @@ inline void ASSIGN_VISITED( CvPoint p, bool *visitedPoints, int imageWidth  )
 bool ComponentLabeling(	IplImage* inputImage,
 						IplImage* maskImage,
 						unsigned char backgroundColor,
-						Blob_vector &blobs , Mat labelled)
+						Blob_vector &blobs , Mat &labelled)
 {
 	int i,j;
 	// row major vector with visited points 
