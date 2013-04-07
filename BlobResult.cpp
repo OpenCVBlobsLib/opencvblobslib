@@ -806,8 +806,27 @@ CBlob *CBlobResult::GetBlob(int indexblob)
 {	
 	if( indexblob < 0 || indexblob >= GetNumBlobs() )
 		RaiseError( EXCEPTION_BLOB_OUT_OF_BOUNDS );
-
 	return m_blobs[indexblob];
+}
+
+CBlob CBlobResult::GetBlobByID(t_labelType id) const{
+	for(int i = 0;i<GetNumBlobs();i++){
+		if(GetBlob(i).GetID()==id){
+			return m_blobs[i];
+		}
+	}
+	RaiseError( EXCEPTION_EXECUTE_FAULT );
+	return CBlob();
+}
+
+CBlob *CBlobResult::GetBlobByID(t_labelType id){
+	for(int i = 0;i<GetNumBlobs();i++){
+		if(GetBlob(i)->GetID()==id){
+			return m_blobs[i];
+		}
+	}
+	RaiseError( EXCEPTION_EXECUTE_FAULT );
+	return (new CBlob());
 }
 
 /**

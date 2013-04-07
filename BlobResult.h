@@ -131,6 +131,8 @@ public:
 	//! Gets the n-th blob of the class ( without sorting )
 	CBlob GetBlob(int indexblob) const;
 	CBlob *GetBlob(int indexblob);
+	CBlob GetBlobByID(t_labelType id) const;
+	CBlob *GetBlobByID(t_labelType id);
 	
 	//! Elimina tots els blobs de l'objecte
 	//! Clears all the blobs of the class
