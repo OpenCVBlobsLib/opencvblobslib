@@ -4,6 +4,7 @@
 #include "vector"
 #include "BlobContour.h"
 #include "Blob.h"
+#include "opencv2/opencv.hpp"
 
 
 //! definició de que es un vector de blobs
@@ -14,7 +15,7 @@ typedef std::vector<CBlob*>	Blob_vector;
 bool ComponentLabeling(	IplImage* inputImage,
 						IplImage* maskImage,
 						unsigned char backgroundColor,
-						Blob_vector &blobs );
+						Blob_vector &blobs , Mat labelled=Mat());
 
 void contourTracing( IplImage *image, IplImage *mask, CvPoint contourStart, t_labelType *labels, 
 					 bool *visitedPoints, t_labelType label,

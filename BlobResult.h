@@ -83,7 +83,7 @@ public:
 	//! Standard constructor, it creates an empty set of blobs
 	CBlobResult();
 	//! Image constructor, it creates an object with the blobs of the image
-	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor);
+	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor, Mat labelled=Mat());
 	//! OpenCV2 interface
 	CBlobResult(Mat source, Mat mask, uchar backgroundColor);
 	//! Copy constructor
@@ -164,6 +164,7 @@ private:
 
 	class threadMessage{
 	public:
+	Mat labels;
 	Mat image;
 	Mat mask;
 	uchar backColor;

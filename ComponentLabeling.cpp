@@ -93,7 +93,7 @@ inline void ASSIGN_VISITED( CvPoint p, bool *visitedPoints, int imageWidth  )
 bool ComponentLabeling(	IplImage* inputImage,
 						IplImage* maskImage,
 						unsigned char backgroundColor,
-						Blob_vector &blobs )
+						Blob_vector &blobs , Mat labelled)
 {
 	int i,j;
 	// row major vector with visited points 
@@ -260,9 +260,17 @@ bool ComponentLabeling(	IplImage* inputImage,
 		}
 	}
 
+	//Creating an header to export the labelled image
+	labelled=Mat(imageSizes.height,imageSizes.width,4,labelledImage);
+	//labelled=labelledMatTemp.clone();
+	/*FileStorage f;
+	f.open("temp.xml", FileStorage::WRITE);
+	
+	//f << "Label of 3 near pixels"<< labelledMat.at<char>(Point2d(0,0))<< labelledMat.at<char>(Point2d(0,1))<< labelledMat.at<char>(Point2d(1,0))<< labelledMat.at<char>(Point2d(1,1));
+	f << "Labelled" << labelled;*/
 
 	// free auxiliary buffers
-	free( labelledImage );
+	//free( labelledImage );
 	free( visitedPoints );
 
 	return true;

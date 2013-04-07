@@ -6,7 +6,10 @@ using namespace cv;
 using namespace std;
 
 int main(){
-	Mat source = Mat::ones(2*1600,2*1600,CV_8UC1)*255;
+	cout<<"Unsigned int size: "<<sizeof(char);
+	Mat source = Mat::ones(3200,3200,CV_8UC1)*255;
+	Rect roi1 = Rect(800,0,1600,3200);
+	source(roi1).setTo(0);
 	Mat_<Vec3b> out = Mat_<Vec3b>::zeros(2*1600,2*1600);
 	double medST=0,medMT=0;
 	int64 time;

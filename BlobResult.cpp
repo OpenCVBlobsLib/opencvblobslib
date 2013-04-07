@@ -94,13 +94,12 @@ CBlobResult::CBlobResult()
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor )
+CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor ,Mat labelled)
 {
 	bool success;
-
 	try
 	{
-		success = ComponentLabeling( source, mask, backgroundColor, m_blobs );
+		success = ComponentLabeling( source, mask, backgroundColor, m_blobs,labelled);
 	}
 	catch(...)
 	{
@@ -137,7 +136,6 @@ CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
 		mess[i].operator =(threadMessage(source,mask,0,i*roiHeight,roiHeight));
 		pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
 	}
-	int64 time;
 	CBlobResult r;
 	for(int i=0;i<numCores;i++){
 		pthread_join(tIds[i],0);
@@ -1012,9 +1010,9 @@ void* CBlobResult::thread_componentLabeling( threadMessage *msg )
 	//int64 time=getTickCount();
 	Rect roi = Rect(0,msg->origin,msg->image.size().width,msg->height);
 	if(msg->mask.data)
-		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor);
+		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor,msg->labels);
 	else
-		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor);
+		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->labels);
 	//Devo sommare l'offset di ogni punto
 	int numBlobs = msg->res->GetNumBlobs();
 	for(int i=0;i<numBlobs;i++){
