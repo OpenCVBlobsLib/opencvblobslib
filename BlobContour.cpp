@@ -256,3 +256,20 @@ t_PointList CBlobContour::GetContourPoints()
 
 	return m_contourPoints;
 }
+
+void CBlobContour::ShiftBlobContour(int x,int y)
+{
+	m_startPoint.x+=x;
+	m_startPoint.y+=y;
+	if ( m_contour == NULL || m_contour->total <= 0 )
+	{
+		return;
+	}
+
+	if(m_contourPoints == NULL)
+		m_contourPoints = GetContourPoints();
+	else{
+		cvClearSeq(m_contourPoints);
+		m_contourPoints = GetContourPoints();
+	}
+}

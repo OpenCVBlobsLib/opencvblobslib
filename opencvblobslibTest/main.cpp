@@ -7,30 +7,50 @@ using namespace std;
 
 int main(){
 	Mat source = Mat::ones(2*1600,2*1600,CV_8UC1)*255;
-	Mat out = Mat::zeros(2*1600,2*1600,CV_8UC1);
+	Mat_<Vec3b> out = Mat_<Vec3b>::zeros(2*1600,2*1600);
+	double medST=0,medMT=0;
 	int64 time;
-	namedWindow("Blobs",CV_GUI_NORMAL+CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
+	double elapsed;
+	namedWindow("BlobsMT",CV_GUI_NORMAL+CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
+	namedWindow("BlobsST",CV_GUI_NORMAL+CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
+	moveWindow("BlobsMT",300,200);
+	moveWindow("BlobsST",700,200);
 	RNG random;
-	time = getTickCount();
-	CBlobResult res(source,Mat(),0);
-	for(int i=0;i<res.GetNumBlobs();i++){
-		res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(100,255)));
-	}
-	double elapsed = (getTickCount()-time)/getTickFrequency();
-	imshow("Blobs",out);
-	cout <<"Interfaccia MultiThread: "<<elapsed;
-	waitKey();
+	CBlobResult res;
+	for(int j=0;j<10;j++){
+		time = getTickCount();
+		res=CBlobResult(source,Mat(),0);
+		elapsed = (getTickCount()-time)/getTickFrequency();
+		cout <<"Interfaccia MultiThread: "<<elapsed;
+		medMT+=elapsed;
+		for(int i=0;i<res.GetNumBlobs();i++){
+			res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
+			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
+		}
+		imshow("BlobsMT",out);
+		waitKey(1);
 
-	time = getTickCount();
-	res=CBlobResult(&(IplImage)source,NULL,0);
-	for(int i=0;i<res.GetNumBlobs();i++){
-		res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(100,255)));
-	}
-	elapsed = (getTickCount()-time)/getTickFrequency();
-	imshow("Blobs",out);
-	cout <<endl<<"Interfaccia SingleThread: "<<elapsed<<endl;
-	waitKey();
+		out.setTo(0);
 
+		time = getTickCount();
+		res=CBlobResult(&(IplImage)source,NULL,0);
+		elapsed = (getTickCount()-time)/getTickFrequency();
+		cout <<endl<<"Interfaccia SingleThread: "<<elapsed<<endl;
+		medST+=elapsed;
+		for(int i=0;i<res.GetNumBlobs();i++){
+			res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
+			rectangle(out,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
+		}
+		imshow("BlobsST",out);
+		waitKey(1);
+	}
+	medST/=10;
+	medMT/=10;
+	cout <<endl;
+	cout << "Tempo MEDIO MultiThread: "<<medMT<<endl;
+	cout << "Tempo MEDIO SingleThread: "<<medST<<endl;
+	cout <<endl;
+	out.setTo(0);
 	Rect roi;
 	Size sz = source.size();
 	int numCores = pthread_num_processors_np();
@@ -39,12 +59,12 @@ int main(){
 
 	time = getTickCount();
 	res=CBlobResult(&(IplImage)(source(roi)),NULL,0);
-	for(int i=0;i<res.GetNumBlobs();i++){
-		res.GetBlob(i)->FillBlob(out(roi),Scalar(10*i+10));
-	}
 	elapsed = (getTickCount()-time)/getTickFrequency();
-	imshow("Blobs",out);
 	cout <<endl<<"Interfaccia SingleThread con una sola sezione dell'immagine: "<<elapsed<<endl;
+	for(int i=0;i<res.GetNumBlobs();i++){
+		res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
+	}
+	imshow("BlobsST",out);
 	waitKey();
 
 	time = getTickCount();

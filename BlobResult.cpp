@@ -129,30 +129,35 @@ CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
 	//CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
 	int numCores = pthread_num_processors_np();
 	pthread_t *tIds = new pthread_t[numCores];
-	Mat* splitSource = new Mat[numCores];
-	Mat* splitMask = new Mat[numCores];
-	CBlobResult **res = new CBlobResult*[numCores];
-	Rect roi;
 	Size sz = source.size();
+	int roiHeight = sz.height/numCores;
+	//Mat_<int> labels = Mat_<int>::zeros(source.size());
 	threadMessage *mess = new threadMessage[numCores];
 	for(int i=0;i<numCores;i++){
-		//roi = Rect(0,i*sz.height/numCores,sz.width,sz.height/numCores);
-		mess[i].operator =(threadMessage(source,mask,0,i*sz.height/numCores,sz.height/numCores));
+		mess[i].operator =(threadMessage(source,mask,0,i*roiHeight,roiHeight));
 		pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
 	}
+	int64 time;
 	CBlobResult r;
 	for(int i=0;i<numCores;i++){
-		//CBlobResult *re = new CBlobResult();
 		pthread_join(tIds[i],0);
-		/*CBlobResult r = *res[i];
-		for(int p =0;p<r.GetNumBlobs();p++)
-			m_blobs.push_back(r.GetBlob(p));*/
 		r = r+*mess[i].res;
 	}
+	/*
+	//Per il join disegno su una Mat i soli contorni dei blobs, poi itero a cavallo delle linee di separazione per fare gli eventuali join
+	for(int i=0;i<r.GetNumBlobs();i++){
+		cvDrawContours(&(IplImage)labels,r.GetBlob(i)->GetExternalContour()->GetContourPoints(),Scalar(i),Scalar(),255,1);
+	}
+	int upperLabelOld=-1,lowerLabelOld=-1;
+	for(int i=1;i<numCores;i++){
+		for(int j=0;j<sz.width;j++){
+			int upperLabel = labels.at<int>(i*roiHeight-1,j),lowerLabel = labels.at<int>(i*roiHeight,j);
+			if(upperLabel != -1 && lowerLabel != -1 && upperLabel!=upperLabelOld && lowerLabel!=lowerLabelOld){
+				
+			}
+		}
+	}*/
 	delete [] mess;
-	delete [] res;
-	delete [] splitSource;
-	delete [] splitMask;
 	delete [] tIds;
 	*this = r;
 }
@@ -1004,24 +1009,18 @@ void CBlobResult::PrintBlobs( char *nom_fitxer ) const
 */
 void* CBlobResult::thread_componentLabeling( threadMessage *msg )
 {
+	//int64 time=getTickCount();
 	Rect roi = Rect(0,msg->origin,msg->image.size().width,msg->height);
 	if(msg->mask.data)
 		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor);
 	else
 		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor);
-	//bool success;
-	//try
-	//{
-	//	if(msg->mask.data)
-	//		success = ComponentLabelingSplit( &(IplImage)msg->image,&(IplImage)msg->mask,msg->backColor, msg->res->m_blobs,msg->origin,msg->height );
-	//	else
-	//		success = ComponentLabelingSplit( &(IplImage)msg->image,NULL,msg->backColor, msg->res->m_blobs,msg->origin,msg->height );
-	//}
-	//catch(...)
-	//{
-	//	success = false;
-	//}
-
-	//if( !success ) throw EXCEPCIO_CALCUL_BLOBS;
+	//Devo sommare l'offset di ogni punto
+	int numBlobs = msg->res->GetNumBlobs();
+	for(int i=0;i<numBlobs;i++){
+		CBlob *curBlob = msg->res->GetBlob(i);
+		curBlob->ShiftBlob(0,msg->origin);
+	}
+	//std::cout <<"Tempo Thread: "<<(getTickCount()-time)/getTickFrequency()<<std::endl;
 	return msg;
 }

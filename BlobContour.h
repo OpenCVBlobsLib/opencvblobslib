@@ -50,6 +50,7 @@ public:
 
 	//! Return all contour points
 	t_chainCodeList GetContourPoints();
+	void ShiftBlobContour(int x,int y);
 
 protected:	
 

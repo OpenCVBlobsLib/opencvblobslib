@@ -137,6 +137,10 @@ public:
 	{
 		return GetBoundingBox().y + GetBoundingBox().height;
 	}
+
+	//Shifts the blob by (x,y) 
+	void ShiftBlob(int x,int y){ m_externalContour.ShiftBlobContour(x,y);}
+
 private:
 	
 	//! Deallocates all contours
