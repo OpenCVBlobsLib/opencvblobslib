@@ -127,8 +127,6 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 */
 CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
 	//CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
-	if(!mask.data)
-		mask = Mat_<uchar>::zeros(source.size());
 	int numCores = pthread_num_processors_np();
 	pthread_t *tIds = new pthread_t[numCores];
 	Mat* splitSource = new Mat[numCores];
@@ -138,10 +136,8 @@ CBlobResult::CBlobResult(Mat source, Mat mask, uchar backgroundColor){
 	Size sz = source.size();
 	threadMessage *mess = new threadMessage[numCores];
 	for(int i=0;i<numCores;i++){
-		roi = Rect(0,i*sz.height/numCores,sz.width,sz.height/numCores);
-		mask(roi).setTo(255);
-		mess[i].operator =(threadMessage(source,mask.clone(),0,i*sz.height/numCores));
-		mask.setTo(0);
+		//roi = Rect(0,i*sz.height/numCores,sz.width,sz.height/numCores);
+		mess[i].operator =(threadMessage(source,mask,0,i*sz.height/numCores,sz.height/numCores));
 		pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
 	}
 	CBlobResult r;
@@ -1008,6 +1004,24 @@ void CBlobResult::PrintBlobs( char *nom_fitxer ) const
 */
 void* CBlobResult::thread_componentLabeling( threadMessage *msg )
 {
-	msg->res = new CBlobResult(&(IplImage)msg->image,&(IplImage)msg->mask,msg->backColor);
+	Rect roi = Rect(0,msg->origin,msg->image.size().width,msg->height);
+	if(msg->mask.data)
+		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor);
+	else
+		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor);
+	//bool success;
+	//try
+	//{
+	//	if(msg->mask.data)
+	//		success = ComponentLabelingSplit( &(IplImage)msg->image,&(IplImage)msg->mask,msg->backColor, msg->res->m_blobs,msg->origin,msg->height );
+	//	else
+	//		success = ComponentLabelingSplit( &(IplImage)msg->image,NULL,msg->backColor, msg->res->m_blobs,msg->origin,msg->height );
+	//}
+	//catch(...)
+	//{
+	//	success = false;
+	//}
+
+	//if( !success ) throw EXCEPCIO_CALCUL_BLOBS;
 	return msg;
 }

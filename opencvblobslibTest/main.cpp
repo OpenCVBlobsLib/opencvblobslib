@@ -10,10 +10,11 @@ int main(){
 	Mat out = Mat::zeros(2*1600,2*1600,CV_8UC1);
 	int64 time;
 	namedWindow("Blobs",CV_GUI_NORMAL+CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
+	RNG random;
 	time = getTickCount();
 	CBlobResult res(source,Mat(),0);
 	for(int i=0;i<res.GetNumBlobs();i++){
-		res.GetBlob(i)->FillBlob(out,Scalar(10*i+10));
+		res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(100,255)));
 	}
 	double elapsed = (getTickCount()-time)/getTickFrequency();
 	imshow("Blobs",out);
@@ -23,7 +24,7 @@ int main(){
 	time = getTickCount();
 	res=CBlobResult(&(IplImage)source,NULL,0);
 	for(int i=0;i<res.GetNumBlobs();i++){
-		res.GetBlob(i)->FillBlob(out,Scalar(10*i+10));
+		res.GetBlob(i)->FillBlob(out,Scalar(random.uniform(100,255)));
 	}
 	elapsed = (getTickCount()-time)/getTickFrequency();
 	imshow("Blobs",out);

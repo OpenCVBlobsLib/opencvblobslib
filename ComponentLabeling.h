@@ -16,6 +16,11 @@ bool ComponentLabeling(	IplImage* inputImage,
 						unsigned char backgroundColor,
 						Blob_vector &blobs );
 
+bool ComponentLabelingSplit(	IplImage* inputImage,
+	IplImage* maskImage,
+	unsigned char backgroundColor,
+	Blob_vector &blobs,
+	int origin, int height);
 
 void contourTracing( IplImage *image, IplImage *mask, CvPoint contourStart, t_labelType *labels, 
 					 bool *visitedPoints, t_labelType label,
