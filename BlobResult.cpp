@@ -169,11 +169,11 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 			if(prev_label!=0 & following_label!=0 & (!found | prev_label!=last_found_label)){
 				found=true;
 				last_found_label=prev_label;
-				CBlob *nextBlob = mess[i-1].res->GetBlobByID(following_label);
+				/*CBlob *nextBlob = mess[i-1].res->GetBlobByID(following_label);
 				CBlob *prevBlob=mess[i].res->GetBlobByID(prev_label);
 				prevBlob->to_be_deleted=1;
 				mess[i-1].res->AddBlob(prevBlob);
-				nextBlob->JoinBlob(prevBlob);
+				nextBlob->JoinBlob(prevBlob);*/
 			}
 			else if(prev_label==0 | following_label==0) found=false;
 		}
@@ -185,7 +185,7 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 
 	for(int i=0;i<numCores;i++){
 		mess[i].res->Filter(*mess[i].res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);
-		mess[i].res->GetNumBlobs();
+		//mess[i].res->GetNumBlobs();
 		r = r+*mess[i].res;
 	}
 	//r.GetBlob(0)->GetBoundingBox();
