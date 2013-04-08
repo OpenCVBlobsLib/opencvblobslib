@@ -263,11 +263,11 @@ bool ComponentLabeling(	IplImage* inputImage,
 	//Creating an header to export the labelled image
 	labelled=Mat(imageSizes.height,imageSizes.width,4,labelledImage);
 	//labelled=labelledMatTemp.clone();
-	/*FileStorage f;
+	FileStorage f;
 	f.open("temp.xml", FileStorage::WRITE);
 	
 	//f << "Label of 3 near pixels"<< labelledMat.at<char>(Point2d(0,0))<< labelledMat.at<char>(Point2d(0,1))<< labelledMat.at<char>(Point2d(1,0))<< labelledMat.at<char>(Point2d(1,1));
-	f << "Labelled" << labelled;*/
+	f << "Labelled" << labelled;
 
 	// free auxiliary buffers
 	//free( labelledImage );

@@ -7,11 +7,11 @@ using namespace std;
 
 int main(){
 	cout<<"Unsigned int size: "<<sizeof(char);
-	Mat source = Mat::ones(3200,3200,CV_8UC1)*255;
-	Rect roi1 = Rect(800,0,1600,3200);
+	Mat source = Mat::ones(320,320,CV_8UC1)*255;
+	Rect roi1 = Rect(80,0,160,320);
 	source(roi1).setTo(0);
-	Mat_<Vec3b> out = Mat_<Vec3b>::zeros(3200,3200);
-	Mat_<Vec3b> outMT = Mat_<Vec3b>::zeros(3200,3200);
+	Mat_<Vec3b> out = Mat_<Vec3b>::zeros(320,320);
+	Mat_<Vec3b> outMT = Mat_<Vec3b>::zeros(320,320);
 	double medST=0,medMT=0;
 	int64 time;
 	double elapsed;
@@ -29,15 +29,23 @@ int main(){
 		cout<<endl<<"NumblobsMT: "<<res.GetNumBlobs()<<endl;
 		cout <<"Interfaccia MultiThread: "<<elapsed<<endl;
 		medMT+=elapsed;
-
-		cout<<endl<<"Informazioni blob prima join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
-		res.GetBlob(0)->JoinBlob(res.GetBlob(2));
+		//cout<<endl<<"Informazioni blob prima join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
+		/*res.GetBlob(0)->JoinBlob(res.GetBlob(2));
+		res.GetBlob(2)->to_be_deleted=true;
 		res.GetBlob(0)->JoinBlob(res.GetBlob(4));
+		res.GetBlob(4)->to_be_deleted=true;
 		res.GetBlob(0)->JoinBlob(res.GetBlob(6));
+		res.GetBlob(6)->to_be_deleted=true;
 		res.GetBlob(1)->JoinBlob(res.GetBlob(3));
+		res.GetBlob(3)->to_be_deleted=true;
 		res.GetBlob(1)->JoinBlob(res.GetBlob(5));
+		res.GetBlob(5)->to_be_deleted=true;
 		res.GetBlob(1)->JoinBlob(res.GetBlob(7));
-		cout<<endl<<"Informazioni blob dopo join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
+		res.GetBlob(7)->to_be_deleted=true;
+		res.Filter(res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);*/
+
+		cout<<endl<<"Numero blobs trovati: "<<res.GetNumBlobs()<<endl;
+		//cout<<endl<<"Informazioni blob dopo join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
 		//res.PrintBlobs("prova.txt");
 
 		for(int i=0;i<2;i++){

@@ -67,6 +67,9 @@ public:
 		return m_storage;
 	}
 
+	//! Bool to permit deletion with filter function
+	double to_be_deleted;
+
 	//! Get label ID
 	t_labelType GetID()
 	{

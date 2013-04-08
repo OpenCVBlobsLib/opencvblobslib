@@ -25,6 +25,7 @@ CBlob::CBlob()
 	m_ellipse.size.width = -1;
 	m_storage = NULL;
 	m_id = -1;
+	to_be_deleted=0;
 }
 CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
 {
@@ -37,6 +38,7 @@ CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
 	m_externalContour = CBlobContour(startPoint, m_storage);
 	lastStartingPoint = startPoint;
 	m_originalImageSize = originalImageSize;
+	to_be_deleted=0;
 }
 //! Copy constructor
 CBlob::CBlob( const CBlob &src )
@@ -68,7 +70,7 @@ CBlob& CBlob::operator=(const CBlob &src )
 		m_ellipse = src.m_ellipse;
 		m_originalImageSize = src.m_originalImageSize;
 		lastStartingPoint = src.lastStartingPoint;
-		
+		to_be_deleted=src.to_be_deleted;
 		// clear all current blob contours
 		ClearContours();
 		

@@ -130,7 +130,7 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	pthread_t *tIds = new pthread_t[numCores];
 	Size sz = source.size();
 	int roiHeight = sz.height/numCores;
-	Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
+	//Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
 	threadMessage *mess = new threadMessage[numCores];
 	for(int i=0;i<numCores;i++){
 		mess[i].operator =(threadMessage(source,mask,0,i*roiHeight,roiHeight));
@@ -142,32 +142,54 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 		//r = r+*mess[i].res;
 	}
 	CBlobResult temp_result;
-	for(int i=0;i<numCores-1;i++){
+	//for(int i=0;i<numCores-1;i++){
+	//	bool found = false;
+	//	unsigned int last_found_label=0;
+	//	for(int c=0;c<sz.width;c++){
+	//		unsigned int prev_label = mess[i].labels.at<unsigned int>(sz.height/numCores-1,c);
+	//		unsigned int following_label = mess[i+1].labels.at<unsigned int>(0,c);
+	//		if(prev_label!=0 & following_label!=0 & (!found | prev_label!=last_found_label)){
+	//			found=true;
+	//			last_found_label=prev_label;
+	//			CBlob *nextBlob = mess[i+1].res->GetBlobByID(following_label);
+	//			CBlob *prevBlob=mess[i].res->GetBlobByID(prev_label);
+	//			prevBlob->to_be_deleted=1;
+	//			mess[i+1].res->AddBlob(prevBlob);
+	//			nextBlob->JoinBlob(prevBlob);
+	//		}
+	//		else if(prev_label==0 | following_label==0) found=false;
+	//	}
+	//}
+	for(int i=numCores-1;i>0;i--){
 		bool found = false;
 		unsigned int last_found_label=0;
 		for(int c=0;c<sz.width;c++){
 			unsigned int prev_label = mess[i].labels.at<unsigned int>(sz.height/numCores-1,c);
-			unsigned int following_label = mess[i+1].labels.at<unsigned int>(0,c);
+			unsigned int following_label = mess[i-1].labels.at<unsigned int>(0,c);
 			if(prev_label!=0 & following_label!=0 & (!found | prev_label!=last_found_label)){
 				found=true;
 				last_found_label=prev_label;
-				CBlob *nextBlob = mess[i+1].res->GetBlobByID(following_label);
-				CBlob *prevBlob = mess[i].res->GetBlobByID(prev_label);
-				//CBlob joinedBlob(nextBlob);
-				//joinedBlob.JoinBlob(prevBlob);
-				//temp_result_following.AddBlob(prevBlob);
-				//nextBlob->JoinBlob(prevBlob);
-				//mess[i+1].res->GetBlob(following_label-1)->JoinBlob(mess[i].res->GetBlob(prev_label-1));
+				CBlob *nextBlob = mess[i-1].res->GetBlobByID(following_label);
+				CBlob *prevBlob=mess[i].res->GetBlobByID(prev_label);
+				prevBlob->to_be_deleted=1;
+				mess[i-1].res->AddBlob(prevBlob);
+				nextBlob->JoinBlob(prevBlob);
 			}
-			else{
-				if(prev_label==0 | following_label==0)found=false;
-			}
+			else if(prev_label==0 | following_label==0) found=false;
 		}
 	}
+	/*mess[0].res->GetBlob(0);
+		mess[1].res->GetBlob(0);
+			mess[2].res->GetBlob(0);
+				mess[3].res->GetBlob(0);*/
+
 	for(int i=0;i<numCores;i++){
+		mess[i].res->Filter(*mess[i].res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);
+		mess[i].res->GetNumBlobs();
 		r = r+*mess[i].res;
 	}
-	
+	//r.GetBlob(0)->GetBoundingBox();
+	//r.GetBlob(1)->GetBoundingBox();
 	//Per il join disegno su una Mat i soli contorni dei blobs, poi itero a cavallo delle linee di separazione per fare gli eventuali join
 	
 	/*int upperLabelOld=-1,lowerLabelOld=-1;

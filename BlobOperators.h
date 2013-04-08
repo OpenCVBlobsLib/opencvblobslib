@@ -69,6 +69,20 @@ public:
 	}
 };
 
+//! Class to get bool to_be_deleted
+class CBlobGetTBDeleted: public COperadorBlob
+{
+public:
+	double operator()(CBlob &blob)
+	{ 
+		return blob.to_be_deleted; 
+	}
+	const char *GetNom()
+	{
+		return "CBlobGetTBDeleted";
+	}
+};
+
 
 //! Classe per calcular l'àrea d'un blob
 //! Class to get the area of a blob
