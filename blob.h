@@ -149,6 +149,7 @@ public:
 	vector<Point> getPointsTouchingBorder(int border);
 private:
 	
+	CvPoint lastStartingPoint; //Used for join routine
 	//! Deallocates all contours
 	void ClearContours();
 	//////////////////////////////////////////////////////////////////////////

@@ -35,6 +35,7 @@ CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
 	m_ellipse.size.width = -1;
 	m_storage = cvCreateMemStorage();
 	m_externalContour = CBlobContour(startPoint, m_storage);
+	lastStartingPoint = startPoint;
 	m_originalImageSize = originalImageSize;
 }
 //! Copy constructor
@@ -66,6 +67,7 @@ CBlob& CBlob::operator=(const CBlob &src )
 		m_boundingBox = src.m_boundingBox;
 		m_ellipse = src.m_ellipse;
 		m_originalImageSize = src.m_originalImageSize;
+		lastStartingPoint = src.lastStartingPoint;
 		
 		// clear all current blob contours
 		ClearContours();
@@ -702,19 +704,49 @@ t_PointList CBlob::GetConvexHull()
 */
 void CBlob::JoinBlob( CBlob *blob )
 {
+	/* Luca Nardelli & Saverio Murgia
+	Freeman Chain Code:	
+		321		Values indicate the chain code used to identify next pixel location.
+		4-0		If I join 2 blobs I can't just append the 2nd blob chain codes, since they will still start
+		567		from the 1st blob start point
+	*/
+
 	CvSeqWriter writer;
 	CvSeqReader reader;
 	t_chainCode chainCode;
 
 	cvStartAppendToSeq( m_externalContour.GetChainCode(), &writer );
 	cvStartReadSeq( blob->GetExternalContour()->GetChainCode(), &reader );
-
+	int diffX = blob->m_externalContour.m_startPoint.x - lastStartingPoint.x;
+	int diffY = blob->m_externalContour.m_startPoint.y - lastStartingPoint.y;
+	if(diffX < 0)
+		chainCode = 4;
+	else
+		chainCode = 0;
+	diffX=abs(diffX);
+	for(int i=0;i<diffX;i++){
+		CV_WRITE_SEQ_ELEM(chainCode,writer);
+	}
+	if(diffY < 0)
+		chainCode = 2;
+	else
+		chainCode = 6;
+	diffY=abs(diffY);
+	for(int i=0;i<diffY;i++){
+		CV_WRITE_SEQ_ELEM(chainCode,writer);
+	}
+	//chainCode=6;
+	//for(int i=0;i<800;i++)
+	//	CV_WRITE_SEQ_ELEM(chainCode,writer);
 	for (int i = 0; i < blob->GetExternalContour()->GetChainCode()->total; i++ )
 	{
 		CV_READ_SEQ_ELEM( chainCode, reader );
 		CV_WRITE_SEQ_ELEM( chainCode, writer );
-	}	
+	}
+	lastStartingPoint = blob->GetExternalContour()->m_startPoint;
 	cvEndWriteSeq( &writer );
+	m_externalContour.m_contourPoints = NULL;
+	m_boundingBox.width=-1;
 }
 
 vector<Point> CBlob::getPointsTouchingBorder( int border )

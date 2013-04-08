@@ -33,10 +33,14 @@ int main(){
 		cout<<endl<<"Informazioni blob prima join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
 		res.GetBlob(0)->JoinBlob(res.GetBlob(2));
 		res.GetBlob(0)->JoinBlob(res.GetBlob(4));
+		res.GetBlob(0)->JoinBlob(res.GetBlob(6));
+		res.GetBlob(1)->JoinBlob(res.GetBlob(3));
+		res.GetBlob(1)->JoinBlob(res.GetBlob(5));
+		res.GetBlob(1)->JoinBlob(res.GetBlob(7));
 		cout<<endl<<"Informazioni blob dopo join: H "<<res.GetBlob(0)->GetBoundingBox().height<<" W "<<res.GetBlob(0)->GetBoundingBox().height<<endl;
 		//res.PrintBlobs("prova.txt");
 
-		for(int i=0;i<res.GetNumBlobs();i++){
+		for(int i=0;i<2;i++){
 			res.GetBlob(i)->FillBlob(outMT,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
 			rectangle(outMT,res.GetBlob(i)->GetBoundingBox(),Scalar(0,200,0),10);
 			s<<i;
