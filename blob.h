@@ -118,6 +118,8 @@ public:
 	//! Join a blob to current one (add's contour
 	void JoinBlob( CBlob *blob );
 
+	void JoinBlobTangent(CBlob *blob);
+
 	//! Get bounding box
 	CvRect GetBoundingBox();
 	//! Get bounding ellipse
@@ -145,11 +147,13 @@ public:
 	}
 
 	//Shifts the blob by (x,y) 
-	void ShiftBlob(int x,int y){ m_externalContour.ShiftBlobContour(x,y);}
+	void ShiftBlob(int x,int y){ m_externalContour.ShiftBlobContour(x,y);m_boundingBox.width=-1;}
+	Point getCenter(){return Point(GetBoundingBox().x+GetBoundingBox().width*0.5,GetBoundingBox().y+GetBoundingBox().height*0.5);}
 	/*
 	Border: 0 = top, 1 = right, 2 = bottom, 3 = left
 	*/
-	vector<Point> getPointsTouchingBorder(int border);
+	vector<vector<Point>> getPointsTouchingBorder(int border);
+	vector<vector<Point>> getMatchingPoints(CBlob* blob);	//Returns a vector of vectors containing all the segments common to the 2 blobs
 private:
 	
 	CvPoint lastStartingPoint; //Used for join routine

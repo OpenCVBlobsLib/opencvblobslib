@@ -514,7 +514,11 @@ CvRect CBlob::GetBoundingBox()
 	
 	// get contour pixels
 	externContour = m_externalContour.GetContourPoints();
-	
+	//m_boundingBox = ((CvContour*)GetExternalContour()->GetContourPoints())->rect;
+	//return m_boundingBox;
+
+	//This part is not necessary, since getContourPoints already computes the rectangle;
+
 	// it is an empty blob?
 	if( !externContour )
 	{
@@ -528,8 +532,8 @@ CvRect CBlob::GetBoundingBox()
 
 	cvStartReadSeq( externContour, &reader);
 
-	m_boundingBox.x = m_originalImageSize.width;
-	m_boundingBox.y = m_originalImageSize.height;
+	m_boundingBox.x = 1000000;
+	m_boundingBox.y = 1000000;
 	m_boundingBox.width = 0;
 	m_boundingBox.height = 0;
 
@@ -719,27 +723,24 @@ void CBlob::JoinBlob( CBlob *blob )
 
 	cvStartAppendToSeq( m_externalContour.GetChainCode(), &writer );
 	cvStartReadSeq( blob->GetExternalContour()->GetChainCode(), &reader );
-	int diffX = blob->m_externalContour.m_startPoint.x - lastStartingPoint.x;
-	int diffY = blob->m_externalContour.m_startPoint.y - lastStartingPoint.y;
-	if(diffX < 0)
-		chainCode = 4;
-	else
-		chainCode = 0;
-	diffX=abs(diffX);
-	for(int i=0;i<diffX;i++){
-		CV_WRITE_SEQ_ELEM(chainCode,writer);
-	}
-	if(diffY < 0)
-		chainCode = 2;
-	else
-		chainCode = 6;
-	diffY=abs(diffY);
-	for(int i=0;i<diffY;i++){
-		CV_WRITE_SEQ_ELEM(chainCode,writer);
-	}
-	//chainCode=6;
-	//for(int i=0;i<800;i++)
+	//int diffX = blob->m_externalContour.m_startPoint.x - lastStartingPoint.x;
+	//int diffY = blob->m_externalContour.m_startPoint.y - lastStartingPoint.y;
+	//if(diffX < 0)
+	//	chainCode = 4;
+	//else
+	//	chainCode = 0;
+	//diffX=abs(diffX);
+	//for(int i=0;i<diffX;i++){
 	//	CV_WRITE_SEQ_ELEM(chainCode,writer);
+	//}
+	//if(diffY < 0)
+	//	chainCode = 2;
+	//else
+	//	chainCode = 6;
+	//diffY=abs(diffY);
+	//for(int i=0;i<diffY;i++){
+	//	CV_WRITE_SEQ_ELEM(chainCode,writer);
+	//}
 	for (int i = 0; i < blob->GetExternalContour()->GetChainCode()->total; i++ )
 	{
 		CV_READ_SEQ_ELEM( chainCode, reader );
@@ -751,32 +752,205 @@ void CBlob::JoinBlob( CBlob *blob )
 	m_boundingBox.width=-1;
 }
 
-vector<Point> CBlob::getPointsTouchingBorder( int border )
+vector<vector<Point>> CBlob::getPointsTouchingBorder( int border )
 {
 	vector<Point> points;
-	CvPoint pt;
+	vector<vector<Point>> segments;
+	CvPoint pt,pt2;
+	int pointsIndex;
+	int numPoints = m_externalContour.GetContourPoints()->total;
 	CvSeqReader reader;
 	cvStartReadSeq(m_externalContour.GetContourPoints(),&reader);
-	for(int i=0;i< m_externalContour.GetContourPoints()->total;i++){
+	//Determino quale fra il primo e l'ultimo punto (coincidenti) è da scartare in quanto singolo.
+	CV_READ_SEQ_ELEM(pt,reader);
+	CV_READ_SEQ_ELEM(pt2,reader);
+	bool discardLast = false;
+	m_boundingBox = GetBoundingBox();
+	switch(border){
+	case 0:	//Top
+		discardLast=(pt.y == GetBoundingBox().y && pt2.y==GetBoundingBox().y);break;
+	case 1:	//Right
+		discardLast=(pt.x = GetBoundingBox().width && pt.x == GetBoundingBox().width);break;
+	case 2: // Bottom
+		discardLast=(pt.y = GetBoundingBox().height && pt.y == GetBoundingBox().height );break;
+	case 3: // Left
+		discardLast=(pt.x == GetBoundingBox().x && pt2.x==GetBoundingBox().x);break;
+	}
+	cvStartReadSeq(m_externalContour.GetContourPoints(),&reader);
+	if(discardLast)
+		numPoints--;
+	else{
 		CV_READ_SEQ_ELEM(pt,reader);
+		numPoints--;
+	}
+
+	for(int i=0;i< numPoints;i++){
+		CV_READ_SEQ_ELEM(pt,reader);
+		CvPoint tempPt = pt;
+		tempPt.x -= GetBoundingBox().x;
+		tempPt.y -= GetBoundingBox().y;
+		m_boundingBox;
 		switch(border){
 		case 0:	//Top
-			if(pt.y == 0)
+			if(tempPt.y == 0)
 				points.push_back(Point(pt));
+			else if(points.size() != 0){
+				segments.push_back(points);
+				points = vector<Point>();
+			}
 			break;
 		case 1: // Right
-			if(pt.x == m_originalImageSize.width-1 )
+			if(tempPt.x == GetBoundingBox().width )
 				points.push_back(Point(pt));
+			else if(points.size() != 0){
+				segments.push_back(points);
+				points = vector<Point>();
+			}
 			break;
 		case 2: // Bottom
-			if(pt.y == m_originalImageSize.height-1 )
+			if(tempPt.y == GetBoundingBox().height )
 				points.push_back(Point(pt));
+			else if(points.size() != 0){
+				segments.push_back(points);
+				points = vector<Point>();
+			}
 			break;
-		case 4: // Left
-			if(pt.x == 0 )
+		case 3: // Left
+			if(tempPt.x == 0 )
 				points.push_back(Point(pt));
+			else if(points.size() != 0){
+				segments.push_back(points);
+				points = vector<Point>();
+			}
 			break;
 		}
 	}
-	return points;
+	if(points.size()!=0)
+		segments.push_back(points);
+	return segments;
+}
+
+void CBlob::JoinBlobTangent( CBlob *blob )
+{
+	/* Luca Nardelli & Saverio Murgia
+	Freeman Chain Code:	
+		321		Values indicate the chain code used to identify next pixel location.
+		4-0		If I join 2 blobs I can't just append the 2nd blob chain codes, since they will still start
+		567		from the 1st blob start point
+	*/
+
+	vector<vector<Point>> segBottom = getPointsTouchingBorder(2);
+	vector<vector<Point>> segTop = blob->getPointsTouchingBorder(0);
+	//Estraggo gli estremi di ogni segmento in modo da fare un matching più veloce.
+	vector<Vec2i> extremesBottom;
+	vector<Vec2i> extremesTop;
+	std::cout << "ExtremesTop: "<<std::endl;
+	for(int i=0;i< segTop.size();i++){
+		extremesTop.push_back(Vec2i(1000000,0));
+		for(int j=0;j<segTop[i].size();j++){
+			extremesTop[i][0] = MIN(extremesTop[i][0],segTop[i][j].x);
+			extremesTop[i][1] = MAX(extremesTop[i][1],segTop[i][j].x);
+		}
+		std::cout <<extremesTop[i]<<" "<<segTop[i][0].y<<std::endl;
+	}
+	std::cout << "ExtremesBottom: "<<std::endl;
+	for(int i=0;i< segBottom.size();i++){
+		extremesBottom.push_back(Vec2i(1000000,0));
+		for(int j=0;j<segBottom[i].size();j++){
+			extremesBottom[i][0] = MIN(extremesBottom[i][0],segBottom[i][j].x);
+			extremesBottom[i][1] = MAX(extremesBottom[i][1],segBottom[i][j].x);
+		}
+		std::cout <<extremesBottom[i]<<" "<<segBottom[i][0].y<<std::endl;
+	}	
+	
+	vector<Vec2i> matchesBottomTop;	//Contiene gli indici dei match fra vari segmenti (ind. Bottom contour, ind. Top contour)
+	//Cerco le corrispondenze:
+	for(int j=0;j<extremesTop.size();j++){
+		for(int i=0;i<extremesBottom.size();i++){
+			//if(extremesBottom[i][0] >= extremesTop[j][0] && extremesBottom[i][1] >= extremesTop[j][1] ||
+			//   extremesBottom[i][0] <= extremesTop[j][0] && extremesBottom[i][1] <= extremesTop[j][1] ||
+			//   extremesBottom[i][0] <= extremesTop[j][0] && extremesBottom[i][1] >= extremesTop[j][1] ||
+			//   extremesBottom[i][0] >= extremesTop[j][0] && extremesBottom[i][1] <= extremesTop[j][1] ){
+			if(extremesBottom[i][0] == extremesTop[j][0]){
+				std::cout << "Match Found! " << i << " " << j <<std::endl;
+				matchesBottomTop.push_back(Vec2i(i,j));
+				break;
+			}
+		}
+	}
+
+	//Joino i contorni eliminando quelli appartenenti al match ma non estremi del segmento
+	CvSeqReader readerTop,readerBottom;
+	CvSeqWriter writer;
+	t_PointList newContour; //Nuovo contorno;
+	t_PointList pointsTop = blob->GetExternalContour()->GetContourPoints();
+	t_PointList pointsBottom = GetExternalContour()->GetContourPoints();
+	int totalTop = pointsTop->total;
+	int totalBottom = pointsBottom->total;
+	cvStartReadSeq(pointsTop,&readerTop);
+	cvStartReadSeq(pointsBottom,&readerBottom);
+	cvStartWriteSeq(pointsTop->flags,pointsTop->header_size,pointsTop->elem_size,pointsTop->storage,&writer);
+	CvPoint pt;
+	// Per garantire l'ordine dei 2 contours, parto da quello superiore e, non appena raggiungo il valore y che delimita i 2 blob,
+	// inizio a seguire il contour del blob sotto. Una volta terminato quello, dovrei aver incluso il secondo blob nella sua interezza
+
+	//Scorro i 2 contours, scartando tutti i punti tangenti ai 2 blob ma non quelli estremi, per preservare l'integrità del contour
+	bool first = true;
+	bool noCheck = false;
+	for(int i=0;i<totalBottom;i++){
+		bool writeBottom = true;
+		CV_READ_SEQ_ELEM(pt,readerBottom);
+		if(pt.y == GetBoundingBox().y+GetBoundingBox().height){
+			for(int j=0;j< matchesBottomTop.size();j++){
+				if((pt.x > extremesTop[matchesBottomTop[j][1]][0] && pt.x < extremesTop[matchesBottomTop[j][1]][1])){
+					writeBottom=false;
+				}
+			}
+			if(writeBottom)
+				CV_WRITE_SEQ_ELEM(pt,writer);
+			if(first && !writeBottom){
+				CV_WRITE_SEQ_ELEM(pt,writer);
+				//Scarto l'ultimo punto, visto che è un clone del primo
+				for(int p=0;p<totalTop-1;p++){
+					bool write=true;
+					CV_READ_SEQ_ELEM(pt,readerTop);
+					if(pt.y == blob->GetBoundingBox().y && p!=0){
+						for(int q=0;q< matchesBottomTop.size();q++)
+							if((pt.x > extremesBottom[matchesBottomTop[q][0]][0] && pt.x < extremesBottom[matchesBottomTop[q][0]][1])){
+								write = false;
+							}
+						if(write)
+							CV_WRITE_SEQ_ELEM(pt,writer);
+					}
+					else{
+						CV_WRITE_SEQ_ELEM(pt,writer);
+					}
+				}
+				first=false;
+			}
+		}
+		else{
+			CV_WRITE_SEQ_ELEM(pt,writer);
+		}
+	}
+	/*for(int p=0;p<totalTop;p++){
+	CV_READ_SEQ_ELEM(pt,readerTop);
+	if(pt.y == blob->GetBoundingBox().y){
+	for(int q=0;q< matchesBottomTop.size();q++)
+	if(!(pt.x > extremesTop[matchesBottomTop[q][1]][0] && pt.x < extremesTop[matchesBottomTop[q][1]][1])){
+	CV_WRITE_SEQ_ELEM(pt,writer);
+	}
+	}
+	else{
+	CV_WRITE_SEQ_ELEM(pt,writer);
+	}
+	}*/
+	newContour = cvEndWriteSeq(&writer);
+	//Ora devo ordinarli in senso antiorario!
+
+	cvClearSeq(m_externalContour.m_contourPoints);
+	m_externalContour.m_contourPoints = newContour;
+	/*m_boundingBox.width = -1;
+	m_boundingBox = GetBoundingBox();
+	m_boundingBox;*/
 }

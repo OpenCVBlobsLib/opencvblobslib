@@ -51,13 +51,14 @@ public:
 	//! Return all contour points
 	t_chainCodeList GetContourPoints();
 	void ShiftBlobContour(int x,int y);
-
-protected:	
-
+	
 	CvPoint GetStartPoint() const
 	{
 		return m_startPoint;
 	}
+protected:	
+
+	
 
 	//! Clears chain code contour
 	void ResetChainCode();

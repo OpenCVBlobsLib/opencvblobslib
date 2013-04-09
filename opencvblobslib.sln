@@ -1,14 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvblobslib", "opencvblobslib.vcxproj", "{2F324F0B-0990-A667-53E2-24F6FF44D52B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvblobslib", "opencvblobslib.vcxproj", "{5C8A901D-9545-A370-B5F8-82F5B56E0A62}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvblobslibTest", "opencvblobslibTest\opencvblobslibTest.vcxproj", "{5A68903B-8726-4727-AC07-B67D7D95D2C7}"
 	ProjectSection(ProjectDependencies) = postProject
-		{2F324F0B-0990-A667-53E2-24F6FF44D52B} = {2F324F0B-0990-A667-53E2-24F6FF44D52B}
+		{5C8A901D-9545-A370-B5F8-82F5B56E0A62} = {5C8A901D-9545-A370-B5F8-82F5B56E0A62}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvBlobsExample", "opencvblobslibExample\opencvBlobsExample.vcxproj", "{B05E7416-3460-44AE-B249-9AFE703B9FAD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5C8A901D-9545-A370-B5F8-82F5B56E0A62} = {5C8A901D-9545-A370-B5F8-82F5B56E0A62}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
@@ -20,10 +23,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Debug|Win32.Build.0 = Debug|Win32
-		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Release|Win32.ActiveCfg = Release|Win32
-		{2F324F0B-0990-A667-53E2-24F6FF44D52B}.Release|Win32.Build.0 = Release|Win32
+		{5C8A901D-9545-A370-B5F8-82F5B56E0A62}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5C8A901D-9545-A370-B5F8-82F5B56E0A62}.Debug|Win32.Build.0 = Debug|Win32
+		{5C8A901D-9545-A370-B5F8-82F5B56E0A62}.Release|Win32.ActiveCfg = Release|Win32
+		{5C8A901D-9545-A370-B5F8-82F5B56E0A62}.Release|Win32.Build.0 = Release|Win32
 		{5A68903B-8726-4727-AC07-B67D7D95D2C7}.Debug|Win32.ActiveCfg = Debug|Win32
 		{5A68903B-8726-4727-AC07-B67D7D95D2C7}.Debug|Win32.Build.0 = Debug|Win32
 		{5A68903B-8726-4727-AC07-B67D7D95D2C7}.Release|Win32.ActiveCfg = Release|Win32

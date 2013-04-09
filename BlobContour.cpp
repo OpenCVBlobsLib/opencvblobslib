@@ -230,7 +230,7 @@ t_PointList CBlobContour::GetContourPoints()
 
 	// also calculate bounding box of the contour to allow cvPointPolygonTest
 	// work correctly on the generated polygon
-	boundingBox.x = boundingBox.y = 10000;
+	boundingBox.x = boundingBox.y = 100000;
 	boundingBox.width = boundingBox.height = 0;
 	
 	for( int i=0; i< tmpPoints->total; i++)
@@ -247,6 +247,10 @@ t_PointList CBlobContour::GetContourPoints()
 		
 		CV_WRITE_SEQ_ELEM( actualPoint, writer );
 	}
+	//These 2 lines were missing (Luca & Saverio)
+	boundingBox.width -= boundingBox.x;
+	boundingBox.height -=boundingBox.y;
+
 	cvEndWriteSeq( &writer );
 	cvClearSeq( tmpPoints );
 
@@ -265,7 +269,6 @@ void CBlobContour::ShiftBlobContour(int x,int y)
 	{
 		return;
 	}
-
 	if(m_contourPoints == NULL)
 		m_contourPoints = GetContourPoints();
 	else{
