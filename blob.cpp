@@ -1058,8 +1058,8 @@ vector<vector<Point>> CBlob::getPointsTouchingBorder( int border )
 // }
 
 void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
-	//Converto le CvSeq in vectors
-	namedWindow("Prova",CV_WINDOW_KEEPRATIO+CV_WINDOW_NORMAL);
+	//Per mostrare le mat sotto
+	//namedWindow("Prova",CV_WINDOW_KEEPRATIO+CV_WINDOW_NORMAL);
 	CvSeqReader readerTop,readerBottom,readerChainTop,readerChainBottom;
 	CvSeqWriter writerSeq,writerChain;
 	t_PointList contourSeqTop = GetExternalContour()->GetContourPoints();
@@ -1122,8 +1122,9 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 			break;
 		if(pt.x == startPt.x && pt.y == startPt.y)
 			write = true;
-		if(write)
+		if(write){
 			CV_WRITE_SEQ_ELEM(pt,writerSeq);CV_WRITE_SEQ_ELEM(chain,writerChain);
+		}
 		//contourBottom.push_back(Point(pt));
 	}
 
@@ -1133,8 +1134,9 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 		CV_READ_SEQ_ELEM(pt,readerTop);CV_READ_SEQ_ELEM(chain,readerChainTop);
 		if(pt.x == endPt.x && pt.y == endPt.y)
 			write = true;
-		if(write)
+		if(write){
 			CV_WRITE_SEQ_ELEM(pt,writerSeq);CV_WRITE_SEQ_ELEM(chain,writerChain);
+		}
 	}
 
 	newContour = cvEndWriteSeq(&writerSeq);
@@ -1149,10 +1151,8 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 	GetExternalContour()->m_contour = cvCloneSeq(newChain,m_storage);
 	blob->GetExternalContour()->m_contour = cvCloneSeq(newChain,blob->m_storage);
 
-	cvStartReadSeq(newContour,&readerTop);
+	/*cvStartReadSeq(newContour,&readerTop);
 	cvStartReadSeq(newChain,&readerChainTop);
-	
-	
 	for(int i=0;i<newContour->total;i++){
 		CV_READ_SEQ_ELEM(pt,readerTop);
 		temp.at<Vec3b>(pt) = Vec3b(255,0,0);
@@ -1167,7 +1167,7 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 		waitKey(1);
 	}
 	imshow("Prova",temp);
-	waitKey();
+	waitKey();*/
 	cvClearSeq(newContour);
 	cvClearSeq(newChain);
 }
