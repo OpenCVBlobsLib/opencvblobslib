@@ -958,103 +958,166 @@ vector<vector<Point>> CBlob::getPointsTouchingBorder( int border )
 //	m_boundingBox;*/
 //}
 
-void CBlob::JoinBlobTangent(CBlob *blob,deque<Segment> segments){
-	CvSeqReader readerTop,readerBottom,chainReaderTop,chainReaderBottom;
-	CvSeqWriter writer,chainWriter;
-	t_PointList newContour; //Nuovo contorno;
-	t_PointList pointsTop = GetExternalContour()->GetContourPoints();
-	t_PointList pointsBottom = blob->GetExternalContour()->GetContourPoints();
-	t_chainCodeList chainTop = GetExternalContour()->GetChainCode();
-	t_chainCodeList chainBottom = blob->GetExternalContour()->GetChainCode();
-	t_chainCodeList newChain; //Nuovo chain code;
-	t_chainCode chainCodeTop,chainCodeBottom;
-	CvPoint pt;
-	//Se non ho un contour sotto (1 pixel, cioè 0 elementi chain)
-	if(!pointsBottom){
-		return;		
-	}
-	int totalTop = pointsTop->total;
-	int totalBottom = pointsBottom->total;
-	cvStartReadSeq(pointsTop,&readerTop);
-	cvStartReadSeq(pointsBottom,&readerBottom);
-	cvStartWriteSeq(pointsTop->flags,pointsTop->header_size,pointsTop->elem_size,pointsTop->storage,&writer);
-	cvStartReadSeq(chainTop,&chainReaderTop);
-	cvStartReadSeq(chainBottom,&chainReaderBottom);
-	cvStartWriteSeq(chainTop->flags,chainTop->header_size,chainTop->elem_size,chainTop->storage,&chainWriter);
-	
-	// Per garantire l'ordine dei 2 contours, parto da quello superiore e, non appena raggiungo un punto in comune al secondo,
-	// inizio a seguire il contour del blob sotto. Una volta terminato quello, dovrei aver incluso il secondo blob nella sua interezza
-	// In parallelo genero anche la nuova chain code list
-	CvPoint startPointBottom = blob->GetExternalContour()->GetStartPoint();
-	CvPoint lastPointVisited = Point(-100,-100).operator CvPoint();
-	for(int i=0;i<totalTop;i++){
-		CV_READ_SEQ_ELEM(pt,readerTop);
-		CV_READ_SEQ_ELEM(chainCodeTop,chainReaderTop);
-		/*if(!(pt.x == segments[0].begin.x && pt.y == segments[0].begin.y)){*/
-		if(!(pt.x == startPointBottom.x && pt.y == startPointBottom.y)){
-			CV_WRITE_SEQ_ELEM(pt,writer);
-			CV_WRITE_SEQ_ELEM(chainCodeTop,chainWriter);
-		}
-		else{
-			CvPoint ptBottom;
-			CV_READ_SEQ_ELEM(ptBottom,readerBottom);
-			CV_READ_SEQ_ELEM(chainCodeBottom,chainReaderBottom);
-			while(ptBottom.x!=pt.x && ptBottom.y != pt.y){
-				CV_READ_SEQ_ELEM(ptBottom,readerBottom);
-				CV_READ_SEQ_ELEM(chainCodeBottom,chainReaderBottom);
-			}
-			//Arrivo in fondo al segmento
-			/*while(pt.y == segments[0].end.y){*/
-			while(pt.y == startPointBottom.y){
-				CV_READ_SEQ_ELEM(pt,readerTop);
-				CV_READ_SEQ_ELEM(chainCodeTop,chainReaderTop);
-				i++;
-			}
-			CV_PREV_SEQ_ELEM(pointsTop->elem_size,readerTop);
-			CV_PREV_SEQ_ELEM(pointsTop->elem_size,readerTop);
-			CV_PREV_SEQ_ELEM(chainTop->elem_size,chainReaderTop);
-			CV_PREV_SEQ_ELEM(chainTop->elem_size,chainReaderTop);
-			CV_READ_SEQ_ELEM(pt,readerTop);
-			CV_READ_SEQ_ELEM(chainCodeTop,chainReaderTop);
+// void CBlob::JoinBlobTangent(CBlob *blob,deque<Segment> segments){
+// 	CvSeqReader readerTop,readerBottom,chainReaderTop,chainReaderBottom;
+// 	CvSeqWriter writer,chainWriter;
+// 	t_PointList newContour; //Nuovo contorno;
+// 	t_PointList pointsTop = GetExternalContour()->GetContourPoints();
+// 	t_PointList pointsBottom = blob->GetExternalContour()->GetContourPoints();
+// 	t_chainCodeList chainTop = GetExternalContour()->GetChainCode();
+// 	t_chainCodeList chainBottom = blob->GetExternalContour()->GetChainCode();
+// 	t_chainCodeList newChain; //Nuovo chain code;
+// 	t_chainCode chainCodeTop,chainCodeBottom;
+// 	CvPoint pt;
+// 	//Se non ho un contour sotto (1 pixel, cioè 0 elementi chain)
+// 	if(!pointsBottom){
+// 		return;		
+// 	}
+// 	int totalTop = pointsTop->total;
+// 	int totalBottom = pointsBottom->total;
+// 	cvStartReadSeq(pointsTop,&readerTop);
+// 	cvStartReadSeq(pointsBottom,&readerBottom);
+// 	cvStartWriteSeq(pointsTop->flags,pointsTop->header_size,pointsTop->elem_size,pointsTop->storage,&writer);
+// 	cvStartReadSeq(chainTop,&chainReaderTop);
+// 	cvStartReadSeq(chainBottom,&chainReaderBottom);
+// 	cvStartWriteSeq(chainTop->flags,chainTop->header_size,chainTop->elem_size,chainTop->storage,&chainWriter);
+// 	
+// 	// Per garantire l'ordine dei 2 contours, parto da quello superiore e, non appena raggiungo un punto in comune al secondo,
+// 	// inizio a seguire il contour del blob sotto. Una volta terminato quello, dovrei aver incluso il secondo blob nella sua interezza
+// 	// In parallelo genero anche la nuova chain code list
+// 	CvPoint startPointBottom = blob->GetExternalContour()->GetStartPoint();
+// 	CvPoint lastPointVisited = Point(-100,-100).operator CvPoint();
+// 	for(int i=0;i<totalTop;i++){
+// 		CV_READ_SEQ_ELEM(pt,readerTop);
+// 		CV_READ_SEQ_ELEM(chainCodeTop,chainReaderTop);
+// 		/*if(!(pt.x == segments[0].begin.x && pt.y == segments[0].begin.y)){*/
+// 		if(!(pt.x == startPointBottom.x && pt.y == startPointBottom.y)){
+// 			CV_WRITE_SEQ_ELEM(pt,writer);
+// 			CV_WRITE_SEQ_ELEM(chainCodeTop,chainWriter);
+// 		}
+// 		else{
+// 			CvPoint ptBottom;
+// 			CV_READ_SEQ_ELEM(ptBottom,readerBottom);
+// 			CV_READ_SEQ_ELEM(chainCodeBottom,chainReaderBottom);
+// 			while(ptBottom.x!=pt.x && ptBottom.y != pt.y){
+// 				CV_READ_SEQ_ELEM(ptBottom,readerBottom);
+// 				CV_READ_SEQ_ELEM(chainCodeBottom,chainReaderBottom);
+// 			}
+// 			//Arrivo in fondo al segmento
+// 			/*while(pt.y == segments[0].end.y){*/
+// 			while(pt.y == startPointBottom.y){
+// 				CV_READ_SEQ_ELEM(pt,readerTop);
+// 				CV_READ_SEQ_ELEM(chainCodeTop,chainReaderTop);
+// 				i++;
+// 			}
+// 			CV_PREV_SEQ_ELEM(pointsTop->elem_size,readerTop);
 // 			CV_PREV_SEQ_ELEM(pointsTop->elem_size,readerTop);
 // 			CV_PREV_SEQ_ELEM(chainTop->elem_size,chainReaderTop);
-			i-=1;
-			//Scrivo il blob sotto, e nel mentre seguo dal blob sopra. Quando si ricongiungono ho terminato il blob sotto.
-			for(int j=0;j<totalBottom;j++){
-				CV_READ_SEQ_ELEM(ptBottom,readerBottom);
-				CV_READ_SEQ_ELEM(chainCodeBottom,chainReaderBottom);
-				if(pt.x == ptBottom.x && pt.y == ptBottom.y){
-					CV_WRITE_SEQ_ELEM(ptBottom,writer);
-					CV_WRITE_SEQ_ELEM(chainCodeBottom,chainWriter);
-					break;
-				}
-				CV_WRITE_SEQ_ELEM(ptBottom,writer);
-				CV_WRITE_SEQ_ELEM(chainCodeBottom,chainWriter);
-				lastPointVisited=ptBottom;
-			}
-		}
-		lastPointVisited=pt;
-	}
-
-	newContour=cvEndWriteSeq(&writer);
-	cvClearSeq(m_externalContour.m_contourPoints);
-	m_externalContour.m_contourPoints = newContour;
-
-// 	cvStartReadSeq(m_externalContour.m_contourPoints,&readerTop);
-// 	lastPointVisited.x = -10;
-// 	lastPointVisited.y=-10;
-// 	CV_READ_SEQ_ELEM(lastPointVisited,readerTop);
-// 	for(int i=0;i< m_externalContour.m_contourPoints->total;i++){
-// 		CV_READ_SEQ_ELEM(pt,readerTop);
-// 		/*std::cout << Point(pt) << std::endl;*/
-// 		chainCodeTop = points2ChainCode(pt,lastPointVisited);
-// 		if(chainCodeTop <= 7)
-// 			CV_WRITE_SEQ_ELEM(chainCodeTop,chainWriter);
+// 			CV_PREV_SEQ_ELEM(chainTop->elem_size,chainReaderTop);
+// 			CV_READ_SEQ_ELEM(pt,readerTop);
+// 			CV_READ_SEQ_ELEM(chainCodeTop,chainReaderTop);
+// // 			CV_PREV_SEQ_ELEM(pointsTop->elem_size,readerTop);
+// // 			CV_PREV_SEQ_ELEM(chainTop->elem_size,chainReaderTop);
+// 			i-=1;
+// 			//Scrivo il blob sotto, e nel mentre seguo dal blob sopra. Quando si ricongiungono ho terminato il blob sotto.
+// 			for(int j=0;j<totalBottom;j++){
+// 				CV_READ_SEQ_ELEM(ptBottom,readerBottom);
+// 				CV_READ_SEQ_ELEM(chainCodeBottom,chainReaderBottom);
+// 				if(pt.x == ptBottom.x && pt.y == ptBottom.y){
+// 					CV_WRITE_SEQ_ELEM(ptBottom,writer);
+// 					CV_WRITE_SEQ_ELEM(chainCodeBottom,chainWriter);
+// 					break;
+// 				}
+// 				CV_WRITE_SEQ_ELEM(ptBottom,writer);
+// 				CV_WRITE_SEQ_ELEM(chainCodeBottom,chainWriter);
+// 				lastPointVisited=ptBottom;
+// 			}
+// 		}
 // 		lastPointVisited=pt;
 // 	}
-	newChain = cvEndWriteSeq(&chainWriter);
-	cvClearSeq(m_externalContour.m_contour);
-	m_externalContour.m_contour = newChain;
+// 
+// 	newContour=cvEndWriteSeq(&writer);
+// 	cvClearSeq(m_externalContour.m_contourPoints);
+// 	m_externalContour.m_contourPoints = newContour;
+// 
+// // 	cvStartReadSeq(m_externalContour.m_contourPoints,&readerTop);
+// // 	lastPointVisited.x = -10;
+// // 	lastPointVisited.y=-10;
+// // 	CV_READ_SEQ_ELEM(lastPointVisited,readerTop);
+// // 	for(int i=0;i< m_externalContour.m_contourPoints->total;i++){
+// // 		CV_READ_SEQ_ELEM(pt,readerTop);
+// // 		/*std::cout << Point(pt) << std::endl;*/
+// // 		chainCodeTop = points2ChainCode(pt,lastPointVisited);
+// // 		if(chainCodeTop <= 7)
+// // 			CV_WRITE_SEQ_ELEM(chainCodeTop,chainWriter);
+// // 		lastPointVisited=pt;
+// // 	}
+// 	newChain = cvEndWriteSeq(&chainWriter);
+// 	cvClearSeq(m_externalContour.m_contour);
+// 	m_externalContour.m_contour = newChain;
+// }
+
+void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
+	//Converto le CvSeq in vectors
+	CvSeqReader readerTop,readerBottom;
+	CvSeqWriter writer;
+	t_PointList contourSeqTop = GetExternalContour()->GetContourPoints();
+	t_PointList contourSeqBottom = blob->GetExternalContour()->GetContourPoints();
+	t_PointList newContour;
+	cvStartWriteSeq(contourSeqTop->flags,contourSeqTop->header_size,contourSeqTop->elem_size,m_storage,&writer);
+	cvStartReadSeq(contourSeqTop,&readerTop);
+	cvStartReadSeq(contourSeqBottom,&readerBottom);
+	vector<Point> contourTop,contourBottom;
+	CvPoint pt;
+	Point startPt = segments[0].begin,endPt = segments[segments.size()-1].end;
+	//Scrivo tutti i punti a partire da S1 (startingpoint 1) fino al primo punto di intersezione (il begin del primo segmento coincidente)
+	int indTop = 0;
+	for(indTop;indTop<contourSeqTop->total;indTop++){
+		CV_READ_SEQ_ELEM(pt,readerTop);
+		if(pt.x == startPt.x && pt.y == startPt.y){
+			break;
+		}
+		CV_WRITE_SEQ_ELEM(pt,writer);
+		//contourTop.push_back(Point(pt));
+	}
+	//Scrivo tutti i punti del secondo blob a partire dal primo punto di intersezione fino all'ultimo (end dell'ultimo segmento coincidente)
+	bool write = false;
+	while(true){
+		CV_READ_SEQ_ELEM(pt,readerBottom);
+		if(pt.x == endPt.x && pt.y == endPt.y && write)
+			break;
+		if(pt.x == startPt.x && pt.y == startPt.y)
+			write = true;
+		if(write)
+			CV_WRITE_SEQ_ELEM(pt,writer);
+		//contourBottom.push_back(Point(pt));
+	}
+
+	//Ora scrivo i restanti punti della sequenza 1 a partire da endPoint fino al termine della sequenza stessa
+	write = false;
+	for(indTop;indTop<contourSeqTop->total;indTop++){
+		CV_READ_SEQ_ELEM(pt,readerTop);
+		if(pt.x == endPt.x && pt.y == endPt.y)
+			write = true;
+		if(write)
+			CV_WRITE_SEQ_ELEM(pt,writer);
+	}
+
+	newContour = cvEndWriteSeq(&writer);
+	cvClearSeq(GetExternalContour()->m_contourPoints);
+	GetExternalContour()->m_contourPoints = cvCloneSeq(newContour,m_storage);
+	cvClearSeq(blob->GetExternalContour()->m_contourPoints);
+	blob->GetExternalContour()->m_contourPoints = cvCloneSeq(newContour,blob->m_storage); //Anche il nuovo blob avrà lo stesso contour!
+
+	cvStartReadSeq(newContour,&readerTop);
+	namedWindow("Prova",CV_WINDOW_KEEPRATIO+CV_WINDOW_NORMAL);
+	Mat temp = Mat::zeros(500,500,CV_8UC1);
+	for(int i=0;i<newContour->total;i++){
+		CV_READ_SEQ_ELEM(pt,readerTop);
+		temp.at<uchar>(pt) = 255;
+	}
+	imshow("Prova",temp);
+	waitKey();
 }
 
 t_chainCode points2ChainCode( CvPoint p1, CvPoint p2 )

@@ -3,7 +3,7 @@
 #include "blob.h"
 #include "BlobResult.h"
 
-const int IMSIZE = 2000;
+const int IMSIZE = 500;
 using namespace std;
 int main(){
 	int64 time;
