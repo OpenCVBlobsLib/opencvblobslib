@@ -1073,17 +1073,28 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 	Mat temp = Mat::zeros(500,500,CV_8UC3);
 
 	//Mostro la chain prima del join... Da commentare poi
-	cvStartReadSeq(contourChainTop,&readerChainTop);
+	/*cvStartReadSeq(contourChainTop,&readerChainTop);
 	CvPoint point2 = GetExternalContour()->GetStartPoint();
 	temp.at<Vec3b>(point2) = Vec3b(0,255,0);
 	for(int i=0;i<contourChainTop->total;i++){
-		CV_READ_SEQ_ELEM(chain,readerChainTop);
-		point2 = chainCode2Point(point2,chain);
-		temp.at<Vec3b>(point2) = Vec3b(0,255,0);
-		imshow("Prova",temp);
-		waitKey(1);
+	CV_READ_SEQ_ELEM(chain,readerChainTop);
+	point2 = chainCode2Point(point2,chain);
+	temp.at<Vec3b>(point2) = Vec3b(0,255,0);
+	imshow("Prova",temp);
+	waitKey(1);
 	}
-
+	CvSeq* approx = cvApproxChains(contourChainTop,m_storage,CV_CHAIN_APPROX_NONE);
+	cvStartReadSeq(approx,&readerChainTop);
+	CvPoint stpt = GetExternalContour()->GetStartPoint();
+	temp.at<Vec3b>(point2) = Vec3b(255,255,0);
+	for(int i=0;i<approx->total;i++){
+	CV_READ_SEQ_ELEM(point2,readerChainTop);
+	point2.x+=stpt.x;point2.y+=stpt.y;
+	temp.at<Vec3b>(point2) = Vec3b(255,255,0);
+	imshow("Prova",temp);
+	waitKey(1);
+	}*/
+	//
 	cvStartWriteSeq(contourSeqTop->flags,contourSeqTop->header_size,contourSeqTop->elem_size,m_storage,&writerSeq);
 	cvStartWriteSeq(contourChainTop->flags,contourChainTop->header_size,contourChainTop->elem_size,m_storage,&writerChain);
 	cvStartReadSeq(contourSeqTop,&readerTop);
@@ -1200,7 +1211,7 @@ CvPoint chainCode2Point(CvPoint origin,t_chainCode code){
 	switch(code){
 	case 0:pt.x++;break;
 	case 1:pt.x++;pt.y--;break;
-	case 2:pt.y++;break;
+	case 2:pt.y--;break;
 	case 3:pt.x--;pt.y--;break;
 	case 4:pt.x--;break;
 	case 5:pt.x--;pt.y++;break;
