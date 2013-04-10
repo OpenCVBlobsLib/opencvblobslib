@@ -22,6 +22,8 @@ MODIFICATIONS (Modification, Author, Date):
 #include "opencv2\opencv.hpp"
 #include "BlobLibraryConfiguration.h"
 #include "BlobContour.h"
+#include "Segment.h"
+#include <deque>
 
 
 #ifdef BLOB_OBJECT_FACTORY
@@ -118,7 +120,10 @@ public:
 	//! Join a blob to current one (add's contour
 	void JoinBlob( CBlob *blob );
 
-	void JoinBlobTangent(CBlob *blob);
+	/*
+		Segments is a vector of vectors of 2 Points, which encode the starting and ending point of every common segment
+	*/
+	void JoinBlobTangent(CBlob *blob,std::deque<Segment> segments);
 
 	//! Get bounding box
 	CvRect GetBoundingBox();
@@ -196,5 +201,8 @@ private:
 	public: CvSize OriginalImageSize() const { return m_originalImageSize; }
 	public: void OriginalImageSize(int width, int height) { m_originalImageSize.width = width; m_originalImageSize.height = height; }
 };
+
+
+t_chainCode points2ChainCode(CvPoint p1, CvPoint p2);
 
 #endif //CBLOB_INSPECTA_INCLUDED

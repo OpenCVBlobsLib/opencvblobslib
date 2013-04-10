@@ -24,6 +24,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include "opencv/cxcore.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/opencv_modules.hpp>
+#include <deque>
 
 #ifdef MATRIXCV_ACTIU
 	#include "matrixCV.h"
@@ -39,6 +40,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include "Blob.h"
 #include "BlobOperators.h"
 #include "ComponentLabeling.h"
+#include "Segment.h"
 /**************************************************************************
 	Filtres / Filters
 **************************************************************************/
@@ -164,7 +166,7 @@ private:
 				int filterAction, funcio_calculBlob *evaluador, 
 				int condition, double lowLimit, double highLimit = 0) const;
 
-	class threadMessage{
+	class ThreadMessage{
 	public:
 	Mat labels;
 	Mat image;
@@ -173,11 +175,26 @@ private:
 	int origin;
 	int height;
 	CBlobResult *res;
-	threadMessage(Mat &img,Mat &msk,uchar backgroundCol,int org,int hei):image(img),mask(msk),backColor(backgroundCol),origin(org),height(hei),res(NULL){}
-	threadMessage():image(Mat()),mask(Mat()),res(NULL){}
-	~threadMessage(){ if(res!=NULL) delete res;}
-	threadMessage& operator=(threadMessage &o){image=o.image;mask=o.mask;backColor=o.backColor;res=o.res;origin=o.origin;height=o.height; return *this;}
+	ThreadMessage(Mat &img,Mat &msk,uchar backgroundCol,int org,int hei):image(img),mask(msk),backColor(backgroundCol),origin(org),height(hei),res(NULL){}
+	ThreadMessage():image(Mat()),mask(Mat()),res(NULL){}
+	~ThreadMessage(){ if(res!=NULL) delete res;}
+	ThreadMessage& operator=(ThreadMessage &o){image=o.image;mask=o.mask;backColor=o.backColor;res=o.res;origin=o.origin;height=o.height; return *this;}
 	};
+
+	/*
+	Classe per gestire la sovrapposizione fra i blobs in modo da poterli unire
+	*/
+	class BlobOverlap{
+	public:
+		CBlob *sourceBlob,*joinedBlob;
+		std::map<unsigned int,CBlob*> blobsToJoin;
+		std::map<unsigned int,std::deque<Segment>> matchingSegments;
+		BlobOverlap(CBlob* src){sourceBlob=src;}
+		BlobOverlap(){sourceBlob=NULL;joinedBlob=NULL;}
+		~BlobOverlap(){}
+		void Print();
+	};
+
 	/*class threadMessage{
 	public:
 		CBlobResult& instance;
@@ -185,7 +202,7 @@ private:
 		threadMessage(CBlobResult &inst,int i):instance(inst),id(i){}
 		~threadMessage(){}
 	};*/
-	static void* thread_componentLabeling(threadMessage *msg);
+	static void* thread_componentLabeling(ThreadMessage *msg);
 
 protected:
 

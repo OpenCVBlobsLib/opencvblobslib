@@ -14,12 +14,15 @@ MODIFICACIONS (Modificació, Autor, Data):
 #include <opencv2/opencv.hpp>
 #include <opencv2/opencv_modules.hpp>
 #include "BlobResult.h"
+#include "Segment.h"
 #include <pthread.h>
 //! Show errors functions: only works for windows releases
 #ifdef _SHOW_ERRORS
 	#include <afx.h>			//suport per a CStrings
 	#include <afxwin.h>			//suport per a AfxMessageBox
 #endif
+
+using namespace std;
 
 /**************************************************************************
 		Constructors / Destructors
@@ -131,9 +134,9 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	Size sz = source.size();
 	int roiHeight = sz.height/numCores;
 	//Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
-	threadMessage *mess = new threadMessage[numCores];
+	ThreadMessage *mess = new ThreadMessage[numCores];
 	for(int i=0;i<numCores;i++){
-		mess[i].operator =(threadMessage(source,mask,0,i*roiHeight,roiHeight));
+		mess[i].operator =(ThreadMessage(source,mask,0,i*roiHeight,roiHeight));
 		pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
 	}
 	CBlobResult r;
@@ -160,50 +163,49 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	//		else if(prev_label==0 | following_label==0) found=false;
 	//	}
 	//}
+	std::map<unsigned int,BlobOverlap> overlaps;
 	for(int i=numCores-1;i>0;i--){
-		bool found = false;
+		//cout << "RIGA: "<< i*sz.height/numCores -1 << endl;
+		overlaps.clear();
 		unsigned int last_found_label=0;
+		unsigned int prevLabelTop = 0;
+		unsigned int prevLabelBottom = 0;
+		Point segStart(sz.width,i*sz.height/numCores-1),segEnd(0,i*sz.height/numCores-1);
 		for(int c=0;c<sz.width;c++){
-			unsigned int prev_label = mess[i].labels.at<unsigned int>(sz.height/numCores-1,c);
-			unsigned int following_label = mess[i-1].labels.at<unsigned int>(0,c);
-			if(prev_label!=0 & following_label!=0 & (!found | prev_label!=last_found_label)){
-				found=true;
-				last_found_label=prev_label;
-				/*CBlob *nextBlob = mess[i-1].res->GetBlobByID(following_label);
-				CBlob *prevBlob=mess[i].res->GetBlobByID(prev_label);
-				prevBlob->to_be_deleted=1;
-				mess[i-1].res->AddBlob(prevBlob);
-				nextBlob->JoinBlob(prevBlob);*/
+			//L'ultima riga di labelTop e la prima di labelBottom sono sovrapposte (coincidenti)
+			unsigned int labelBottom = mess[i].labels.at<unsigned int>(0,c);
+			unsigned int labelTop = mess[i-1].labels.at<unsigned int>(mess[i-1].labels.size().height-1,c);
+			if(labelTop!= prevLabelTop && labelTop!=0){
+				if(!overlaps[labelTop].sourceBlob){
+					overlaps[labelTop].sourceBlob = mess[i-1].res->GetBlobByID(labelTop);
+				}
 			}
-			else if(prev_label==0 | following_label==0) found=false;
+			if(labelBottom!=prevLabelBottom && labelBottom!=0){
+				overlaps[labelTop].matchingSegments[labelBottom].push_back(Segment(Point(segStart),Point(segEnd)));
+				overlaps[labelTop].blobsToJoin[labelBottom] = mess[i].res->GetBlobByID(labelBottom); //Da migliorare
+			}
+			if(labelBottom!=0 && labelTop!=0){
+				overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].begin.x = MIN(overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].begin.x,c);
+				overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].end.x = MAX(overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].end.x,c);
+			}
+			prevLabelTop=labelTop;
+			prevLabelBottom=labelBottom;
 		}
+		for(map<unsigned int,BlobOverlap>::iterator it=overlaps.begin();it!=overlaps.end();it++){
+				//it->second.Print();
+				map<unsigned int,CBlob*>::iterator itB = it->second.blobsToJoin.begin();
+				map<unsigned int,deque<Segment>>::iterator itC = it->second.matchingSegments.begin();
+				for(itB,itC; itB!=it->second.blobsToJoin.end();itB++,itC++){
+					it->second.sourceBlob->JoinBlobTangent(itB->second,itC->second);
+					itB->second->to_be_deleted=1;
+				}
+		}
+		cout << endl;
 	}
-	/*mess[0].res->GetBlob(0);
-		mess[1].res->GetBlob(0);
-			mess[2].res->GetBlob(0);
-				mess[3].res->GetBlob(0);*/
-
 	for(int i=0;i<numCores;i++){
 		mess[i].res->Filter(*mess[i].res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);
-		//mess[i].res->GetNumBlobs();
 		r = r+*mess[i].res;
 	}
-	//r.GetBlob(0)->GetBoundingBox();
-	//r.GetBlob(1)->GetBoundingBox();
-	//Per il join disegno su una Mat i soli contorni dei blobs, poi itero a cavallo delle linee di separazione per fare gli eventuali join
-	
-	/*int upperLabelOld=-1,lowerLabelOld=-1;
-	for(int i=1;i<numCores;i++){
-		for(int j=0;j<r.GetNumBlobs();j++){
-			cvDrawContours(&(IplImage)labels,r.GetBlob(j)->GetExternalContour()->GetContourPoints(),Scalar(j),Scalar(),255,1);
-		}
-		for(int j=0;j<sz.width;j++){
-			int upperLabel = labels.at<int>(i*roiHeight-1,j),lowerLabel = labels.at<int>(i*roiHeight,j);
-			if(upperLabel != -1 && lowerLabel != -1 && upperLabel!=upperLabelOld && lowerLabel!=lowerLabelOld){
-				
-			}
-		}
-	}*/
 	delete [] mess;
 	delete [] tIds;
 	*this = r;
@@ -1073,7 +1075,7 @@ void CBlobResult::PrintBlobs( char *nom_fitxer ) const
 - CREATION DATE: 06-04-2013.
 - MODIFICATION: Date. Author. Description.
 */
-void* CBlobResult::thread_componentLabeling( threadMessage *msg )
+void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
 {
 	//int64 time=getTickCount();
 	int shift = msg->origin > 0 ? msg->origin-1 : msg->origin;
@@ -1095,4 +1097,16 @@ void* CBlobResult::thread_componentLabeling( threadMessage *msg )
 	}
 	//std::cout <<"Tempo Thread: "<<(getTickCount()-time)/getTickFrequency()<<std::endl;
 	return msg;
+}
+
+void CBlobResult::BlobOverlap::Print(){
+	cout << "Source Blob ID: "<< sourceBlob->GetID()<<endl;
+	map<unsigned int,deque<Segment>>::iterator it;
+	for( it = matchingSegments.begin();it!=matchingSegments.end();it++){
+		cout << "Blob to Join ID: " << it->first << endl;
+		cout << "Common Segments: " << endl;
+		for(int i=0; i< it->second.size();i++){
+			cout << it->second[i].begin << "-" << it->second[i].end << endl;
+		}
+	}
 }

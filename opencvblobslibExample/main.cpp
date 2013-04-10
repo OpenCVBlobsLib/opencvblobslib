@@ -3,10 +3,16 @@
 #include "blob.h"
 #include "BlobResult.h"
 
+const int IMSIZE = 2000;
 using namespace std;
 int main(){
+	int64 time;
 	RNG random;
 	Mat color_img = imread("opencv.png");
+ 	resize(color_img,color_img,Size(IMSIZE,IMSIZE),0,0,INTER_LINEAR);
+// 	Mat temp = Mat(4000,4000,CV_8UC3);
+// 	color_img.copyTo(temp(Rect(2000,2000,500,500)));
+// 	color_img=temp;
 	namedWindow("Color Image",CV_WINDOW_NORMAL);
 	namedWindow("Gray Image",CV_WINDOW_NORMAL);
 	namedWindow("Binary Image",CV_WINDOW_NORMAL);
@@ -17,38 +23,36 @@ int main(){
 	imshow("Gray Image",binary_img);
 	threshold(binary_img,binary_img,250,255,CV_THRESH_BINARY_INV);
 	imshow("Binary Image",binary_img);
-	CBlobResult blobs(binary_img,Mat(),0);
+	CBlobResult blobs;
+	time=getTickCount();
+	blobs = CBlobResult(&(IplImage)binary_img,NULL,0);
+	blobs.GetBlob(0)->GetExternalContour()->GetContourPoints();
+	cout <<"Tempo ST: "<<(getTickCount() -time)/getTickFrequency()<<endl;
+	time=getTickCount();
+	blobs = CBlobResult(binary_img,Mat(),0);
+	cout <<"Tempo MT: "<<(getTickCount() -time)/getTickFrequency()<<endl;
+	
 	CBlob *curblob;
 	cout<<"found: "<<blobs.GetNumBlobs()<<endl;
 	stringstream s;
-	cout << "Start 0: " << Point(blobs.GetBlob(0)->GetExternalContour()->GetStartPoint())<<endl;
-	cout << "Start 5: " << Point(blobs.GetBlob(5)->GetExternalContour()->GetStartPoint())<<endl;
-	cout << "Start 4: " << Point(blobs.GetBlob(4)->GetExternalContour()->GetStartPoint())<<endl;
-	blobs.GetBlob(0)->JoinBlobTangent(blobs.GetBlob(5));
-	blobs.GetBlob(0)->JoinBlobTangent(blobs.GetBlob(4));
-	blobs.GetBlob(8)->JoinBlobTangent(blobs.GetBlob(16));
-	blobs.GetBlob(3)->JoinBlobTangent(blobs.GetBlob(8));
-	blobs.GetBlob(6)->JoinBlobTangent(blobs.GetBlob(15));
-	blobs.GetBlob(2)->JoinBlobTangent(blobs.GetBlob(6));
-	blobs.GetBlob(1)->JoinBlobTangent(blobs.GetBlob(2));
 	int numBlobs = blobs.GetNumBlobs();
 	color_img.setTo(Vec3b(0,0,0));
-	
 	for(int i=0;i<numBlobs;i++){
-		if(i != 0 && i != 3 && i != 1)
-			continue;
 		Vec3b color = Vec3b(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255));
 		curblob=blobs.GetBlob(i);
+		//cout <<"Blob "<<i<<": "<< curblob->GetID()<<endl;
 		curblob->FillBlob(color_img,CV_RGB(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
-		/*CvSeqReader reader;
+		CvSeqReader reader;
 		Point pt;
-		cvStartReadSeq(curblob->GetExternalContour()->GetContourPoints(),&reader);
-		for(int j=0;j<curblob->GetExternalContour()->GetContourPoints()->total;j++){
-			CV_READ_SEQ_ELEM(pt,reader);
-			color_img.at<Vec3b>(pt) = color;
-		}*/
+		if(curblob->GetExternalContour()->GetContourPoints()){
+			cvStartReadSeq(curblob->GetExternalContour()->GetContourPoints(),&reader);
+			for(int j=0;j<curblob->GetExternalContour()->GetContourPoints()->total;j++){
+				CV_READ_SEQ_ELEM(pt,reader);
+				color_img.at<Vec3b>(pt) = color;		
+			}
+		}
 		s<<i;
-		putText(color_img,s.str(),curblob->getCenter(),1.6,5,CV_RGB(200,200,200),3);
+		putText(color_img,s.str(),curblob->getCenter(),1.6,IMSIZE/200,CV_RGB(200,200,200),3);
 		s.str("");
 	}
 	imshow("Blobs Image",color_img);

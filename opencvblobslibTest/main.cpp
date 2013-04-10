@@ -151,9 +151,9 @@ void testJoin2()
 		cout<<endl<<"NumblobsMT: "<<res.GetNumBlobs()<<endl;
 		cout <<"Interfaccia MultiThread: "<<elapsed<<endl;
 		medMT+=elapsed;
-		res.GetBlob(4)->JoinBlobTangent(res.GetBlob(6));
+		/*res.GetBlob(4)->JoinBlobTangent(res.GetBlob(6));
 		res.GetBlob(2)->JoinBlobTangent(res.GetBlob(4));
-		res.GetBlob(0)->JoinBlobTangent(res.GetBlob(2));
+		res.GetBlob(0)->JoinBlobTangent(res.GetBlob(2));*/
 		for(int i=0;i<1;i++){
 			res.GetBlob(i)->FillBlob(outMT,Scalar(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
 			//cvDrawContours(&(IplImage)outMT,res.GetBlob(i)->GetExternalContour()->GetContourPoints(),Scalar(200,200,0),Scalar(),2000,1,8);

@@ -26,6 +26,9 @@
     <ClCompile Include="ComponentLabeling.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Segment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blob.h">
@@ -44,6 +47,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ComponentLabeling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Segment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
