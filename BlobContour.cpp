@@ -218,7 +218,7 @@ t_PointList CBlobContour::GetContourPoints()
 	CvRect boundingBox;
 	
 	// if aproximation is different than simple extern perimeter will not work
-	tmpPoints = cvApproxChains( m_contour, m_parentStorage, CV_CHAIN_APPROX_NONE,0.0,0,1);
+	tmpPoints = cvApproxChains( m_contour, m_parentStorage, CV_CHAIN_APPROX_NONE);
 
 
 	// apply an offset to contour points to recover real coordinates

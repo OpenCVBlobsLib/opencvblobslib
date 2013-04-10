@@ -204,5 +204,6 @@ private:
 
 
 t_chainCode points2ChainCode(CvPoint p1, CvPoint p2);
+CvPoint chainCode2Point(CvPoint origin,t_chainCode code);
 
 #endif //CBLOB_INSPECTA_INCLUDED
