@@ -3,16 +3,13 @@
 #include "blob.h"
 #include "BlobResult.h"
 
-const int IMSIZE = 500;
+const int IMSIZE = 2000;
 using namespace std;
 int main(){
 	int64 time;
 	RNG random;
-	Mat color_img = imread("opencv.png");
- 	resize(color_img,color_img,Size(IMSIZE,IMSIZE),0,0,INTER_LINEAR);
-// 	Mat temp = Mat(4000,4000,CV_8UC3);
-// 	color_img.copyTo(temp(Rect(2000,2000,500,500)));
-// 	color_img=temp;
+	Mat color_img = imread("opencvblobslibBIG.png");
+ 	//resize(color_img,color_img,Size(IMSIZE,IMSIZE),0,0,INTER_LINEAR);
 	namedWindow("Color Image",CV_WINDOW_NORMAL);
 	namedWindow("Gray Image",CV_WINDOW_NORMAL);
 	namedWindow("Binary Image",CV_WINDOW_NORMAL);
@@ -24,14 +21,19 @@ int main(){
 	threshold(binary_img,binary_img,250,255,CV_THRESH_BINARY_INV);
 	imshow("Binary Image",binary_img);
 	CBlobResult blobs;
+	color_img.setTo(Vec3b(0,0,0));
 	time=getTickCount();
 	blobs = CBlobResult(&(IplImage)binary_img,NULL,0);
-	blobs.GetBlob(0)->GetExternalContour()->GetContourPoints();
 	cout <<"Tempo ST: "<<(getTickCount() -time)/getTickFrequency()<<endl;
+	for(int i=0;i<blobs.GetNumBlobs();i++){
+		blobs.GetBlob(i)->FillBlob(color_img,CV_RGB(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
+	}
+	displayOverlay("Blobs Image","Single Thread");
+	imshow("Blobs Image",color_img);
+	waitKey();
 	time=getTickCount();
 	blobs = CBlobResult(binary_img,Mat(),0);
 	cout <<"Tempo MT: "<<(getTickCount() -time)/getTickFrequency()<<endl;
-	
 	CBlob *curblob;
 	cout<<"found: "<<blobs.GetNumBlobs()<<endl;
 	stringstream s;
@@ -55,6 +57,7 @@ int main(){
 		putText(color_img,s.str(),curblob->getCenter(),1.6,IMSIZE/200,CV_RGB(200,200,200),3);
 		s.str("");
 	}
+	displayOverlay("Blobs Image","Multi Thread");
 	imshow("Blobs Image",color_img);
 	waitKey();
 	return 0;

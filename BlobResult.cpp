@@ -135,10 +135,13 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	int roiHeight = sz.height/numCores;
 	//Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
 	ThreadMessage *mess = new ThreadMessage[numCores];
-	for(int i=0;i<numCores;i++){
+	for(int i=0;i<numCores-1;i++){
 		mess[i].operator =(ThreadMessage(source,mask,0,i*roiHeight,roiHeight));
 		pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
 	}
+	//L'ultimo thread deve coprire il resto dell'immagine (se ci sono stati errori dovuti ad arrotondamenti)
+	mess[numCores-1].operator =(ThreadMessage(source,mask,0,(numCores-1)*roiHeight,source.size().height -(numCores-1)*roiHeight));
+	pthread_create(&tIds[numCores-1],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[numCores-1]);
 	CBlobResult r;
 	for(int i=0;i<numCores;i++){
 		pthread_join(tIds[i],0);
@@ -170,7 +173,7 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 		unsigned int last_found_label=0;
 		unsigned int prevLabelTop = 0;
 		unsigned int prevLabelBottom = 0;
-		Point segStart(sz.width,i*sz.height/numCores-1),segEnd(0,i*sz.height/numCores-1);
+		Point segStart(sz.width,mess[i].overlappingLine),segEnd(0,mess[i].overlappingLine);
 		for(int c=0;c<sz.width;c++){
 			//L'ultima riga di labelTop e la prima di labelBottom sono sovrapposte (coincidenti)
 			unsigned int labelBottom = mess[i].labels.at<unsigned int>(0,c);
@@ -1096,6 +1099,7 @@ void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
 	int shift = msg->origin > 0 ? msg->origin-1 : msg->origin;
 	int height = msg->origin > 0 ? msg->height+1 : msg->height;
 	Rect roi = Rect(0,shift,msg->image.size().width,height);
+	msg->overlappingLine=shift;
 	if(msg->mask.data)
 		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor,msg->labels);
 	else
@@ -1106,7 +1110,6 @@ void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
 	for(int i=0;i<numBlobs;i++){
 		CBlob *curBlob = msg->res->GetBlob(i);
 		curBlob->ShiftBlob(0,shift);
-		curBlob = curBlob;
 		//Per ora non mi serve
 		//curBlob->OriginalImageSize(curBlob->OriginalImageSize().width,curBlob->OriginalImageSize().height*numCores);
 	}

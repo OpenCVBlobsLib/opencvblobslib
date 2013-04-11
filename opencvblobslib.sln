@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencvBlobsExample", "openc
 		{5C8A901D-9545-A370-B5F8-82F5B56E0A62} = {5C8A901D-9545-A370-B5F8-82F5B56E0A62}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5056F5F9-2831-4845-9FE7-CD92A09EBE47}"
+EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True
