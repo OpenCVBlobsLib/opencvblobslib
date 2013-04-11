@@ -895,6 +895,7 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 	for(indTop;indTop<contourSeqTop->total;indTop++){
 		CV_READ_SEQ_ELEM(pt,readerTop);CV_READ_SEQ_ELEM(chain,readerChainTop);
 		if(pt.x == startPt.x && pt.y == startPt.y){
+			indTop++;
 			break;
 		}
 		CV_WRITE_SEQ_ELEM(pt,writerSeq);CV_WRITE_SEQ_ELEM(chain,writerChain);
@@ -916,7 +917,7 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 
 	//Ora scrivo i restanti punti della sequenza 1 a partire da endPoint fino al termine della sequenza stessa
 	write = false;
-	for(indTop;indTop<contourSeqTop->total;indTop++){
+	for(indTop;indTop<contourSeqTop->total-1;indTop++){
 		CV_READ_SEQ_ELEM(pt,readerTop);CV_READ_SEQ_ELEM(chain,readerChainTop);
 		if(pt.x == endPt.x && pt.y == endPt.y)
 			write = true;
@@ -938,26 +939,41 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 	blob->GetExternalContour()->m_contour = cvCloneSeq(newChain,blob->m_storage);
 
 
-	namedWindow("Prova",CV_WINDOW_KEEPRATIO+CV_WINDOW_NORMAL);
-	cvStartReadSeq(newContour,&readerTop);
-	cvStartReadSeq(newChain,&readerChainTop);
-	for(int i=0;i<newContour->total;i++){
-		CV_READ_SEQ_ELEM(pt,readerTop);
-		temp.at<Vec3b>(pt) = Vec3b(255,0,0);
-// 		imshow("Prova",temp);
-// 		waitKey(1);
-	}
-	CvPoint point = GetExternalContour()->GetStartPoint();
-	temp.at<Vec3b>(point) = Vec3b(0,255,0);
-	for(int i=0;i<newChain->total;i++){
-		CV_READ_SEQ_ELEM(chain,readerChainTop);
-		point = chainCode2Point(point,chain);
-		temp.at<Vec3b>(point) = Vec3b(0,255,0);
-		imshow("Prova",temp);
-		waitKey(1);
-	}
-	imshow("Prova",temp);
-	waitKey();
+// 	namedWindow("Prova",CV_WINDOW_KEEPRATIO+CV_WINDOW_NORMAL);
+// 	cvStartReadSeq(newContour,&readerTop);
+// 	cvStartReadSeq(newChain,&readerChainTop);
+// 	int key;
+// 	bool disp=true;
+// 	for(int i=0;i<newContour->total;i++){
+// 		CV_READ_SEQ_ELEM(pt,readerTop);
+// 		if(i < newContour->total/2)
+// 			temp.at<Vec3b>(pt) = Vec3b(255,0,0);
+// 		else
+// 			temp.at<Vec3b>(pt) = Vec3b(255,255,0);
+// // 		imshow("Prova",temp);
+// // 		waitKey(1);
+// 	}
+// 	imshow("Prova",temp);
+// 	waitKey();
+// 	CvPoint point = GetExternalContour()->GetStartPoint();
+// 	temp.at<Vec3b>(point) = Vec3b(0,255,0);
+// 	int i=0;
+// 	for(i=0;i<newChain->total;i++){
+// 		CV_READ_SEQ_ELEM(chain,readerChainTop);
+// 		point = chainCode2Point(point,chain);
+// 		if(i < newChain->total/2)
+// 			temp.at<Vec3b>(point) = Vec3b(0,255,0);
+// 		else
+// 			temp.at<Vec3b>(point) = Vec3b(0,255,255);
+// 		if(disp){
+// 			imshow("Prova",temp);
+// 			key = waitKey(1);
+// 			if(key == ' ')
+// 				disp=false;
+// 		}
+// 	}
+// 	imshow("Prova",temp);
+// 	waitKey();
 	cvClearSeq(newContour);
 	cvClearSeq(newChain);
 }
