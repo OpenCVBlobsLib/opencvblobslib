@@ -27,6 +27,7 @@ CBlob::CBlob()
 	m_storage = NULL;
 	m_id = -1;
 	to_be_deleted=0;
+	deleteRequestOwnerBlob=NULL;
 }
 CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
 {
@@ -37,9 +38,9 @@ CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
 	m_ellipse.size.width = -1;
 	m_storage = cvCreateMemStorage();
 	m_externalContour = CBlobContour(startPoint, m_storage);
-	lastStartingPoint = startPoint;
 	m_originalImageSize = originalImageSize;
 	to_be_deleted=0;
+	deleteRequestOwnerBlob=NULL;
 }
 //! Copy constructor
 CBlob::CBlob( const CBlob &src )
@@ -70,8 +71,8 @@ CBlob& CBlob::operator=(const CBlob &src )
 		m_boundingBox = src.m_boundingBox;
 		m_ellipse = src.m_ellipse;
 		m_originalImageSize = src.m_originalImageSize;
-		lastStartingPoint = src.lastStartingPoint;
 		to_be_deleted=src.to_be_deleted;
+		deleteRequestOwnerBlob=src.deleteRequestOwnerBlob;
 		// clear all current blob contours
 		ClearContours();
 		
@@ -749,7 +750,6 @@ void CBlob::JoinBlob( CBlob *blob )
 		CV_READ_SEQ_ELEM( chainCode, reader );
 		CV_WRITE_SEQ_ELEM( chainCode, writer );
 	}
-	lastStartingPoint = blob->GetExternalContour()->m_startPoint;
 	cvEndWriteSeq( &writer );
 	m_externalContour.m_contourPoints = NULL;
 	m_boundingBox.width=-1;
@@ -976,6 +976,19 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 // 	waitKey();
 	cvClearSeq(newContour);
 	cvClearSeq(newChain);
+}
+
+void CBlob::requestDeletion( CBlob *blob )
+{
+	//Se il blob è già stato segnalato per la cancellazione, allora segnalo anche i blob che lo hanno richiesto per essere cancellati
+	while(blob->deleteRequestOwnerBlob!=NULL){
+		CBlob *temp = blob;
+		blob->deleteRequestOwnerBlob->to_be_deleted=1;
+		blob = blob->deleteRequestOwnerBlob;
+		temp->deleteRequestOwnerBlob=this;
+	}
+	blob->to_be_deleted=1;
+	blob->deleteRequestOwnerBlob=this;
 }
 
 t_chainCode points2ChainCode( CvPoint p1, CvPoint p2 )

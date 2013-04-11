@@ -201,21 +201,22 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 				for(itB,itC; itB!=it->second.blobsToJoin.end();itB++,itC++){
 					it->second.sourceBlob->JoinBlobTangent(itB->second,itC->second);
 					//Se ho già segnato da cancellare quel blob allora devo eliminare anche il blob che vi si è joinato prima
+					it->second.sourceBlob->requestDeletion(itB->second);
 					//Da migliorare anche sta parte mi sa...
-					if(itB->second->to_be_deleted==1){
-						map<unsigned int,BlobOverlap>::iterator iter = overlaps.begin();
-						for(iter;iter!=overlaps.end();iter++){
-							if(iter->first == it->first)
-								break;
-							map<unsigned int,CBlob*>::iterator iterB = iter->second.blobsToJoin.begin();
-							for(iterB;iterB!=iter->second.blobsToJoin.end();iterB++){
-								if(iterB->first == itB->first)
-									iter->second.sourceBlob->to_be_deleted=1;
-							}
-						}
-					}
-					else
-						itB->second->to_be_deleted=1;
+// 					if(itB->second->to_be_deleted==1){
+// 						map<unsigned int,BlobOverlap>::iterator iter = overlaps.begin();
+// 						for(iter;iter!=overlaps.end();iter++){
+// 							if(iter->first == it->first)
+// 								break;
+// 							map<unsigned int,CBlob*>::iterator iterB = iter->second.blobsToJoin.begin();
+// 							for(iterB;iterB!=iter->second.blobsToJoin.end();iterB++){
+// 								if(iterB->first == itB->first)
+// 									iter->second.sourceBlob->to_be_deleted=1;
+// 							}
+// 						}
+// 					}
+// 					else
+// 						itB->second->to_be_deleted=1;
 				}
 		}
 		cout << endl;

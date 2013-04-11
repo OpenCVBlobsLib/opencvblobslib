@@ -3,12 +3,12 @@
 #include "blob.h"
 #include "BlobResult.h"
 
-const int IMSIZE = 2000;
+const int IMSIZE = 400;
 using namespace std;
 int main(){
 	int64 time;
 	RNG random;
-	Mat color_img = imread("opencvblobslibBIG.png");
+	Mat color_img = imread("testImage.png");
  	//resize(color_img,color_img,Size(IMSIZE,IMSIZE),0,0,INTER_LINEAR);
 	namedWindow("Color Image",CV_WINDOW_NORMAL);
 	namedWindow("Gray Image",CV_WINDOW_NORMAL);
@@ -44,18 +44,21 @@ int main(){
 		curblob=blobs.GetBlob(i);
 		//cout <<"Blob "<<i<<": "<< curblob->GetID()<<endl;
 		curblob->FillBlob(color_img,CV_RGB(random.uniform(0,255),random.uniform(0,255),random.uniform(0,255)));
-		CvSeqReader reader;
-		Point pt;
-		if(curblob->GetExternalContour()->GetContourPoints()){
-			cvStartReadSeq(curblob->GetExternalContour()->GetContourPoints(),&reader);
-			for(int j=0;j<curblob->GetExternalContour()->GetContourPoints()->total;j++){
-				CV_READ_SEQ_ELEM(pt,reader);
-				color_img.at<Vec3b>(pt) = color;		
-			}
-		}
+// 		CvSeqReader reader;
+// 		Point pt;
+// 		if(curblob->GetExternalContour()->GetContourPoints()){
+// 			cvStartReadSeq(curblob->GetExternalContour()->GetContourPoints(),&reader);
+// 			for(int j=0;j<curblob->GetExternalContour()->GetContourPoints()->total;j++){
+// 				CV_READ_SEQ_ELEM(pt,reader);
+// 				color_img.at<Vec3b>(pt) = color;		
+// 			}
+// 		}
 		s<<i;
 		putText(color_img,s.str(),curblob->getCenter(),1.6,IMSIZE/200,CV_RGB(200,200,200),3);
 		s.str("");
+// 		displayOverlay("Blobs Image","Press a key to show the next blob",500);
+// 		imshow("Blobs Image",color_img);
+// 		waitKey();
 	}
 	displayOverlay("Blobs Image","Multi Thread");
 	imshow("Blobs Image",color_img);

@@ -161,7 +161,10 @@ public:
 	vector<vector<Point>> getMatchingPoints(CBlob* blob);	//Returns a vector of vectors containing all the segments common to the 2 blobs
 private:
 	
-	CvPoint lastStartingPoint; //Used for join routine
+	CBlob* deleteRequestOwnerBlob;
+	void requestDeletion(CBlob *blob);
+
+
 	//! Deallocates all contours
 	void ClearContours();
 	//////////////////////////////////////////////////////////////////////////
@@ -200,6 +203,9 @@ private:
 	CvSize m_originalImageSize;
 	public: CvSize OriginalImageSize() const { return m_originalImageSize; }
 	public: void OriginalImageSize(int width, int height) { m_originalImageSize.width = width; m_originalImageSize.height = height; }
+
+
+	friend class CBlobResult;
 };
 
 

@@ -26,5 +26,8 @@
     <None Include="opencvblobslibBIG.png">
       <Filter>File di risorse</Filter>
     </None>
+    <None Include="testImage.png">
+      <Filter>File di risorse</Filter>
+    </None>
   </ItemGroup>
 </Project>

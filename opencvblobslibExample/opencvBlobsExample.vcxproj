@@ -68,6 +68,7 @@
   <ItemGroup>
     <None Include="opencv.png" />
     <None Include="opencvblobslibBIG.png" />
+    <None Include="testImage.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
