@@ -261,8 +261,8 @@ bool ComponentLabeling(	IplImage* inputImage,
 	}
 
 	//Creating an header to export the labelled image
-	labelled=Mat(imageSizes.height,imageSizes.width,4,labelledImage);
-	//labelled=labelledMatTemp.clone();
+	Mat labelledMatTemp=Mat(imageSizes.height,imageSizes.width,4,labelledImage);
+	labelled=labelledMatTemp.clone();
 	FileStorage f;
 	f.open("temp.xml", FileStorage::WRITE);
 	
@@ -270,7 +270,7 @@ bool ComponentLabeling(	IplImage* inputImage,
 	f << "Labelled" << labelled;
 
 	// free auxiliary buffers
-	//free( labelledImage );
+	free( labelledImage );
 	free( visitedPoints );
 
 	return true;

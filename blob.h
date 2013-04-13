@@ -31,6 +31,7 @@ MODIFICATIONS (Modification, Author, Date):
 	#include "..\inspecta\DesignPatterns\ObjectFactory.h"
 #endif
 
+class Segment;
 
 //! Type of labelled images
 typedef unsigned int t_labelType;
@@ -206,6 +207,7 @@ private:
 
 
 	friend class CBlobResult;
+	friend class MacroBlob;
 };
 
 

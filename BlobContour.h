@@ -22,7 +22,7 @@ typedef CvSeq* t_PointList;
 class CBlobContour
 {
 	friend class CBlob;
-	
+	friend class MacroBlob;
 public:
 	//! Constructors
 	CBlobContour();

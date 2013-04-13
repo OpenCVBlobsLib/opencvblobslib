@@ -131,6 +131,7 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"> /fast /Qopenmp /G7 /QaxW /Qvec_report3   /fast /Qopenmp /G7 /QaxW /Qvec_report3 </AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"> /Qopenmp   /Qopenmp </AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="MacroBlob.cpp" />
     <ClCompile Include="Segment.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -140,6 +141,7 @@
     <ClInclude Include="BlobOperators.h" />
     <ClInclude Include="BlobResult.h" />
     <ClInclude Include="ComponentLabeling.h" />
+    <ClInclude Include="MacroBlob.h" />
     <ClInclude Include="Segment.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

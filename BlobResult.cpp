@@ -15,6 +15,7 @@ MODIFICACIONS (Modificació, Autor, Data):
 #include <opencv2/opencv_modules.hpp>
 #include "BlobResult.h"
 #include "Segment.h"
+#include "MacroBlob.h"
 #include <pthread.h>
 //! Show errors functions: only works for windows releases
 #ifdef _SHOW_ERRORS
@@ -166,60 +167,65 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
 	//		else if(prev_label==0 | following_label==0) found=false;
 	//	}
 	//}
-	std::map<unsigned int,BlobOverlap> overlaps;
+	vector<MacroBlob> macroBlobs;
 	for(int i=numCores-1;i>0;i--){
 		//cout << "RIGA: "<< i*sz.height/numCores -1 << endl;
-		overlaps.clear();
-		unsigned int last_found_label=0;
+		/*unsigned int last_found_label=0;*/
 		unsigned int prevLabelTop = 0;
 		unsigned int prevLabelBottom = 0;
 		Point segStart(sz.width,mess[i].overlappingLine),segEnd(0,mess[i].overlappingLine);
+		int macroBlobIndex = -1;
+		int commonSegmentsSize=-1;
 		for(int c=0;c<sz.width;c++){
 			//L'ultima riga di labelTop e la prima di labelBottom sono sovrapposte (coincidenti)
 			unsigned int labelBottom = mess[i].labels.at<unsigned int>(0,c);
 			unsigned int labelTop = mess[i-1].labels.at<unsigned int>(mess[i-1].labels.size().height-1,c);
 			if(labelTop!= prevLabelTop && labelTop!=0){
-				if(!overlaps[labelTop].sourceBlob){
-					overlaps[labelTop].sourceBlob = mess[i-1].res->GetBlobByID(labelTop);
+				CBlob* tempTop = mess[i-1].res->GetBlobByID(labelTop);
+				CBlob* tempBottom = mess[i].res->GetBlobByID(labelBottom);
+				bool containsTop=false,containsBottom=false;
+				int p=0,q=0;
+				for(p;p<macroBlobs.size();p++){
+					if(macroBlobs[p].contains(tempTop)){
+						containsTop=true;
+						break;
+					}
 				}
-			}
-			if(labelBottom!=prevLabelBottom && labelBottom!=0){
-				overlaps[labelTop].matchingSegments[labelBottom].push_back(Segment(Point(segStart),Point(segEnd)));
-				overlaps[labelTop].blobsToJoin[labelBottom] = mess[i].res->GetBlobByID(labelBottom); //Da migliorare
+				for(q;q<macroBlobs.size();q++){
+					if(macroBlobs[q].contains(tempBottom)){
+						containsBottom=true;
+						break;
+					}
+				}
+				//Se entrambi i blob sono nuovi (entrambi i bool a false) allora devo creare un nuovo macroblob
+				if(!(containsTop || containsBottom)){
+					MacroBlob temp;
+					temp.blobsToJoin.push_back(tempTop);
+					temp.blobsToJoin.push_back(tempBottom);
+					macroBlobs.push_back(temp);
+					macroBlobIndex = macroBlobs.size()-1;
+				}
+				else{
+					macroBlobIndex = containsTop ? p : q;
+					macroBlobs[macroBlobIndex].blobsToJoin.push_back(containsTop ? tempBottom : tempTop);
+				}
+				macroBlobs[macroBlobIndex].commonSegments.push_back(Segment(Point(segStart),Point(segEnd),tempTop,tempBottom));
+				commonSegmentsSize = macroBlobs[macroBlobIndex].commonSegments.size();
 			}
 			if(labelBottom!=0 && labelTop!=0){
-				overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].begin.x = MIN(overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].begin.x,c);
-				overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].end.x = MAX(overlaps[labelTop].matchingSegments[labelBottom][overlaps[labelTop].matchingSegments[labelBottom].size()-1].end.x,c);
+				macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x = MIN(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x,c);
+				macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x = MAX(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x,c);
 			}
 			prevLabelTop=labelTop;
 			prevLabelBottom=labelBottom;
-		}
-		for(map<unsigned int,BlobOverlap>::iterator it=overlaps.begin();it!=overlaps.end();it++){
-				//it->second.Print();
-				map<unsigned int,CBlob*>::iterator itB = it->second.blobsToJoin.begin();
-				map<unsigned int,deque<Segment>>::iterator itC = it->second.matchingSegments.begin();
-				for(itB,itC; itB!=it->second.blobsToJoin.end();itB++,itC++){
-					it->second.sourceBlob->JoinBlobTangent(itB->second,itC->second);
-					//Se ho già segnato da cancellare quel blob allora devo eliminare anche il blob che vi si è joinato prima
-					it->second.sourceBlob->requestDeletion(itB->second);
-					//Da migliorare anche sta parte mi sa...
-// 					if(itB->second->to_be_deleted==1){
-// 						map<unsigned int,BlobOverlap>::iterator iter = overlaps.begin();
-// 						for(iter;iter!=overlaps.end();iter++){
-// 							if(iter->first == it->first)
-// 								break;
-// 							map<unsigned int,CBlob*>::iterator iterB = iter->second.blobsToJoin.begin();
-// 							for(iterB;iterB!=iter->second.blobsToJoin.end();iterB++){
-// 								if(iterB->first == itB->first)
-// 									iter->second.sourceBlob->to_be_deleted=1;
-// 							}
-// 						}
-// 					}
-// 					else
-// 						itB->second->to_be_deleted=1;
-				}
-		}
-		cout << endl;
+		}	
+	}
+	MacroBlobJoiner joiner(macroBlobs);
+	joiner.JoinAll();
+	for(int i=0;i<macroBlobs.size();i++){
+		//macroBlobs[i].join();
+		if(macroBlobs[i].joinedBlob)
+			r.AddBlob(macroBlobs[i].joinedBlob);
 	}
 	for(int i=0;i<numCores;i++){
 		mess[i].res->Filter(*mess[i].res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);
@@ -1111,8 +1117,7 @@ void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
 	for(int i=0;i<numBlobs;i++){
 		CBlob *curBlob = msg->res->GetBlob(i);
 		curBlob->ShiftBlob(0,shift);
-		//Per ora non mi serve
-		//curBlob->OriginalImageSize(curBlob->OriginalImageSize().width,curBlob->OriginalImageSize().height*numCores);
+		curBlob->m_originalImageSize = msg->image.size();
 	}
 	//std::cout <<"Tempo Thread: "<<(getTickCount()-time)/getTickFrequency()<<std::endl;
 	return msg;
