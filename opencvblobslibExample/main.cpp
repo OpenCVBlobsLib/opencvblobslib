@@ -6,7 +6,7 @@
 #include <intrin.h>
 
 const int IMSIZE = 400;
-const int NUMCORES = 8;
+const int NUMCORES = 4;
 using namespace std;
 
 
