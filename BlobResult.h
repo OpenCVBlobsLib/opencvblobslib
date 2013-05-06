@@ -87,7 +87,7 @@ public:
 	//! Image constructor, it creates an object with the blobs of the image
 	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor, Mat &labelled=Mat());
 	//! OpenCV2 interface
-	CBlobResult(Mat &source, Mat &mask, uchar backgroundColor);
+	CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numThreads=1);
 	//! Copy constructor
 	CBlobResult( const CBlobResult &source );
 	//! Destructor

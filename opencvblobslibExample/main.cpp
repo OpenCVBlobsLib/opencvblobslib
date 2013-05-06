@@ -6,15 +6,19 @@
 #include <intrin.h>
 
 const int IMSIZE = 400;
+const int NUMCORES = 4;
 using namespace std;
 
+
+//iter = iterations for every resolution, in order to be able to compute a mean computation time.
 void testTimes(int startRes,int endRes, int step,string fileName,int iter=1);
+
 void test();
 void opencvLogo();
 
 int main(){
-	//testTimes(500,5000,500,"Tempi",5);
-	opencvLogo();
+	testTimes(500,1000,250,"Tempi",5);
+	//opencvLogo();
 	//test();
 	return 0;
 }
@@ -46,16 +50,16 @@ void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 			time=getTickCount();
 			res = CBlobResult(&(IplImage)temp_color_img,NULL,0);
 			elapsed =  (getTickCount()-time)/getTickFrequency();
-			//cout <<"Tempo Single Thread: " <<elapsed<<endl;
+			cout <<"Tempo Single Thread: " <<elapsed<<endl;
 			fileOutST <<"\t" << elapsed;
 		}
 		fileOutST << "\n";
 		fileOutMT << resolution;
 		for(int j=0;j<iter;j++){
 			time=getTickCount();
-			res = CBlobResult(temp_color_img,Mat(),0);
+			res = CBlobResult(temp_color_img,Mat(),0,NUMCORES);
 			elapsed =  (getTickCount()-time)/getTickFrequency();
-			//cout <<"Tempo Single Thread: " <<elapsed<<endl;
+			cout <<"Tempo Multi Thread: " <<elapsed<<endl;
 			fileOutMT <<"\t" << elapsed;
 		}
 		fileOutMT << "\n";
@@ -66,7 +70,6 @@ void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 	cout <<"Premere un tasto per continuare...."<<endl;
 	cin.get();
 }
-
 void test()
 {
 	int64 time;
@@ -96,7 +99,7 @@ void test()
 	imshow("Blobs Image",color_img);
 	waitKey();
 	time=getTickCount();
-	blobs = CBlobResult(binary_img,Mat(),0);
+	blobs = CBlobResult(binary_img,Mat(),0,NUMCORES);
 	cout <<"Tempo MT: "<<(getTickCount() -time)/getTickFrequency()<<endl;
 	CBlob *curblob;
 	cout<<"found: "<<blobs.GetNumBlobs()<<endl;
@@ -128,14 +131,13 @@ void test()
 	imshow("Blobs Image",color_img);
 	waitKey();
 }
-
 void opencvLogo()
 {
 	Mat im = imread("opencvblobslibBIG.png");
 	Mat img;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,img,254,255,CV_THRESH_BINARY_INV);
-	CBlobResult res(img,Mat(),0);
+	CBlobResult res(img,Mat(),0,NUMCORES);
 	stringstream ss;
 	for(int i=0;i<res.GetNumBlobs();i++){
 		ss << i;

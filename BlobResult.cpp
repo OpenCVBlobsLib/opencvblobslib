@@ -128,112 +128,100 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 - CREATION DATE: 06-04-2013.
 - MODIFICATION: Date. Author. Description.
 */
-CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor){
-	//CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
-	int numCores = pthread_num_processors_np();
-	pthread_t *tIds = new pthread_t[numCores];
-	Size sz = source.size();
-	int roiHeight = sz.height/numCores;
-	//Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
-	ThreadMessage *mess = new ThreadMessage[numCores];
-	for(int i=0;i<numCores-1;i++){
-		mess[i].operator =(ThreadMessage(source,mask,0,i*roiHeight,roiHeight));
-		pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
+CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numThreads){
+	if(numThreads==1){
+		if(mask.data)
+			*this = CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor,Mat());
+		else
+			*this = CBlobResult(&(IplImage)source,NULL,backgroundColor,Mat());
 	}
-	//L'ultimo thread deve coprire il resto dell'immagine (se ci sono stati errori dovuti ad arrotondamenti)
-	mess[numCores-1].operator =(ThreadMessage(source,mask,0,(numCores-1)*roiHeight,source.size().height -(numCores-1)*roiHeight));
-	pthread_create(&tIds[numCores-1],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[numCores-1]);
-	CBlobResult r;
-	for(int i=0;i<numCores;i++){
-		pthread_join(tIds[i],0);
-		//r = r+*mess[i].res;
-	}
-	CBlobResult temp_result;
-	//for(int i=0;i<numCores-1;i++){
-	//	bool found = false;
-	//	unsigned int last_found_label=0;
-	//	for(int c=0;c<sz.width;c++){
-	//		unsigned int prev_label = mess[i].labels.at<unsigned int>(sz.height/numCores-1,c);
-	//		unsigned int following_label = mess[i+1].labels.at<unsigned int>(0,c);
-	//		if(prev_label!=0 & following_label!=0 & (!found | prev_label!=last_found_label)){
-	//			found=true;
-	//			last_found_label=prev_label;
-	//			CBlob *nextBlob = mess[i+1].res->GetBlobByID(following_label);
-	//			CBlob *prevBlob=mess[i].res->GetBlobByID(prev_label);
-	//			prevBlob->to_be_deleted=1;
-	//			mess[i+1].res->AddBlob(prevBlob);
-	//			nextBlob->JoinBlob(prevBlob);
-	//		}
-	//		else if(prev_label==0 | following_label==0) found=false;
-	//	}
-	//}
-	vector<MacroBlob> macroBlobs;
-	for(int i=numCores-1;i>0;i--){
-		//cout << "RIGA: "<< i*sz.height/numCores -1 << endl;
-		/*unsigned int last_found_label=0;*/
-		unsigned int prevLabelTop = 0;
-		unsigned int prevLabelBottom = 0;
-		Point segStart(sz.width,mess[i].overlappingLine),segEnd(0,mess[i].overlappingLine);
-		int macroBlobIndex = -1;
-		int commonSegmentsSize=-1;
-		for(int c=0;c<sz.width;c++){
-			//L'ultima riga di labelTop e la prima di labelBottom sono sovrapposte (coincidenti)
-			unsigned int labelBottom = mess[i].labels.at<unsigned int>(0,c);
-			unsigned int labelTop = mess[i-1].labels.at<unsigned int>(mess[i-1].labels.size().height-1,c);
-			if(labelTop!= prevLabelTop && labelTop!=0){
-				CBlob* tempTop = mess[i-1].res->GetBlobByID(labelTop);
-				CBlob* tempBottom = mess[i].res->GetBlobByID(labelBottom);
-				bool containsTop=false,containsBottom=false;
-				int p=0,q=0;
-				for(p;p<macroBlobs.size();p++){
-					if(macroBlobs[p].contains(tempTop)){
-						containsTop=true;
-						break;
+	else{
+		pthread_t *tIds = new pthread_t[numThreads];
+		Size sz = source.size();
+		int roiHeight = sz.height/numThreads;
+		//Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
+		ThreadMessage *mess = new ThreadMessage[numThreads];
+		for(int i=0;i<numThreads-1;i++){
+			mess[i].operator =(ThreadMessage(source,mask,0,i*roiHeight,roiHeight));
+			pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
+		}
+		//L'ultimo thread deve coprire il resto dell'immagine (se ci sono stati errori dovuti ad arrotondamenti)
+		mess[numThreads-1].operator =(ThreadMessage(source,mask,0,(numThreads-1)*roiHeight,source.size().height -(numThreads-1)*roiHeight));
+		pthread_create(&tIds[numThreads-1],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[numThreads-1]);
+		CBlobResult r;
+		for(int i=0;i<numThreads;i++){
+			pthread_join(tIds[i],0);
+			//r = r+*mess[i].res;
+		}
+		CBlobResult temp_result;
+		vector<MacroBlob> macroBlobs;
+		for(int i=numThreads-1;i>0;i--){
+			//cout << "RIGA: "<< i*sz.height/numCores -1 << endl;
+			/*unsigned int last_found_label=0;*/
+			unsigned int prevLabelTop = 0;
+			unsigned int prevLabelBottom = 0;
+			Point segStart(sz.width,mess[i].overlappingLine),segEnd(0,mess[i].overlappingLine);
+			int macroBlobIndex = -1;
+			int commonSegmentsSize=-1;
+			for(int c=0;c<sz.width;c++){
+				//L'ultima riga di labelTop e la prima di labelBottom sono sovrapposte (coincidenti)
+				unsigned int labelBottom = mess[i].labels.at<unsigned int>(0,c);
+				unsigned int labelTop = mess[i-1].labels.at<unsigned int>(mess[i-1].labels.size().height-1,c);
+				if(labelTop!= prevLabelTop && labelTop!=0){
+					CBlob* tempTop = mess[i-1].res->GetBlobByID(labelTop);
+					CBlob* tempBottom = mess[i].res->GetBlobByID(labelBottom);
+					bool containsTop=false,containsBottom=false;
+					int p=0,q=0;
+					for(p;p<macroBlobs.size();p++){
+						if(macroBlobs[p].contains(tempTop)){
+							containsTop=true;
+							break;
+						}
 					}
-				}
-				for(q;q<macroBlobs.size();q++){
-					if(macroBlobs[q].contains(tempBottom)){
-						containsBottom=true;
-						break;
+					for(q;q<macroBlobs.size();q++){
+						if(macroBlobs[q].contains(tempBottom)){
+							containsBottom=true;
+							break;
+						}
 					}
+					//Se entrambi i blob sono nuovi (entrambi i bool a false) allora devo creare un nuovo macroblob
+					if(!(containsTop || containsBottom)){
+						MacroBlob temp;
+						temp.blobsToJoin.push_back(tempTop);
+						temp.blobsToJoin.push_back(tempBottom);
+						macroBlobs.push_back(temp);
+						macroBlobIndex = macroBlobs.size()-1;
+					}
+					else{
+						macroBlobIndex = containsTop ? p : q;
+						macroBlobs[macroBlobIndex].blobsToJoin.push_back(containsTop ? tempBottom : tempTop);
+					}
+					macroBlobs[macroBlobIndex].commonSegments.push_back(Segment(Point(segStart),Point(segEnd),tempTop,tempBottom));
+					commonSegmentsSize = macroBlobs[macroBlobIndex].commonSegments.size();
 				}
-				//Se entrambi i blob sono nuovi (entrambi i bool a false) allora devo creare un nuovo macroblob
-				if(!(containsTop || containsBottom)){
-					MacroBlob temp;
-					temp.blobsToJoin.push_back(tempTop);
-					temp.blobsToJoin.push_back(tempBottom);
-					macroBlobs.push_back(temp);
-					macroBlobIndex = macroBlobs.size()-1;
+				if(labelBottom!=0 && labelTop!=0){
+					macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x = MIN(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x,c);
+					macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x = MAX(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x,c);
 				}
-				else{
-					macroBlobIndex = containsTop ? p : q;
-					macroBlobs[macroBlobIndex].blobsToJoin.push_back(containsTop ? tempBottom : tempTop);
-				}
-				macroBlobs[macroBlobIndex].commonSegments.push_back(Segment(Point(segStart),Point(segEnd),tempTop,tempBottom));
-				commonSegmentsSize = macroBlobs[macroBlobIndex].commonSegments.size();
-			}
-			if(labelBottom!=0 && labelTop!=0){
-				macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x = MIN(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x,c);
-				macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x = MAX(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x,c);
-			}
-			prevLabelTop=labelTop;
-			prevLabelBottom=labelBottom;
-		}	
+				prevLabelTop=labelTop;
+				prevLabelBottom=labelBottom;
+			}	
+		}
+		MacroBlobJoiner joiner(macroBlobs);
+		joiner.JoinAll();
+		for(int i=0;i<macroBlobs.size();i++){
+			//macroBlobs[i].join();
+			if(macroBlobs[i].joinedBlob)
+				r.AddBlob(macroBlobs[i].joinedBlob);
+		}
+		for(int i=0;i<numThreads;i++){
+			mess[i].res->Filter(*mess[i].res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);
+			r = r+*mess[i].res;
+		}
+		delete [] mess;
+		delete [] tIds;
+		*this = r;
 	}
-	MacroBlobJoiner joiner(macroBlobs);
-	joiner.JoinAll();
-	for(int i=0;i<macroBlobs.size();i++){
-		//macroBlobs[i].join();
-		if(macroBlobs[i].joinedBlob)
-			r.AddBlob(macroBlobs[i].joinedBlob);
-	}
-	for(int i=0;i<numCores;i++){
-		mess[i].res->Filter(*mess[i].res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);
-		r = r+*mess[i].res;
-	}
-	delete [] mess;
-	delete [] tIds;
-	*this = r;
 }
 /**
 - FUNCIÓ: CBlobResult
