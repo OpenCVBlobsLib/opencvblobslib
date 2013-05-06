@@ -45,7 +45,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_nonfree244d.lib;opencv_features2d244d.lib;opencv_core244d.lib;opencv_imgproc244d.lib;opencv_highgui244d.lib;opencv_ml244d.lib;opencv_video244d.lib;opencv_calib3d244d.lib;opencv_legacy244d.lib;opencv_gpu244d.lib;pthreadVC2.lib;opencvblobslibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_features2d244d.lib;opencv_core244d.lib;opencv_imgproc244d.lib;opencv_highgui244d.lib;opencv_ml244d.lib;opencv_video244d.lib;opencv_calib3d244d.lib;opencv_legacy244d.lib;opencv_gpu244d.lib;pthreadVC2.lib;opencvblobslibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OPENCV_DIR)\lib\Debug;$(PTHREADS_DIR)\lib;$(SolutionDir)\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

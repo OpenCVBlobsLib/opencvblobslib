@@ -184,13 +184,27 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numTh
 							break;
 						}
 					}
-					//Se entrambi i blob sono nuovi (entrambi i bool a false) allora devo creare un nuovo macroblob
+					//If both blobs are "new", not belonging to a MacroBlob, I have to create a new MacroBlob.
 					if(!(containsTop || containsBottom)){
 						MacroBlob temp;
 						temp.blobsToJoin.push_back(tempTop);
 						temp.blobsToJoin.push_back(tempBottom);
 						macroBlobs.push_back(temp);
 						macroBlobIndex = macroBlobs.size()-1;
+					}
+					//If I have to join 2 adiacent macroblobs (they were created as separate entities if in the image I had a "H" like structure)
+					else if(containsTop && containsBottom && p!=q){
+						int size = macroBlobs[q].blobsToJoin.size();
+						//I add the bottom one to the top one and set the bottom to not be joined afterwards.
+						for(int j=0;j<size;j++){
+							macroBlobs[p].blobsToJoin.push_back(macroBlobs[q].blobsToJoin[j]);
+						}
+						size  = macroBlobs[q].commonSegments.size();
+						for(int j=0;j<size;j++){
+							macroBlobs[p].commonSegments.push_back(macroBlobs[q].commonSegments[j]);
+						}
+						macroBlobs[q].toJoin=false;
+						macroBlobIndex = p;
 					}
 					else{
 						macroBlobIndex = containsTop ? p : q;
@@ -210,7 +224,6 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numTh
 		MacroBlobJoiner joiner(macroBlobs);
 		joiner.JoinAll();
 		for(int i=0;i<macroBlobs.size();i++){
-			//macroBlobs[i].join();
 			if(macroBlobs[i].joinedBlob)
 				r.AddBlob(macroBlobs[i].joinedBlob);
 		}

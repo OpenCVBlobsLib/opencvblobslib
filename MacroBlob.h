@@ -13,6 +13,7 @@ public:
 	vector<CBlob*> blobsToJoin;
 	vector<Segment> commonSegments;
 	CBlob *joinedBlob; //Obtained after the joining operation
+	bool toJoin;
 public:
 	MacroBlob(void);
 	~MacroBlob(void);

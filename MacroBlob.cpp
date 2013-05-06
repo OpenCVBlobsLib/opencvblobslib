@@ -5,6 +5,7 @@ using namespace cv;
 MacroBlob::MacroBlob(void)
 {
 	joinedBlob=NULL;
+	toJoin=true;
 }
 
 
@@ -14,29 +15,33 @@ MacroBlob::~MacroBlob(void)
 
 void MacroBlob::join()
 {
+	if(!toJoin){
+		joinedBlob=NULL;
+		return;
+	}
 	//Per ora mostro i blobs ed i segmenti
-//  	namedWindow("Temp",CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
-//  	Mat_<Vec3b> tempImg = Mat_<Vec3b>::zeros(blobsToJoin[0]->m_originalImageSize);
-//  	RNG rng;
-// 	CvSeqReader read;
-// 	t_chainCode ch;
-//  	for(int i=0;i<blobsToJoin.size();i++){
-// 		Vec3b col(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
-// 		CvPoint po = blobsToJoin[i]->GetExternalContour()->GetStartPoint();
-//  		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
-//  		cvStartReadSeq(blobsToJoin[i]->GetExternalContour()->m_contour,&read);
-// 		for(int j=0;j<blobsToJoin[i]->GetExternalContour()->m_contour->total;j++){
-// 			CV_READ_SEQ_ELEM(ch,read);
-// 			po = chainCode2Point(po,ch);
-// 			tempImg.at<Vec3b>(po) = col;
-// 		}
-//  	}
-//  	for(int i=0;i<commonSegments.size();i++){
-//  		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
-//  		commonSegments[i].DrawSegment(tempImg,color);
-//  	}
-//  	imshow("Temp",tempImg);
-//  	waitKey();
+ 	namedWindow("Temp",CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
+ 	Mat_<Vec3b> tempImg = Mat_<Vec3b>::zeros(blobsToJoin[0]->m_originalImageSize);
+ 	RNG rng;
+	CvSeqReader read;
+	t_chainCode ch;
+ 	for(int i=0;i<blobsToJoin.size();i++){
+		Vec3b col(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
+		CvPoint po = blobsToJoin[i]->GetExternalContour()->GetStartPoint();
+ 		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
+ 		cvStartReadSeq(blobsToJoin[i]->GetExternalContour()->m_contour,&read);
+		for(int j=0;j<blobsToJoin[i]->GetExternalContour()->m_contour->total;j++){
+			CV_READ_SEQ_ELEM(ch,read);
+			po = chainCode2Point(po,ch);
+			tempImg.at<Vec3b>(po) = col;
+		}
+ 	}
+ 	for(int i=0;i<commonSegments.size();i++){
+ 		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
+ 		commonSegments[i].DrawSegment(tempImg,color);
+ 	}
+ 	imshow("Temp",tempImg);
+ 	waitKey();
 
 	//Trovo le righe nelle quali si trovano i segmenti comuni
 	vector<int> segmentRows;
@@ -145,6 +150,8 @@ void MacroBlob::join()
 	for(int i=0;i<blobsToJoin.size();i++)
 		blobsToJoin[i]->to_be_deleted=1;
 	
+
+	//Images to show only for debug purposes
 // 	Mat_<Vec3b> temp = Mat_<Vec3b>::zeros(1200,1200);
 // 	cvStartReadSeq(newChain,&reader);
 // 	bool disp=true;
@@ -215,12 +222,16 @@ MacroBlobJoiner::~MacroBlobJoiner()
 
 void MacroBlobJoiner::JoinAll()
 {
-	for(int i=0;i<numCores;i++){
-		pthread_create(&threadIds[i],NULL,(void *(*)(void*))MacroBlobJoiner::threadJoiner,this);
-	}
-	for(int i=0;i<numCores;i++){
-		pthread_join(threadIds[i],0);
-	}
+	//Per ragioni di debug
+	for(int i=0;i<macroBlobs.size();i++)
+		macroBlobs[i].join();
+
+// 	for(int i=0;i<numCores;i++){
+// 		pthread_create(&threadIds[i],NULL,(void *(*)(void*))MacroBlobJoiner::threadJoiner,this);
+// 	}
+// 	for(int i=0;i<numCores;i++){
+// 		pthread_join(threadIds[i],0);
+// 	}
 }
 
 int MacroBlobJoiner::getIndexThread()

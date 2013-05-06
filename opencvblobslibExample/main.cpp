@@ -6,7 +6,7 @@
 #include <intrin.h>
 
 const int IMSIZE = 400;
-const int NUMCORES = 4;
+const int NUMCORES = 8;
 using namespace std;
 
 
@@ -17,9 +17,9 @@ void test();
 void opencvLogo();
 
 int main(){
-	testTimes(500,1000,250,"Tempi",5);
+	//testTimes(500,1000,250,"Tempi",5);
 	//opencvLogo();
-	//test();
+	test();
 	return 0;
 }
 
@@ -137,7 +137,9 @@ void opencvLogo()
 	Mat img;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,img,254,255,CV_THRESH_BINARY_INV);
+	int64 time = getTickCount();
 	CBlobResult res(img,Mat(),0,NUMCORES);
+	cout << "Tempo: " << (getTickCount() - time)/getTickFrequency();
 	stringstream ss;
 	for(int i=0;i<res.GetNumBlobs();i++){
 		ss << i;
