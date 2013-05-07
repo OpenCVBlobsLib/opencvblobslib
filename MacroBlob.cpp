@@ -19,29 +19,29 @@ void MacroBlob::join()
 		joinedBlob=NULL;
 		return;
 	}
-	//Per ora mostro i blobs ed i segmenti
- 	namedWindow("Temp",CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
- 	Mat_<Vec3b> tempImg = Mat_<Vec3b>::zeros(blobsToJoin[0]->m_originalImageSize);
- 	RNG rng;
-	CvSeqReader read;
-	t_chainCode ch;
- 	for(int i=0;i<blobsToJoin.size();i++){
-		Vec3b col(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
-		CvPoint po = blobsToJoin[i]->GetExternalContour()->GetStartPoint();
- 		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
- 		cvStartReadSeq(blobsToJoin[i]->GetExternalContour()->m_contour,&read);
-		for(int j=0;j<blobsToJoin[i]->GetExternalContour()->m_contour->total;j++){
-			CV_READ_SEQ_ELEM(ch,read);
-			po = chainCode2Point(po,ch);
-			tempImg.at<Vec3b>(po) = col;
-		}
- 	}
- 	for(int i=0;i<commonSegments.size();i++){
- 		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
- 		commonSegments[i].DrawSegment(tempImg,color);
- 	}
- 	imshow("Temp",tempImg);
- 	waitKey();
+	//DEBUG: Per ora mostro i blobs ed i segmenti
+//  	namedWindow("Temp",CV_WINDOW_NORMAL+CV_WINDOW_KEEPRATIO);
+//  	Mat_<Vec3b> tempImg = Mat_<Vec3b>::zeros(blobsToJoin[0]->m_originalImageSize);
+//  	RNG rng;
+// 	CvSeqReader read;
+// 	t_chainCode ch;
+//  	for(int i=0;i<blobsToJoin.size();i++){
+// 		Vec3b col(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
+// 		CvPoint po = blobsToJoin[i]->GetExternalContour()->GetStartPoint();
+//  		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
+//  		cvStartReadSeq(blobsToJoin[i]->GetExternalContour()->m_contour,&read);
+// 		for(int j=0;j<blobsToJoin[i]->GetExternalContour()->m_contour->total;j++){
+// 			CV_READ_SEQ_ELEM(ch,read);
+// 			po = chainCode2Point(po,ch);
+// 			tempImg.at<Vec3b>(po) = col;
+// 		}
+//  	}
+//  	for(int i=0;i<commonSegments.size();i++){
+//  		Scalar color(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
+//  		commonSegments[i].DrawSegment(tempImg,color);
+//  	}
+//  	imshow("Temp",tempImg);
+//  	waitKey();
 
 	//Trovo le righe nelle quali si trovano i segmenti comuni
 	vector<int> segmentRows;
