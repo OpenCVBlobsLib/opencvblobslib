@@ -153,6 +153,12 @@ void CBlob::ClearContours()
 	m_internalContours.clear();
 
 	m_externalContour.ResetChainCode();
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			(*it)->ClearContours();
+		}
+	}
 		
 }
 void CBlob::AddInternalContour( const CBlobContour &newContour )
@@ -195,7 +201,12 @@ double CBlob::Area()
 		itContour++;
 	}
 
-	
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			area=+(*it)->Area();
+		}
+	}
 
 	return area;
 }
@@ -227,6 +238,13 @@ double CBlob::Perimeter()
 		perimeter += (*itContour).GetPerimeter();
 		itContour++;
 	}
+
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			perimeter=+(*it)->Perimeter();
+		}
+	}
 	return perimeter;
 
 }
@@ -247,12 +265,13 @@ double CBlob::Perimeter()
 */
 int	CBlob::Exterior(IplImage *mask, bool xBorder /* = true */, bool yBorder /* = true */)
 {
+	int result = 0;
 	if (ExternPerimeter(mask, xBorder, yBorder ) > 0 )
 	{
-		return 1;
+		result = 1;
 	}
 	
-	return 0;	 
+	return result;	 
 }
 int	CBlob::Exterior(Mat mask, bool xBorder /* = true */, bool yBorder /* = true */)
 {
@@ -405,6 +424,13 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 	// Perimeter of external points counts both sides, so it must be divided
 	m_externPerimeter /= 2.0;
 	
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			m_externPerimeter=+(*it)->ExternPerimeter(maskImage, xBorder /* = true */, yBorder /* = true */);
+		}
+	}
+
 	return m_externPerimeter;
 }
 double CBlob::ExternPerimeter( Mat maskImage, bool xBorder /* = true */, bool yBorder /* = true */){
@@ -491,6 +517,18 @@ double CBlob::Mean( IplImage *image )
 	cvReleaseImage( &mask );
 	cvResetImageROI( image );
 
+
+	if(isJoined){
+		double total_area=this->Area();
+		double total_value=m_meanGray*Area();
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			total_value=+(*it)->Area() * (*it)->Mean(image);
+			total_area=+(*it)->Area();
+		}
+		m_meanGray=total_value/total_area;
+	}
+
 	return m_meanGray;
 }
 double CBlob::Mean(Mat image ){
@@ -528,10 +566,10 @@ double CBlob::StdDev(Mat image){
 CvRect CBlob::GetBoundingBox()
 {
 	// it is calculated?
-	if( m_boundingBox.width != -1 )
+	/*if( m_boundingBox.width != -1 )
 	{
 		return m_boundingBox;
-	}
+	}*/
 
 	t_PointList externContour;
 	CvSeqReader reader;
@@ -692,7 +730,14 @@ CvBox2D CBlob::GetEllipse()
 */
 void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/) 					  
 {
-	cvDrawContours( image, m_externalContour.GetContourPoints(), color, color,0, CV_FILLED, 8 );
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			(*it)->FillBlob(image,color,offsetX,offsetY);
+		}
+
+	}
+			cvDrawContours( image, m_externalContour.GetContourPoints(), color, color,0, CV_FILLED, 8 );
 }
 void CBlob::FillBlob( Mat image, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/){
 	if(isJoined){
@@ -741,11 +786,14 @@ t_PointList CBlob::GetConvexHull()
 - MODIFICATION: 
 	08-2013, Luca Nardelli & Saverio Murgia, Created a working version of the join blob function
 */
-void CBlob::JoinBlob( CBlob *blob )
+void CBlob::JoinBlob( CBlob *blob, bool deleteblob)
 {
 	/* Luca Nardelli & Saverio Murgia */
 	this->isJoined=true;
 	this->joinedBlobs.push_back(new CBlob(blob));
+	if(deleteblob){
+		blob->to_be_deleted=true;
+	}
 }
 
 vector<vector<Point>> CBlob::getPointsTouchingBorder( int border )
