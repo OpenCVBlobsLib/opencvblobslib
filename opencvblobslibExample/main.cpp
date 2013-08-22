@@ -15,11 +15,13 @@ void testTimes(int startRes,int endRes, int step,string fileName,int iter=1);
 
 void test();
 void opencvLogo();
+void testJoin();
 
 int main(){
 	//testTimes(500,1000,250,"Tempi",5);
 	//opencvLogo();
-	test();
+	//test();
+	testJoin();
 	return 0;
 }
 
@@ -151,3 +153,21 @@ void opencvLogo()
 	waitKey();
 	imwrite("Logo.png",im);
 }
+void testJoin(){
+	Mat im = imread("opencvblobslibBIG.png");
+	Mat img;
+	cvtColor(im,img,CV_BGR2GRAY);
+	threshold(img,img,254,255,CV_THRESH_BINARY_INV);
+	CBlobResult res(img,Mat(),0,1);
+	CBlob temp,t2;
+	for(int i=0;i<res.GetNumBlobs();i++){
+		temp.JoinBlob(res.GetBlob(i));
+	}
+	//Copy and assignment test
+	t2 = CBlob(temp);
+	t2.FillBlob(im,Scalar(200,200,0));
+	imshow("temp",im);
+	cout << t2.getNumJoinedBlobs() << endl;
+	waitKey();
+}
+

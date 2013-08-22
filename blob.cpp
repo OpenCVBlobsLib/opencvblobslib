@@ -15,6 +15,7 @@ MODIFICATIONS (Modification, Author, Date):
 
 
 #include "blob.h"
+#include <list>
 
 using namespace std;
 
@@ -28,6 +29,7 @@ CBlob::CBlob()
 	m_id = -1;
 	to_be_deleted=0;
 	deleteRequestOwnerBlob=NULL;
+	isJoined=false;
 }
 CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
 {
@@ -41,12 +43,13 @@ CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
 	m_originalImageSize = originalImageSize;
 	to_be_deleted=0;
 	deleteRequestOwnerBlob=NULL;
+	isJoined=false;
 }
 //! Copy constructor
 CBlob::CBlob( const CBlob &src )
 {
 	m_storage = NULL;
-	*this = src;
+	*this = src;	
 }
 
 CBlob::CBlob( const CBlob *src )
@@ -110,11 +113,26 @@ CBlob& CBlob::operator=(const CBlob &src )
 		}
 	}
 
+	isJoined = src.isJoined;
+	if(isJoined){
+		list<CBlob*>::const_iterator it,en = src.joinedBlobs.end();
+		for(it = src.joinedBlobs.begin();it!=en;it++){
+			joinedBlobs.push_back(new CBlob(*it));
+		}
+	}
+
 	return *this;
 }
 
 CBlob::~CBlob()
 {
+	if(isJoined){
+		list<CBlob*>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			delete (*it);
+		}
+	}
+
 	ClearContours();
 	
 	if( m_storage )
@@ -176,6 +194,9 @@ double CBlob::Area()
 		area -= (*itContour).GetArea();
 		itContour++;
 	}
+
+	
+
 	return area;
 }
 
@@ -674,6 +695,13 @@ void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX /*=0*/, int o
 	cvDrawContours( image, m_externalContour.GetContourPoints(), color, color,0, CV_FILLED, 8 );
 }
 void CBlob::FillBlob( Mat image, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/){
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			(*it)->FillBlob(&(IplImage)image,color,offsetX,offsetY);
+		}
+
+	}
 	FillBlob(&(IplImage)image,color,offsetX,offsetY);
 }
 
@@ -702,57 +730,22 @@ t_PointList CBlob::GetConvexHull()
 
 /**
 - FUNCTION: JoinBlob
-- FUNCTIONALITY: Add's external contour to current external contour
+- FUNCTIONALITY: Joins the 2 blobs, creating another blob which contains the 2 joined ones
 - PARAMETERS:
-	- blob: blob from which extract the added external contour
+	- blob: blob to join with the calling one
 - RESULT:
-	- true if no error ocurred
+	- Joined blob
 - RESTRICTIONS: Only external contours are added
 - AUTHOR: Ricard Borràs
 - CREATION DATE: 25-05-2005.
-- MODIFICATION: Date. Author. Description.
+- MODIFICATION: 
+	08-2013, Luca Nardelli & Saverio Murgia, Created a working version of the join blob function
 */
 void CBlob::JoinBlob( CBlob *blob )
 {
-	/* Luca Nardelli & Saverio Murgia
-	Freeman Chain Code:	
-		321		Values indicate the chain code used to identify next pixel location.
-		4-0		If I join 2 blobs I can't just append the 2nd blob chain codes, since they will still start
-		567		from the 1st blob start point
-	*/
-
-	CvSeqWriter writer;
-	CvSeqReader reader;
-	t_chainCode chainCode;
-
-	cvStartAppendToSeq( m_externalContour.GetChainCode(), &writer );
-	cvStartReadSeq( blob->GetExternalContour()->GetChainCode(), &reader );
-	//int diffX = blob->m_externalContour.m_startPoint.x - lastStartingPoint.x;
-	//int diffY = blob->m_externalContour.m_startPoint.y - lastStartingPoint.y;
-	//if(diffX < 0)
-	//	chainCode = 4;
-	//else
-	//	chainCode = 0;
-	//diffX=abs(diffX);
-	//for(int i=0;i<diffX;i++){
-	//	CV_WRITE_SEQ_ELEM(chainCode,writer);
-	//}
-	//if(diffY < 0)
-	//	chainCode = 2;
-	//else
-	//	chainCode = 6;
-	//diffY=abs(diffY);
-	//for(int i=0;i<diffY;i++){
-	//	CV_WRITE_SEQ_ELEM(chainCode,writer);
-	//}
-	for (int i = 0; i < blob->GetExternalContour()->GetChainCode()->total; i++ )
-	{
-		CV_READ_SEQ_ELEM( chainCode, reader );
-		CV_WRITE_SEQ_ELEM( chainCode, writer );
-	}
-	cvEndWriteSeq( &writer );
-	m_externalContour.m_contourPoints = NULL;
-	m_boundingBox.width=-1;
+	/* Luca Nardelli & Saverio Murgia */
+	this->isJoined=true;
+	this->joinedBlobs.push_back(new CBlob(blob));
 }
 
 vector<vector<Point>> CBlob::getPointsTouchingBorder( int border )
@@ -989,6 +982,11 @@ void CBlob::requestDeletion( CBlob *blob )
 	}
 	blob->to_be_deleted=1;
 	blob->deleteRequestOwnerBlob=this;
+}
+
+int CBlob::getNumJoinedBlobs()
+{
+	return joinedBlobs.size();
 }
 
 t_chainCode points2ChainCode( CvPoint p1, CvPoint p2 )

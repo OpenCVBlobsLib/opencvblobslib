@@ -24,6 +24,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include "BlobContour.h"
 #include "Segment.h"
 #include <deque>
+#include <list>
 
 
 #ifdef BLOB_OBJECT_FACTORY
@@ -118,7 +119,7 @@ public:
 	void FillBlob( IplImage *image, CvScalar color, int offsetX = 0, int offsetY = 0 );
 	//! opencv2 interface
 	void FillBlob( Mat image, CvScalar color, int offsetX = 0, int offsetY = 0 );
-	//! Join a blob to current one (add's contour
+	//! Joins a blob to current one
 	void JoinBlob( CBlob *blob );
 
 	/*
@@ -160,8 +161,14 @@ public:
 	*/
 	vector<vector<Point>> getPointsTouchingBorder(int border);
 	vector<vector<Point>> getMatchingPoints(CBlob* blob);	//Returns a vector of vectors containing all the segments common to the 2 blobs
+	
+	int getNumJoinedBlobs(); // For joined blobs, return the number of sub-blobs.
+
 private:
 	
+	bool isJoined;
+	std::list<CBlob*> joinedBlobs;
+
 	CBlob* deleteRequestOwnerBlob;
 	void requestDeletion(CBlob *blob);
 
