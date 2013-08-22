@@ -120,7 +120,7 @@ public:
 	//! opencv2 interface
 	void FillBlob( Mat image, CvScalar color, int offsetX = 0, int offsetY = 0 );
 	//! Joins a blob to current one
-	void JoinBlob( CBlob *blob );
+	void JoinBlob( CBlob *blob , bool deleteblob=false);
 
 	/*
 		Segments is a vector of vectors of 2 Points, which encode the starting and ending point of every common segment
