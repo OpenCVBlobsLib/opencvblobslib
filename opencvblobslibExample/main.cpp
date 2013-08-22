@@ -155,19 +155,22 @@ void opencvLogo()
 }
 void testJoin(){
 	Mat im = imread("opencvblobslibBIG.png");
-	Mat img;
+	Mat img,im2;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,img,254,255,CV_THRESH_BINARY_INV);
 	CBlobResult res(img,Mat(),0,1);
 	CBlob temp,t2;
 	for(int i=0;i<res.GetNumBlobs();i++){
+		im2 = im.clone();
 		temp.JoinBlob(res.GetBlob(i));
+		t2 = CBlob(temp);
+		Rect bbox = t2.GetBoundingBox();
+		rectangle(im2,bbox,Scalar(0,220,0),3);
+		t2.FillBlob(im2,Scalar(200,200,0));
+		imshow("temp",im2);
+		waitKey();
 	}
-	//Copy and assignment test
-	t2 = CBlob(temp);
-	t2.FillBlob(im,Scalar(200,200,0));
-	imshow("temp",im);
 	cout << t2.getNumJoinedBlobs() << endl;
-	waitKey();
+	
 }
 

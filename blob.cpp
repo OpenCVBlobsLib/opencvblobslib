@@ -153,12 +153,14 @@ void CBlob::ClearContours()
 	m_internalContours.clear();
 
 	m_externalContour.ResetChainCode();
+/*
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
 		for(it = joinedBlobs.begin();it!=en;it++){
 			(*it)->ClearContours();
 		}
 	}
+*/
 		
 }
 void CBlob::AddInternalContour( const CBlobContour &newContour )
@@ -580,8 +582,6 @@ CvRect CBlob::GetBoundingBox()
 	//m_boundingBox = ((CvContour*)GetExternalContour()->GetContourPoints())->rect;
 	//return m_boundingBox;
 
-	//This part is not necessary, since getContourPoints already computes the rectangle;
-
 	// it is an empty blob?
 	if( !externContour )
 	{
@@ -589,10 +589,35 @@ CvRect CBlob::GetBoundingBox()
 		m_boundingBox.y = 0;
 		m_boundingBox.width = 0;
 		m_boundingBox.height = 0;
-
+		if(isJoined){
+			m_boundingBox.x = 1000000;
+			m_boundingBox.y = 1000000;
+			CvRect bigRect = m_boundingBox;
+			list<CBlob *>::iterator it,en = joinedBlobs.end();
+			int maxX=0,maxY=0;
+			for(it = joinedBlobs.begin();it!=en;it++){
+				CvRect temp = (*it)->GetBoundingBox();
+				if(bigRect.x > temp.x){
+					bigRect.x = temp.x;
+				}
+				if(bigRect.y > temp.y){
+					bigRect.y = temp.y;
+				}
+				if(maxX < temp.x+temp.width){
+					maxX = temp.x+temp.width;
+				}
+				if(maxY < temp.y + temp.height){
+					maxY = temp.y + temp.height;
+				}
+			}
+			bigRect.width=maxX - bigRect.x;
+			bigRect.height=maxY - bigRect.y;
+			m_boundingBox=bigRect;
+		}
 		return m_boundingBox;
 	}
 
+	//This part should not be necessary, since getContourPoints already computes the rectangle;
 	cvStartReadSeq( externContour, &reader);
 
 	m_boundingBox.x = 1000000;
@@ -616,7 +641,31 @@ CvRect CBlob::GetBoundingBox()
 
 	m_boundingBox.width -= m_boundingBox.x;
 	m_boundingBox.height -= m_boundingBox.y;
-	
+
+	if(isJoined){
+		CvRect bigRect = m_boundingBox;
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		int maxX=0,maxY=0;
+		for(it = joinedBlobs.begin();it!=en;it++){
+			CvRect temp = (*it)->GetBoundingBox();
+			if(bigRect.x > temp.x){
+				bigRect.x = temp.x;
+			}
+			if(bigRect.y > temp.y){
+				bigRect.y = temp.y;
+			}
+			if(maxX < temp.x+temp.width){
+				maxX = temp.x+temp.width;
+			}
+			if(maxY < temp.y + temp.height){
+				maxY = temp.y + temp.height;
+			}
+		}
+		bigRect.width=maxX - bigRect.x;
+		bigRect.height=maxY - bigRect.y;
+		m_boundingBox=bigRect;
+	}
+
 	return m_boundingBox;
 }
 
