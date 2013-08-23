@@ -17,9 +17,9 @@ MODIFICATIONS (Modification, Author, Date):
 
 #ifndef CBLOB_INSPECTA_INCLUDED
 #define CBLOB_INSPECTA_INCLUDED
-
-#include "opencv\cxcore.h"
-#include "opencv2\opencv.hpp"
+class CBlob;
+#include "opencv/cxcore.h"
+#include "opencv2/opencv.hpp"
 #include "BlobLibraryConfiguration.h"
 #include "BlobContour.h"
 #include "Segment.h"

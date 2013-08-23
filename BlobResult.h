@@ -37,7 +37,7 @@ MODIFICATIONS (Modification, Author, Date):
 
 #include <vector>		// vectors de la STL
 #include <functional>
-#include "Blob.h"
+#include "blob.h"
 #include "BlobOperators.h"
 #include "ComponentLabeling.h"
 #include "Segment.h"

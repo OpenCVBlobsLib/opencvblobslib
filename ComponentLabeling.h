@@ -3,7 +3,7 @@
 
 #include "vector"
 #include "BlobContour.h"
-#include "Blob.h"
+#include "blob.h"
 #include "opencv2/opencv.hpp"
 
 

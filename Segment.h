@@ -1,9 +1,9 @@
 #pragma once
+class Segment;
 #include "blob.h"
 #include <opencv2/opencv.hpp>
 using namespace cv;
 
-class Cblob;
 
 class Segment{
 private:
