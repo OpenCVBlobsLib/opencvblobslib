@@ -1,6 +1,6 @@
 #
 # Makefile for blobs library for OpenCV Version 4 and its examples
-#
+# made by: Kumar Vishal
 
 CFLAGS= -fpermissive `pkg-config --cflags opencv` -I. 
 LDFLAGS= `pkg-config --libs opencv` -L. -lblob 
