@@ -56,7 +56,7 @@ void MacroBlob::join()
 	}
 
 	 
-	//Per la scelta del primo blob prendo quello più in alto perchè altrimenti potrei avere blob con lo starting point
+	//Per la scelta del primo blob prendo quello piï¿½ in alto perchï¿½ altrimenti potrei avere blob con lo starting point
 	//che si trova su una delle linee sovrapposte. Impongo anche il vincolo di non avere chaincodelist nulla
 	CBlob* blob;
 	Point p0 = Point(-1,blobsToJoin[0]->m_originalImageSize.height);
@@ -140,7 +140,7 @@ void MacroBlob::join()
 			}
 		}
 		else{
-			//Se il blob non ha chain code (è formato probabilmente da un punto solo) proseguo con il blob corrente.
+			//Se il blob non ha chain code (ï¿½ formato probabilmente da un punto solo) proseguo con il blob corrente.
 			blob = Point(blob->GetExternalContour()->GetStartPoint()) == Point(commonSegments[segmentIndex].blobA->GetExternalContour()->GetStartPoint()) ? commonSegments[segmentIndex].blobB : commonSegments[segmentIndex].blobA;
 		}
 	} while(pt!=originalStartingPt);
@@ -209,7 +209,11 @@ Point MacroBlob::chainCode2Point( Point org,t_chainCode code )
 
 MacroBlobJoiner::MacroBlobJoiner(vector<MacroBlob> &vect):macroBlobs(vect)
 {
-	numCores =pthread_num_processors_np();
+#ifdef _WIN32
+	numCores = pthread_num_processors_np();
+#else
+	numCores = 4;
+#endif
 	threadIds = new pthread_t[numCores];
 	mutex = PTHREAD_MUTEX_INITIALIZER;
 	currentIndex=0;

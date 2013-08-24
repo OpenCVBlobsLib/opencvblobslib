@@ -1,9 +1,9 @@
 /************************************************************************
   			BlobLibraryConfiguration.h
   			
-FUNCIONALITAT: Configuració del comportament global de la llibreria
+FUNCIONALITAT: Configuraciï¿½ del comportament global de la llibreria
 AUTOR: Inspecta S.L.
-MODIFICACIONS (Modificació, Autor, Data):
+MODIFICACIONS (Modificaciï¿½, Autor, Data):
 
 FUNCTIONALITY: Global configuration of the library
 AUTHOR: Inspecta S.L.
@@ -19,4 +19,14 @@ MODIFICATIONS (Modification, Author, Date):
 //#define BLOB_OBJECT_FACTORY
 
 //! Show/not show blob access errors
-#define _SHOW_ERRORS
+//#define _SHOW_ERRORS
+
+#ifndef EXCEPTION_READ_FAULT
+#define EXCEPTION_READ_FAULT  0 // Access violation was caused by a read
+#endif
+#ifndef EXCEPTION_WRITE_FAULT
+#define EXCEPTION_WRITE_FAULT   1 // Access violation was caused by a read
+#endif
+#ifndef EXCEPTION_EXECUTE_FAULT
+#define EXCEPTION_EXECUTE_FAULT   8 // Access violation was caused by a read
+#endif

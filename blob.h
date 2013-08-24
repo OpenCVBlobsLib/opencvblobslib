@@ -1,9 +1,9 @@
 /************************************************************************
   			Blob.h
   			
-FUNCIONALITAT: Definició de la classe CBlob
+FUNCIONALITAT: Definiciï¿½ de la classe CBlob
 AUTOR: Inspecta S.L.
-MODIFICACIONS (Modificació, Autor, Data):
+MODIFICACIONS (Modificaciï¿½, Autor, Data):
 
 FUNCTIONALITY: Definition of the CBlob class and some helper classes to perform
 			   some calculations on it
@@ -23,6 +23,7 @@ class CBlob;
 #include "BlobLibraryConfiguration.h"
 #include "BlobContour.h"
 #include "Segment.h"
+//#include "abstractsegment.h"
 #include <deque>
 #include <list>
 
@@ -52,7 +53,7 @@ public:
 	CBlob( const CBlob &src );
 	CBlob( const CBlob *src );
 
-	//! Operador d'assignació
+	//! Operador d'assignaciï¿½
 	//! Assigment operator
 	CBlob& operator=(const CBlob &src );
 	
@@ -106,7 +107,7 @@ public:
 	double StdDev( IplImage *image );
 	//! opencv2 interface
 	double StdDev( Mat image );
-	//! Indica si el blob està buit ( no té cap info associada )
+	//! Indica si el blob estï¿½ buit ( no tï¿½ cap info associada )
 	//! Shows if the blob has associated information
 	bool IsEmpty();
 
@@ -159,8 +160,8 @@ public:
 	/*
 	Border: 0 = top, 1 = right, 2 = bottom, 3 = left
 	*/
-	vector<vector<Point>> getPointsTouchingBorder(int border);
-	vector<vector<Point>> getMatchingPoints(CBlob* blob);	//Returns a vector of vectors containing all the segments common to the 2 blobs
+	vector<vector<Point> > getPointsTouchingBorder(int border);
+	vector<vector<Point> > getMatchingPoints(CBlob* blob);	//Returns a vector of vectors containing all the segments common to the 2 blobs
 	
 	int getNumJoinedBlobs(); // For joined blobs, return the number of sub-blobs.
 

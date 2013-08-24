@@ -8,17 +8,17 @@ static const CvPoint freemanCodeIncrement[8] =
 
 
 /**
-- FUNCIÓ: 
+- FUNCIï¿½: 
 - FUNCIONALITAT: 
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/04/29
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/04/29
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 inline unsigned char GET_ABOVE_IMAGEPIXEL( unsigned char *currentPixel, IplImage *image )
 {
@@ -49,17 +49,17 @@ inline bool GET_BELOW_VISITEDPIXEL( bool *currentPixel, int imageWidth )
 }
 
 /**
-- FUNCIÓ: ASSIGN_LABEL
+- FUNCIï¿½: ASSIGN_LABEL
 - FUNCIONALITAT: Assigns label value to label image
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/04/29
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/04/29
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 inline void ASSIGN_LABEL( CvPoint p, t_labelType *labels, int imageWidth, int newLabel )
 {
@@ -73,9 +73,9 @@ inline void ASSIGN_VISITED( CvPoint p, bool *visitedPoints, int imageWidth  )
 }
 
 /**
-- FUNCIÓ: ComponentLabeling
+- FUNCIï¿½: ComponentLabeling
 - FUNCIONALITAT: Calcula els components binaris (blobs) d'una imatge amb connectivitat a 8
-- PARÀMETRES:
+- PARï¿½METRES:
 	- inputImage: image to segment (pixel values different than blobColor are treated as background)
 	- maskImage: if not NULL, all the pixels equal to 0 in mask are skipped in input image
 	- backgroundColor: color of background (ignored pixels)
@@ -85,11 +85,20 @@ inline void ASSIGN_VISITED( CvPoint p, bool *visitedPoints, int imageWidth  )
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/04/21
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/04/21
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 - NOTA: Algorithm based on "A linear-time component labeling algorithm using contour tracing technique", 
 		F.Chang et al
 */
+
+bool ComponentLabeling(	IplImage* inputImage,
+						IplImage* maskImage,
+						unsigned char backgroundColor,
+						Blob_vector &blobs){
+	Mat lbl;
+	return ComponentLabeling(inputImage,maskImage,backgroundColor,blobs,lbl);
+}
+
 bool ComponentLabeling(	IplImage* inputImage,
 						IplImage* maskImage,
 						unsigned char backgroundColor,
@@ -277,17 +286,17 @@ bool ComponentLabeling(	IplImage* inputImage,
 }
 
 /**
-- FUNCIÓ: 
+- FUNCIï¿½: 
 - FUNCIONALITAT: 
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/04/29
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/04/29
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 void contourTracing( IplImage *image, 
 					 IplImage *maskImage,
@@ -355,17 +364,17 @@ void contourTracing( IplImage *image,
 }
 
 /**
-- FUNCIÓ: tracer
+- FUNCIï¿½: tracer
 - FUNCIONALITAT: Searches for next point of a contour
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/04/30
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/04/30
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 CvPoint tracer( IplImage *image, IplImage *maskImage, CvPoint P, bool *visitedPoints,
 				short initialMovement,

@@ -1,9 +1,9 @@
 /************************************************************************
   			Blob.cpp
   			
-- FUNCIONALITAT: Implementació de la classe CBlob
+- FUNCIONALITAT: Implementaciï¿½ de la classe CBlob
 - AUTOR: Inspecta S.L.
-MODIFICACIONS (Modificació, Autor, Data):
+MODIFICACIONS (Modificaciï¿½, Autor, Data):
 
  
 FUNCTIONALITY: Implementation of the CBlob class and some helper classes to perform
@@ -168,7 +168,7 @@ void CBlob::AddInternalContour( const CBlobContour &newContour )
 	m_internalContours.push_back(newContour);
 }
 
-//! Indica si el blob està buit ( no té cap info associada )
+//! Indica si el blob estï¿½ buit ( no tï¿½ cap info associada )
 //! Shows if the blob has associated information
 bool CBlob::IsEmpty()
 {
@@ -176,17 +176,17 @@ bool CBlob::IsEmpty()
 }
 
 /**
-- FUNCIÓ: Area
+- FUNCIï¿½: Area
 - FUNCIONALITAT: Get blob area, ie. external contour area minus internal contours area
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/04/30
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/04/30
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 double CBlob::Area()
 {
@@ -214,17 +214,17 @@ double CBlob::Area()
 }
 
 /**
-- FUNCIÓ: Perimeter
+- FUNCIï¿½: Perimeter
 - FUNCIONALITAT: Get blob perimeter, ie. sum of the length of all the contours
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/04/30
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/04/30
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 double CBlob::Perimeter()
 {
@@ -252,9 +252,9 @@ double CBlob::Perimeter()
 }
 
 /**
-- FUNCIÓ: Exterior
+- FUNCIï¿½: Exterior
 - FUNCIONALITAT: Return true for extern blobs
-- PARÀMETRES:
+- PARï¿½METRES:
 	- xBorder: true to consider blobs touching horizontal borders as extern
 	- yBorder: true to consider blobs touching vertical borders as extern
 - RESULTAT:
@@ -262,8 +262,8 @@ double CBlob::Perimeter()
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/05/06
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/05/06
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 int	CBlob::Exterior(IplImage *mask, bool xBorder /* = true */, bool yBorder /* = true */)
 {
@@ -280,9 +280,9 @@ int	CBlob::Exterior(Mat mask, bool xBorder /* = true */, bool yBorder /* = true 
 	return Exterior(&(IplImage) mask, xBorder, yBorder);	 
 }
 /**
-- FUNCIÓ: ExternPerimeter
+- FUNCIï¿½: ExternPerimeter
 - FUNCIONALITAT: Get extern perimeter (perimeter touching image borders)
-- PARÀMETRES:
+- PARï¿½METRES:
 	- maskImage: if != NULL, counts maskImage black pixels as external pixels and contour points touching
 				 them are counted as external contour points.
 	- xBorder: true to consider blobs touching horizontal borders as extern
@@ -292,8 +292,8 @@ int	CBlob::Exterior(Mat mask, bool xBorder /* = true */, bool yBorder /* = true 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/05/05
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/05/05
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 - NOTA: If CBlobContour::GetContourPoints aproximates contours with a method different that NONE,
 		this function will not give correct results
 */
@@ -457,17 +457,17 @@ double CBlob::Moment(int p, int q)
 }
 
 /**
-- FUNCIÓ: Mean
+- FUNCIï¿½: Mean
 - FUNCIONALITAT: Get blob mean color in input image
-- PARÀMETRES:
+- PARï¿½METRES:
 	- image: image from gray color are extracted
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/05/06
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/05/06
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 double CBlob::Mean( IplImage *image )
 {
@@ -553,17 +553,17 @@ double CBlob::StdDev(Mat image){
 	return StdDev(&(IplImage)image);
 }
 /**
-- FUNCIÓ: GetBoundingBox
+- FUNCIï¿½: GetBoundingBox
 - FUNCIONALITAT: Get bounding box (without rotation) of a blob
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/05/06
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/05/06
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 */
 CvRect CBlob::GetBoundingBox()
 {
@@ -670,17 +670,17 @@ CvRect CBlob::GetBoundingBox()
 }
 
 /**
-- FUNCIÓ: GetEllipse
+- FUNCIï¿½: GetEllipse
 - FUNCIONALITAT: Calculates bounding ellipse of external contour points
-- PARÀMETRES:
+- PARï¿½METRES:
 	- 
 - RESULTAT:
 	- 
 - RESTRICCIONS:
 	- 
 - AUTOR: rborras
-- DATA DE CREACIÓ: 2008/05/06
-- MODIFICACIÓ: Data. Autor. Descripció.
+- DATA DE CREACIï¿½: 2008/05/06
+- MODIFICACIï¿½: Data. Autor. Descripciï¿½.
 - NOTA: Calculation is made using second order moment aproximation
 */
 CvBox2D CBlob::GetEllipse()
@@ -773,7 +773,7 @@ CvBox2D CBlob::GetEllipse()
 - RESULT:
 	- modifies input image and returns the seed point used to fill the blob
 - RESTRICTIONS:
-- AUTHOR: Ricard Borràs
+- AUTHOR: Ricard Borrï¿½s
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
@@ -807,7 +807,7 @@ void CBlob::FillBlob( Mat image, CvScalar color, int offsetX /*=0*/, int offsetY
 - RESULT:
 	- true if no error ocurred
 - RESTRICTIONS:
-- AUTHOR: Ricard Borràs
+- AUTHOR: Ricard Borrï¿½s
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
@@ -830,7 +830,7 @@ t_PointList CBlob::GetConvexHull()
 - RESULT:
 	- Joined blob
 - RESTRICTIONS: Only external contours are added
-- AUTHOR: Ricard Borràs
+- AUTHOR: Ricard Borrï¿½s
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: 
 	08-2013, Luca Nardelli & Saverio Murgia, Created a working version of the join blob function
@@ -845,16 +845,16 @@ void CBlob::JoinBlob( CBlob *blob, bool deleteblob)
 	}
 }
 
-vector<vector<Point>> CBlob::getPointsTouchingBorder( int border )
+vector<vector<Point> > CBlob::getPointsTouchingBorder( int border )
 {
 	vector<Point> points;
-	vector<vector<Point>> segments;
+	vector<vector<Point> > segments;
 	CvPoint pt,pt2;
 	int pointsIndex;
 	int numPoints = m_externalContour.GetContourPoints()->total;
 	CvSeqReader reader;
 	cvStartReadSeq(m_externalContour.GetContourPoints(),&reader);
-	//Determino quale fra il primo e l'ultimo punto (coincidenti) è da scartare in quanto singolo.
+	//Determino quale fra il primo e l'ultimo punto (coincidenti) ï¿½ da scartare in quanto singolo.
 	CV_READ_SEQ_ELEM(pt,reader);
 	CV_READ_SEQ_ELEM(pt2,reader);
 	bool discardLast = false;
@@ -1020,7 +1020,7 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 	cvClearSeq(GetExternalContour()->m_contourPoints);
 	GetExternalContour()->m_contourPoints = cvCloneSeq(newContour,m_storage);
 	cvClearSeq(blob->GetExternalContour()->m_contourPoints);
-	blob->GetExternalContour()->m_contourPoints = cvCloneSeq(newContour,blob->m_storage); //Anche il nuovo blob avrà lo stesso contour!
+	blob->GetExternalContour()->m_contourPoints = cvCloneSeq(newContour,blob->m_storage); //Anche il nuovo blob avrï¿½ lo stesso contour!
 	
 	newChain = cvEndWriteSeq(&writerChain);
 	cvClearSeq(GetExternalContour()->m_contour);
@@ -1070,7 +1070,7 @@ void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
 
 void CBlob::requestDeletion( CBlob *blob )
 {
-	//Se il blob è già stato segnalato per la cancellazione, allora segnalo anche i blob che lo hanno richiesto per essere cancellati
+	//Se il blob ï¿½ giï¿½ stato segnalato per la cancellazione, allora segnalo anche i blob che lo hanno richiesto per essere cancellati
 	while(blob->deleteRequestOwnerBlob!=NULL){
 		CBlob *temp = blob;
 		blob->deleteRequestOwnerBlob->to_be_deleted=1;
