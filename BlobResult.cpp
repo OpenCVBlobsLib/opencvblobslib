@@ -101,7 +101,7 @@ CBlobResult::CBlobResult()
 CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor)
 {
 	Mat lbl;
-	CBlobResult(source,mask,backgroundColor,lbl);
+	*this = CBlobResult(source,mask,backgroundColor,lbl);
 }
 CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor ,Mat &labelled)
 {
