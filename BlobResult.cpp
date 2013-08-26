@@ -1121,10 +1121,12 @@ void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
 		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->labels);
 	//Devo sommare l'offset di ogni punto
 	int numBlobs = msg->res->GetNumBlobs();
+	int numCores = 1;
 #ifdef _WIN32
-	int numCores = pthread_num_processors_np();
-#else
-	int numCores = 4;
+	numCores = pthread_num_processors_np();
+#endif
+#ifdef __linux__
+
 #endif
 	for(int i=0;i<numBlobs;i++){
 		CBlob *curBlob = msg->res->GetBlob(i);

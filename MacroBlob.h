@@ -4,7 +4,9 @@
 #include <opencv2/opencv.hpp>
 #include <pthread.h>
 #include <vector>
-
+#ifdef __linux__
+	#include <unistd.h>
+#endif
 /* Classe per gestire il join dei blob dopo la detection multithread
 */
 class MacroBlob

@@ -209,10 +209,12 @@ Point MacroBlob::chainCode2Point( Point org,t_chainCode code )
 
 MacroBlobJoiner::MacroBlobJoiner(vector<MacroBlob> &vect):macroBlobs(vect)
 {
+numCores = 1;
 #ifdef _WIN32
 	numCores = pthread_num_processors_np();
-#else
-	numCores = 4;
+#endif
+#ifdef __linux__
+	numCores = sysconf( _SC_NPROCESSORS_ONLN );
 #endif
 	threadIds = new pthread_t[numCores];
 	mutex = PTHREAD_MUTEX_INITIALIZER;

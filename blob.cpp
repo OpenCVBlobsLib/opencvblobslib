@@ -114,6 +114,7 @@ CBlob& CBlob::operator=(const CBlob &src )
 	}
 
 	isJoined = src.isJoined;
+	joinedBlobs.clear();
 	if(isJoined){
 		list<CBlob*>::const_iterator it,en = src.joinedBlobs.end();
 		for(it = src.joinedBlobs.begin();it!=en;it++){
@@ -190,25 +191,33 @@ bool CBlob::IsEmpty()
 */
 double CBlob::Area()
 {
-	double area;
+	double area=0;
 	t_contourList::iterator itContour; 
 
-	area = m_externalContour.GetArea();
-
-	itContour = m_internalContours.begin();
-	
-	while (itContour != m_internalContours.end() )
-	{
-		area -= (*itContour).GetArea();
-		itContour++;
-	}
 
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
 		for(it = joinedBlobs.begin();it!=en;it++){
-			area=+(*it)->Area();
+			area += (*it)->m_externalContour.GetArea();
+			itContour = (*it)->m_internalContours.begin();
+			while (itContour != (*it)->m_internalContours.end() )
+			{
+				area -= (*itContour).GetArea();
+				itContour++;
+			}
 		}
 	}
+	else{
+		area = m_externalContour.GetArea();
+		itContour = m_internalContours.begin();
+		while (itContour != m_internalContours.end() )
+		{
+			area -= (*itContour).GetArea();
+			itContour++;
+		}
+	}
+
+
 
 	return area;
 }
@@ -228,25 +237,31 @@ double CBlob::Area()
 */
 double CBlob::Perimeter()
 {
-	double perimeter;
+	double perimeter=0;
 	t_contourList::iterator itContour; 
-
-	perimeter = m_externalContour.GetPerimeter();
-
-	itContour = m_internalContours.begin();
-	
-	while (itContour != m_internalContours.end() )
-	{
-		perimeter += (*itContour).GetPerimeter();
-		itContour++;
-	}
 
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
 		for(it = joinedBlobs.begin();it!=en;it++){
-			perimeter=+(*it)->Perimeter();
+			perimeter+= (*it)->Perimeter();
+			itContour = (*it)->m_internalContours.begin();
+			while (itContour != (*it)->m_internalContours.end() )
+			{
+				perimeter += (*itContour).GetPerimeter();
+				itContour++;
+			}
 		}
 	}
+	else{
+		perimeter = m_externalContour.GetPerimeter();
+		itContour = m_internalContours.begin();
+		while (itContour != m_internalContours.end() )
+		{
+			perimeter += (*itContour).GetPerimeter();
+			itContour++;
+		}
+	}
+
 	return perimeter;
 
 }
@@ -313,9 +328,18 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 		return m_externPerimeter;
 	}
 
+
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			m_externPerimeter+=(*it)->ExternPerimeter(maskImage, xBorder /* = true */, yBorder /* = true */);
+		}
+		return m_externPerimeter;
+	}
+
+
 	// get contour pixels
 	externContour = m_externalContour.GetContourPoints();
-
 	m_externPerimeter = 0;
 
 	// there are contour pixels?
@@ -425,33 +449,41 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 	// divide by two because external points have one side inside the blob and the other outside
 	// Perimeter of external points counts both sides, so it must be divided
 	m_externPerimeter /= 2.0;
-	
-	if(isJoined){
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		for(it = joinedBlobs.begin();it!=en;it++){
-			m_externPerimeter=+(*it)->ExternPerimeter(maskImage, xBorder /* = true */, yBorder /* = true */);
-		}
-	}
-
 	return m_externPerimeter;
 }
 double CBlob::ExternPerimeter( Mat maskImage, bool xBorder /* = true */, bool yBorder /* = true */){
-	return ExternPerimeter( &(IplImage) maskImage, xBorder /* = true */, yBorder /* = true */);
+	if(!maskImage.data){
+		return ExternPerimeter( NULL, xBorder /* = true */, yBorder /* = true */);
+	}
+	else
+		return ExternPerimeter( &(IplImage) maskImage, xBorder /* = true */, yBorder /* = true */);
 }
 //! Compute blob's moment (p,q up to MAX_CALCULATED_MOMENTS)
 double CBlob::Moment(int p, int q)
 {
-	double moment;
+	double moment=0;
 	t_contourList::iterator itContour; 
 
-	moment = m_externalContour.GetMoment(p,q);
-
-	itContour = m_internalContours.begin();
-	
-	while (itContour != m_internalContours.end() )
-	{
-		moment -= (*itContour).GetMoment(p,q);
-		itContour++;
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			moment += (*it)->m_externalContour.GetMoment(p,q);
+			itContour = (*it)->m_internalContours.begin();
+			while (itContour != (*it)->m_internalContours.end() )
+			{
+				moment -= (*itContour).GetMoment(p,q);
+				itContour++;
+			}
+		}
+	}
+	else{
+		moment = m_externalContour.GetMoment(p,q);
+		itContour = m_internalContours.begin();
+		while (itContour != m_internalContours.end() )
+		{
+			moment -= (*itContour).GetMoment(p,q);
+			itContour++;
+		}
 	}
 	return moment;
 }
@@ -497,17 +529,34 @@ double CBlob::Mean( IplImage *image )
 	offset.x = -m_boundingBox.x;
 	offset.y = -m_boundingBox.y;
 
-	// draw contours on mask
-	cvDrawContours( mask, m_externalContour.GetContourPoints(), CV_RGB(255,255,255), CV_RGB(255,255,255),0, CV_FILLED, 8,
+	//If joined
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			cvDrawContours( mask, (*it)->m_externalContour.GetContourPoints(), CV_RGB(255,255,255), CV_RGB(255,255,255),0, CV_FILLED, 8,
+				offset );
+			t_contourList::iterator itint = (*it)->m_internalContours.begin();
+			while(itint != (*it)->m_internalContours.end() )
+			{
+				cvDrawContours( mask, (*itint).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
 					offset );
+				itint++;
+			}
+		}
+	}
+	else{
+		// draw contours on mask
+		cvDrawContours( mask, m_externalContour.GetContourPoints(), CV_RGB(255,255,255), CV_RGB(255,255,255),0, CV_FILLED, 8,
+						offset );
 
-	// draw internal contours
-	t_contourList::iterator it = m_internalContours.begin();
-	while(it != m_internalContours.end() )
-	{
-		cvDrawContours( mask, (*it).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
-					offset );
-		it++;
+		// draw internal contours
+		t_contourList::iterator it = m_internalContours.begin();
+		while(it != m_internalContours.end() )
+		{
+			cvDrawContours( mask, (*it).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
+						offset );
+			it++;
+		}
 	}
 
 	cvSetImageROI( image, m_boundingBox );
@@ -518,18 +567,6 @@ double CBlob::Mean( IplImage *image )
 
 	cvReleaseImage( &mask );
 	cvResetImageROI( image );
-
-
-	if(isJoined){
-		double total_area=this->Area();
-		double total_value=m_meanGray*Area();
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		for(it = joinedBlobs.begin();it!=en;it++){
-			total_value=+(*it)->Area() * (*it)->Mean(image);
-			total_area=+(*it)->Area();
-		}
-		m_meanGray=total_value/total_area;
-	}
 
 	return m_meanGray;
 }
@@ -568,10 +605,39 @@ double CBlob::StdDev(Mat image){
 CvRect CBlob::GetBoundingBox()
 {
 	// it is calculated?
-	/*if( m_boundingBox.width != -1 )
+	if( m_boundingBox.width != -1 )
 	{
 		return m_boundingBox;
-	}*/
+	}
+
+	if(isJoined){
+		CvRect bigRect;
+		bigRect.x = 1000000;
+		bigRect.y = 1000000;
+		bigRect.height = 0;
+		bigRect.width = 0;
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		int maxX=0,maxY=0;
+		for(it = joinedBlobs.begin();it!=en;it++){
+			CvRect temp = (*it)->GetBoundingBox();
+			if(bigRect.x > temp.x){
+				bigRect.x = temp.x;
+			}
+			if(bigRect.y > temp.y){
+				bigRect.y = temp.y;
+			}
+			if(maxX < temp.x+temp.width){
+				maxX = temp.x+temp.width;
+			}
+			if(maxY < temp.y + temp.height){
+				maxY = temp.y + temp.height;
+			}
+		}
+		bigRect.width=maxX - bigRect.x;
+		bigRect.height=maxY - bigRect.y;
+		m_boundingBox=bigRect;
+		return m_boundingBox;
+	}
 
 	t_PointList externContour;
 	CvSeqReader reader;
@@ -641,30 +707,6 @@ CvRect CBlob::GetBoundingBox()
 
 	m_boundingBox.width -= m_boundingBox.x;
 	m_boundingBox.height -= m_boundingBox.y;
-
-	if(isJoined){
-		CvRect bigRect = m_boundingBox;
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		int maxX=0,maxY=0;
-		for(it = joinedBlobs.begin();it!=en;it++){
-			CvRect temp = (*it)->GetBoundingBox();
-			if(bigRect.x > temp.x){
-				bigRect.x = temp.x;
-			}
-			if(bigRect.y > temp.y){
-				bigRect.y = temp.y;
-			}
-			if(maxX < temp.x+temp.width){
-				maxX = temp.x+temp.width;
-			}
-			if(maxY < temp.y + temp.height){
-				maxY = temp.y + temp.height;
-			}
-		}
-		bigRect.width=maxX - bigRect.x;
-		bigRect.height=maxY - bigRect.y;
-		m_boundingBox=bigRect;
-	}
 
 	return m_boundingBox;
 }
@@ -796,7 +838,9 @@ void CBlob::FillBlob( Mat image, CvScalar color, int offsetX /*=0*/, int offsetY
 		}
 
 	}
-	FillBlob(&(IplImage)image,color,offsetX,offsetY);
+	else{
+		FillBlob(&(IplImage)image,color,offsetX,offsetY);
+	}
 }
 
 /**
@@ -838,11 +882,29 @@ t_PointList CBlob::GetConvexHull()
 void CBlob::JoinBlob( CBlob *blob, bool deleteblob)
 {
 	/* Luca Nardelli & Saverio Murgia */
-	this->isJoined=true;
-	this->joinedBlobs.push_back(new CBlob(blob));
+	//Check on m_storage in order to not add empty blobs.
+	if(!isJoined && m_storage){
+		this->joinedBlobs.push_back(new CBlob(this));
+	}
+	if(blob->isJoined){
+		list<CBlob *>::iterator it,en = blob->joinedBlobs.end();
+		for(it = blob->joinedBlobs.begin();it!=en;it++){
+			this->joinedBlobs.push_back(new CBlob(*it));
+		}
+	}
+	else{
+		this->joinedBlobs.push_back(new CBlob(blob));
+	}
 	if(deleteblob){
 		blob->to_be_deleted=true;
 	}
+
+
+	this->isJoined=true;
+	this->m_boundingBox.width=-1;
+	this->m_externPerimeter=-1;
+	this->m_meanGray=-1;
+
 }
 
 vector<vector<Point> > CBlob::getPointsTouchingBorder( int border )

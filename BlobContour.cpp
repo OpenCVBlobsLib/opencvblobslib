@@ -257,7 +257,6 @@ t_PointList CBlobContour::GetContourPoints()
 	// assign calculated bounding box
 	((CvContour*)m_contourPoints)->rect = boundingBox;
 
-
 	return m_contourPoints;
 }
 

@@ -6,7 +6,7 @@
 #include <intrin.h>
 
 const int IMSIZE = 400;
-const int NUMCORES = 4;
+const int NUMCORES = 2;
 using namespace std;
 
 
@@ -18,10 +18,10 @@ void opencvLogo();
 void testJoin();
 
 int main(){
-	//testTimes(500,1000,250,"Tempi",5);
-	//opencvLogo();
+	//testTimes(500,6000,250,"Tempi",5);
+	opencvLogo();
 	//test();
-	testJoin();
+	//testJoin();
 	return 0;
 }
 
@@ -155,10 +155,10 @@ void opencvLogo()
 }
 void testJoin(){
 	Mat im = imread("opencvblobslibBIG.png");
-	Mat img,im2;
+	Mat img,imt,im2;
 	cvtColor(im,img,CV_BGR2GRAY);
-	threshold(img,img,254,255,CV_THRESH_BINARY_INV);
-	CBlobResult res(img,Mat(),0,1);
+	threshold(img,imt,254,255,CV_THRESH_BINARY_INV);
+	CBlobResult res(imt,Mat(),0,1);
 	CBlob temp,t2;
 	for(int i=0;i<res.GetNumBlobs();i++){
 		im2 = im.clone();
@@ -167,6 +167,15 @@ void testJoin(){
 		Rect bbox = t2.GetBoundingBox();
 		rectangle(im2,bbox,Scalar(0,220,0),3);
 		t2.FillBlob(im2,Scalar(200,200,0));
+		cout << "Perimeter: " << t2.Perimeter();
+		cout << "\tArea: " << t2.Area();
+		cout << endl;
+		cout << "ExtPerim: " << t2.ExternPerimeter(Mat());
+		cout << "\tNBlobs: " << t2.getNumJoinedBlobs();
+		cout << endl;
+		cout << "Mean: " << t2.Mean(img);
+		cout << "\tM00: " << t2.Moment(0,0);
+		cout << endl;
 		imshow("temp",im2);
 		waitKey();
 	}

@@ -25,6 +25,9 @@ MODIFICATIONS (Modification, Author, Date):
 #include <opencv2/opencv.hpp>
 #include <opencv2/opencv_modules.hpp>
 #include <deque>
+#ifdef __linux__
+	#include <unistd.h>
+#endif
 
 #ifdef MATRIXCV_ACTIU
 	#include "matrixCV.h"
