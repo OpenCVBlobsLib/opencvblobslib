@@ -4,9 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <pthread.h>
 #include <vector>
-#ifdef __linux__
-	#include <unistd.h>
-#endif
+
 /* Classe per gestire il join dei blob dopo la detection multithread
 */
 class MacroBlob
@@ -31,11 +29,11 @@ private:
 	pthread_t *threadIds;
 	pthread_mutex_t mutex;
 	int currentIndex;
-	int numCores;
+	int numThreads;
 	int getIndexThread(); //Per garantire che i thread prendano macroblobs successivi
 	static void* threadJoiner(MacroBlobJoiner *instance);
 public:
-	MacroBlobJoiner(vector<MacroBlob> &vect);
+	MacroBlobJoiner(vector<MacroBlob> &vect, int numT);
 	~MacroBlobJoiner();
 	void JoinAll();
 };

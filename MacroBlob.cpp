@@ -207,16 +207,9 @@ Point MacroBlob::chainCode2Point( Point org,t_chainCode code )
 	return org +increments[code];
 }
 
-MacroBlobJoiner::MacroBlobJoiner(vector<MacroBlob> &vect):macroBlobs(vect)
+MacroBlobJoiner::MacroBlobJoiner(vector<MacroBlob> &vect, int numT):macroBlobs(vect),numThreads(numT)
 {
-numCores = 1;
-#ifdef _WIN32
-	numCores = pthread_num_processors_np();
-#endif
-#ifdef __linux__
-	numCores = sysconf( _SC_NPROCESSORS_ONLN );
-#endif
-	threadIds = new pthread_t[numCores];
+	threadIds = new pthread_t[numThreads];
 	mutex = PTHREAD_MUTEX_INITIALIZER;
 	currentIndex=0;
 }

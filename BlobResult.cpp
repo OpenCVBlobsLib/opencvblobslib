@@ -228,7 +228,7 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numTh
 				prevLabelBottom=labelBottom;
 			}	
 		}
-		MacroBlobJoiner joiner(macroBlobs);
+		MacroBlobJoiner joiner(macroBlobs, numThreads);
 		joiner.JoinAll();
 		for(int i=0;i<macroBlobs.size();i++){
 			if(macroBlobs[i].joinedBlob)
@@ -1121,13 +1121,6 @@ void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
 		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->labels);
 	//Devo sommare l'offset di ogni punto
 	int numBlobs = msg->res->GetNumBlobs();
-	int numCores = 1;
-#ifdef _WIN32
-	numCores = pthread_num_processors_np();
-#endif
-#ifdef __linux__
-
-#endif
 	for(int i=0;i<numBlobs;i++){
 		CBlob *curBlob = msg->res->GetBlob(i);
 		curBlob->ShiftBlob(0,shift);
