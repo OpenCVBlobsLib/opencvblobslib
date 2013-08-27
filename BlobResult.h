@@ -178,11 +178,11 @@ private:
 	int origin;
 	int height;
 	int overlappingLine;
-	CBlobResult *res;
-	ThreadMessage(Mat &img,Mat &msk,uchar backgroundCol,int org,int hei):image(img),mask(msk),backColor(backgroundCol),origin(org),height(hei),res(NULL){}
-	ThreadMessage():image(Mat()),mask(Mat()),res(NULL){}
-	~ThreadMessage(){ if(res!=NULL) delete res;}
-	ThreadMessage& operator=(ThreadMessage &o){image=o.image;mask=o.mask;backColor=o.backColor;res=o.res;origin=o.origin;height=o.height;overlappingLine=o.overlappingLine; return *this;}
+	Blob_vector vec;
+	ThreadMessage(Mat &img,Mat &msk,uchar backgroundCol,int org,int hei):image(img),mask(msk),backColor(backgroundCol),origin(org),height(hei){}
+	ThreadMessage():image(Mat()),mask(Mat()){}
+	~ThreadMessage(){}
+	ThreadMessage& operator=(ThreadMessage &o){image=o.image;mask=o.mask;backColor=o.backColor;origin=o.origin;height=o.height;overlappingLine=o.overlappingLine;vec=o.vec; return *this;}
 	};
 
 	/*

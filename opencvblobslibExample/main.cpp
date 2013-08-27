@@ -18,10 +18,14 @@ void opencvLogo();
 void testJoin();
 
 int main(){
-	//testTimes(500,6000,250,"Tempi",5);
-	opencvLogo();
+// 	testTimes(500,4000,250,"TempiHR",15);
+// 	testTimes(10,500,10,"TempiLR",15);
+	testTimes(4000,4500,250,"TempiBoh",5);
+	//opencvLogo();
 	//test();
 	//testJoin();
+	cout <<"Premere un tasto per continuare...."<<endl;
+	cin.get();
 	return 0;
 }
 
@@ -52,7 +56,7 @@ void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 			time=getTickCount();
 			res = CBlobResult(&(IplImage)temp_color_img,NULL,0);
 			elapsed =  (getTickCount()-time)/getTickFrequency();
-			cout <<"Tempo Single Thread: " <<elapsed<<endl;
+			cout <<"Tempo Single Thread: " <<elapsed<<"\t Nblobs: "<<res.GetNumBlobs()<<endl;
 			fileOutST <<"\t" << elapsed;
 		}
 		fileOutST << "\n";
@@ -61,7 +65,7 @@ void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 			time=getTickCount();
 			res = CBlobResult(temp_color_img,Mat(),0,NUMCORES);
 			elapsed =  (getTickCount()-time)/getTickFrequency();
-			cout <<"Tempo Multi Thread: " <<elapsed<<endl;
+			cout <<"Tempo Multi Thread: " <<elapsed<<"\t Nblobs: "<<res.GetNumBlobs()<<endl;
 			fileOutMT <<"\t" << elapsed;
 		}
 		fileOutMT << "\n";
@@ -69,8 +73,6 @@ void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 	fileOutST.close();
 	fileOutMT.close();
 	fileOutInfo.close();
-	cout <<"Premere un tasto per continuare...."<<endl;
-	cin.get();
 }
 void test()
 {
@@ -158,7 +160,7 @@ void testJoin(){
 	Mat img,imt,im2;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,imt,254,255,CV_THRESH_BINARY_INV);
-	CBlobResult res(imt,Mat(),0,1);
+	CBlobResult res(imt,Mat(),0,2);
 	CBlob temp,t2;
 	for(int i=0;i<res.GetNumBlobs();i++){
 		im2 = im.clone();

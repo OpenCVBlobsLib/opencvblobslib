@@ -109,6 +109,7 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 	try
 	{
 		success = ComponentLabeling( source, mask, backgroundColor, m_blobs,labelled);
+		Blob_vector::iterator it = m_blobs.begin(),en=m_blobs.end();
 	}
 	catch(...)
 	{
@@ -135,32 +136,31 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 */
 CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numThreads){
 	if(numThreads==1){
+		Mat voidMat;
 		if(mask.data)
-			*this = CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
+			//*this = CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
+			ComponentLabeling(&(IplImage)source,&(IplImage)mask,backgroundColor,m_blobs,voidMat);
 		else
-			*this = CBlobResult(&(IplImage)source,NULL,backgroundColor);
+			//*this = CBlobResult(&(IplImage)source,NULL,backgroundColor);
+			ComponentLabeling(&(IplImage)source,NULL,backgroundColor,m_blobs,voidMat);
 	}
 	else{
 		pthread_t *tIds = new pthread_t[numThreads];
 		Size sz = source.size();
 		int roiHeight = sz.height/numThreads;
-		//Mat_<int> labels = Mat_<int>::zeros(2,source.size().width);
 		ThreadMessage *mess = new ThreadMessage[numThreads];
+		mess[numThreads-1] = ThreadMessage(source,mask,0,(numThreads-1)*roiHeight,source.size().height -(numThreads-1)*roiHeight);
+		int64 time = getTickCount();
 		for(int i=0;i<numThreads-1;i++){
-			ThreadMessage temp(source,mask,0,i*roiHeight,roiHeight);
-			mess[i].operator =(temp);
+			mess[i] = ThreadMessage(source,mask,0,i*roiHeight,roiHeight);
 			pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
 		}
-		//L'ultimo thread deve coprire il resto dell'immagine (se ci sono stati errori dovuti ad arrotondamenti)
-		ThreadMessage temp2(source,mask,0,(numThreads-1)*roiHeight,source.size().height -(numThreads-1)*roiHeight);
-		mess[numThreads-1].operator =(temp2);
+		//The last thread should cover the rest of the image (if I had to round some values).
 		pthread_create(&tIds[numThreads-1],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[numThreads-1]);
-		CBlobResult r;
 		for(int i=0;i<numThreads;i++){
 			pthread_join(tIds[i],0);
-			//r = r+*mess[i].res;
 		}
-		CBlobResult temp_result;
+		//cout << "Tempo detection: " << (getTickCount()-time)/getTickFrequency()<<endl;time = getTickCount();
 		vector<MacroBlob> macroBlobs;
 		for(int i=numThreads-1;i>0;i--){
 			//cout << "RIGA: "<< i*sz.height/numCores -1 << endl;
@@ -175,8 +175,8 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numTh
 				unsigned int labelBottom = mess[i].labels.at<unsigned int>(0,c);
 				unsigned int labelTop = mess[i-1].labels.at<unsigned int>(mess[i-1].labels.size().height-1,c);
 				if(labelTop!= prevLabelTop && labelTop!=0){
-					CBlob* tempTop = mess[i-1].res->GetBlobByID(labelTop);
-					CBlob* tempBottom = mess[i].res->GetBlobByID(labelBottom);
+					CBlob* tempTop = mess[i-1].vec[labelTop-1];
+					CBlob* tempBottom = mess[i].vec[labelBottom-1];
 					bool containsTop=false,containsBottom=false;
 					int p=0,q=0;
 					for(p;p<macroBlobs.size();p++){
@@ -228,19 +228,28 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numTh
 				prevLabelBottom=labelBottom;
 			}	
 		}
+		//cout << "Tempo creazione macroblobs: " << (getTickCount()-time)/getTickFrequency()<<endl;time = getTickCount();
 		MacroBlobJoiner joiner(macroBlobs, numThreads);
 		joiner.JoinAll();
 		for(int i=0;i<macroBlobs.size();i++){
 			if(macroBlobs[i].joinedBlob)
-				r.AddBlob(macroBlobs[i].joinedBlob);
+				m_blobs.push_back(new CBlob(macroBlobs[i].joinedBlob));
 		}
+		//cout << "Tempo join + add: " << (getTickCount()-time)/getTickFrequency()<<endl;time = getTickCount();
 		for(int i=0;i<numThreads;i++){
-			mess[i].res->Filter(*mess[i].res,B_EXCLUDE,CBlobGetTBDeleted(),B_EQUAL,1);
-			r = r+*mess[i].res;
+			for(int j=0;j<mess[i].vec.size();j++){
+				CBlob* temp = mess[i].vec[j];
+				if(temp->to_be_deleted==0)
+					m_blobs.push_back(temp);
+				else
+					delete temp;
+			}
 		}
 		delete [] mess;
 		delete [] tIds;
-		*this = r;
+		//cout << "Tempo fusion: " << (getTickCount()-time)/getTickFrequency()<<endl; time=getTickCount();
+		//*this = r;
+		//cout << "Tempo assign: " << (getTickCount()-time)/getTickFrequency()<<endl; time=getTickCount();
 	}
 }
 /**
@@ -268,9 +277,7 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numTh
 - MODIFICATION: Date. Author. Description.
 */
 CBlobResult::CBlobResult( const CBlobResult &source )
-{
-	m_blobs = Blob_vector( source.GetNumBlobs() );
-	
+{	
 	// creem el nou a partir del passat com a par�metre
 	m_blobs = Blob_vector( source.GetNumBlobs() );
 	// copiem els blobs de l'origen a l'actual
@@ -440,8 +447,10 @@ CBlobResult CBlobResult::operator+( const CBlobResult& source ) const
 */
 void CBlobResult::AddBlob( CBlob *blob )
 {
-	if( blob != NULL )
-		m_blobs.push_back( new CBlob( blob ) );
+	if( blob != NULL ){
+		CBlob* tp = new CBlob(blob);
+		m_blobs.push_back(tp);
+	}
 }
 
 
@@ -1115,14 +1124,23 @@ void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
 	int height = msg->origin > 0 ? msg->height+1 : msg->height;
 	Rect roi = Rect(0,shift,msg->image.size().width,height);
 	msg->overlappingLine=shift;
-	if(msg->mask.data)
-		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor,msg->labels);
-	else
-		msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->labels);
+	if(msg->mask.data){
+		//msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor,msg->labels);
+		ComponentLabeling(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor,msg->vec,msg->labels);
+	}
+	else{
+		//msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->labels);
+		ComponentLabeling(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->vec,msg->labels);
+	}
 	//Devo sommare l'offset di ogni punto
-	int numBlobs = msg->res->GetNumBlobs();
+	//int numBlobs = msg->res->GetNumBlobs();
+	int numBlobs = msg->vec.size();
 	for(int i=0;i<numBlobs;i++){
-		CBlob *curBlob = msg->res->GetBlob(i);
+		CBlob *curBlob;
+// 		curBlob = msg->res->GetBlob(i);
+// 		curBlob->ShiftBlob(0,shift);
+// 		curBlob->m_originalImageSize = msg->image.size();
+		curBlob = msg->vec[i];
 		curBlob->ShiftBlob(0,shift);
 		curBlob->m_originalImageSize = msg->image.size();
 	}
