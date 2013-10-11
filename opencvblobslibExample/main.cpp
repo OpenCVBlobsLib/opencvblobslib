@@ -3,9 +3,7 @@
 #include <fstream>
 #include "blob.h"
 #include "BlobResult.h"
-#include <intrin.h>
 
-const int IMSIZE = 400;
 const int NUMCORES = 2;
 using namespace std;
 
@@ -16,14 +14,16 @@ void testTimes(int startRes,int endRes, int step,string fileName,int iter=1);
 void test();
 void opencvLogo();
 void testJoin();
+void testMio();
 
 int main(){
-// 	testTimes(500,4000,250,"TempiHR",15);
-// 	testTimes(10,500,10,"TempiLR",15);
-	testTimes(4000,4500,250,"TempiBoh",5);
+//  	testTimes(500,3000,250,"TempiHR",20);
+  	//testTimes(1000,1000,20,"TempiLR",40);
+	//testTimes(10,2000,50,"TempiRandom",15);
 	//opencvLogo();
 	//test();
-	//testJoin();
+	testJoin();
+	//testMio();
 	cout <<"Premere un tasto per continuare...."<<endl;
 	cin.get();
 	return 0;
@@ -48,24 +48,32 @@ void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 	cvtColor(color_img,color_img,CV_BGR2GRAY);
 	for(int i=0;i<=(endRes-startRes)/step;i++){
 		int resolution = step*i+startRes;
-		resize(color_img,temp_color_img,Size(resolution,resolution),0,0,INTER_LINEAR);
+		temp_color_img = color_img.clone();
+		resize(color_img,temp_color_img,Size(resolution,resolution),0,0,INTER_NEAREST);
 		threshold(temp_color_img,temp_color_img,250,255,CV_THRESH_BINARY_INV);
+  		//namedWindow("image",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+  		//imshow("image",temp_color_img);
+  		//waitKey();
 		cout <<"RISOLUZIONE: " << resolution<<"x"<<resolution<<endl;
 		fileOutST << resolution;
-		for(int j=0;j<iter;j++){
-			time=getTickCount();
-			res = CBlobResult(&(IplImage)temp_color_img,NULL,0);
-			elapsed =  (getTickCount()-time)/getTickFrequency();
-			cout <<"Tempo Single Thread: " <<elapsed<<"\t Nblobs: "<<res.GetNumBlobs()<<endl;
-			fileOutST <<"\t" << elapsed;
-		}
+		Mat mt;
+ 		for(int j=0;j<iter;j++){
+ 			time=getTickCount();
+ 			CBlobResult res(temp_color_img,mt,1);
+ 			elapsed =  (getTickCount()-time)/getTickFrequency();
+ 			cout <<j<<"/"<<iter<<"\tTempo Single Thread: " <<elapsed<<"\t Nblobs: "<<res.GetNumBlobs()<<"\tTime: "<<endl;
+ 			fileOutST <<"\t" << elapsed;
+ 		}
 		fileOutST << "\n";
 		fileOutMT << resolution;
+
+		//cout <<"MULTITHREAD"<<endl;
 		for(int j=0;j<iter;j++){
 			time=getTickCount();
-			res = CBlobResult(temp_color_img,Mat(),0,NUMCORES);
+			CBlobResult res(temp_color_img,mt,NUMCORES);
+			//CBlobResult res(&(IplImage)temp_color_img,NULL,0,NUMCORES);
 			elapsed =  (getTickCount()-time)/getTickFrequency();
-			cout <<"Tempo Multi Thread: " <<elapsed<<"\t Nblobs: "<<res.GetNumBlobs()<<endl;
+			cout <<j<<"/"<<iter<<"\tTempo Multi Thread: " <<elapsed<<"\t Nblobs: "<<res.GetNumBlobs()<<"\tTime: "<<endl;
 			fileOutMT <<"\t" << elapsed;
 		}
 		fileOutMT << "\n";
@@ -93,7 +101,7 @@ void test()
 	CBlobResult blobs;
 	color_img.setTo(Vec3b(0,0,0));
 	time=getTickCount();
-	blobs = CBlobResult(&(IplImage)binary_img,NULL,0);
+	blobs = CBlobResult(&(IplImage)binary_img,NULL,1);
 	cout <<"found: "<<blobs.GetNumBlobs()<<endl;
 	cout <<"Tempo ST: "<<(getTickCount() -time)/getTickFrequency()<<endl;
 	for(int i=0;i<blobs.GetNumBlobs();i++){
@@ -103,7 +111,7 @@ void test()
 	imshow("Blobs Image",color_img);
 	waitKey();
 	time=getTickCount();
-	blobs = CBlobResult(binary_img,Mat(),0,NUMCORES);
+	blobs = CBlobResult(binary_img,Mat(),NUMCORES);
 	cout <<"Tempo MT: "<<(getTickCount() -time)/getTickFrequency()<<endl;
 	CBlob *curblob;
 	cout<<"found: "<<blobs.GetNumBlobs()<<endl;
@@ -125,7 +133,7 @@ void test()
 		// 			}
 		// 		}
 		s<<i;
-		putText(color_img,s.str(),curblob->getCenter(),1.6,IMSIZE/200,CV_RGB(200,200,200),3);
+		putText(color_img,s.str(),curblob->getCenter(),1.6,binary_img.size().width/200,CV_RGB(200,200,200),3);
 		s.str("");
 		// 		displayOverlay("Blobs Image","Press a key to show the next blob",500);
 		// 		imshow("Blobs Image",color_img);
@@ -142,7 +150,7 @@ void opencvLogo()
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,img,254,255,CV_THRESH_BINARY_INV);
 	int64 time = getTickCount();
-	CBlobResult res(img,Mat(),0,NUMCORES);
+	CBlobResult res(img,Mat(),NUMCORES);
 	cout << "Tempo: " << (getTickCount() - time)/getTickFrequency();
 	stringstream ss;
 	for(int i=0;i<res.GetNumBlobs();i++){
@@ -160,28 +168,140 @@ void testJoin(){
 	Mat img,imt,im2;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,imt,254,255,CV_THRESH_BINARY_INV);
-	CBlobResult res(imt,Mat(),0,2);
-	CBlob temp,t2;
+	CBlobResult res(imt,Mat(),1);
+	im2 = im.clone();
 	for(int i=0;i<res.GetNumBlobs();i++){
-		im2 = im.clone();
-		temp.JoinBlob(res.GetBlob(i));
-		t2 = CBlob(temp);
+		double mean, stddev;
+		CBlob t2 = res.GetBlob(i);
 		Rect bbox = t2.GetBoundingBox();
 		rectangle(im2,bbox,Scalar(0,220,0),3);
-		t2.FillBlob(im2,Scalar(200,200,0));
+		t2.FillBlob(im2,Scalar(200,200,0),0,0,true,im);
+		ellipse(im2,t2.GetEllipse(),Scalar(220,0,0),2);
+		t_contours hull;
+		t2.GetConvexHull(hull);
+		drawContours(im2,hull,-1,Scalar(0,0,220),2);
+		t2.MeanStdDev(img,&mean,&stddev);
 		cout << "Perimeter: " << t2.Perimeter();
 		cout << "\tArea: " << t2.Area();
 		cout << endl;
 		cout << "ExtPerim: " << t2.ExternPerimeter(Mat());
 		cout << "\tNBlobs: " << t2.getNumJoinedBlobs();
 		cout << endl;
-		cout << "Mean: " << t2.Mean(img);
-		cout << "\tM00: " << t2.Moment(0,0);
+		cout << "Mean: " << mean;
+		cout << "\tStdDev: " << stddev;
+		cout << endl;
+		cout << "M00: " << t2.Moment(0,0);
+		cout << endl;
+		cout << "ID: " << t2.GetID();
+		cout << endl;
+	}
+	imshow("temp",im2);
+	displayOverlay("temp","Press a key to continue and join blobs.");
+	waitKey();
+	displayOverlay("temp","Press a key to continue and join blobs.",10);
+	CBlob temp,t2;
+	for(int i=0;i<res.GetNumBlobs();i++){
+		double mean, stddev;
+		im2 = im.clone();
+		temp.JoinBlob(res.GetBlob(i));
+		t2 = CBlob(temp);
+		Rect bbox = t2.GetBoundingBox();
+		rectangle(im2,bbox,Scalar(0,220,0),3);
+		t2.FillBlob(im2,Scalar(200,200,0),0,0,true,im);
+		ellipse(im2,t2.GetEllipse(),Scalar(220,0,0),2);
+		t_contours hull;
+		t2.GetConvexHull(hull);
+		drawContours(im2,hull,-1,Scalar(0,0,220),2);
+		t2.MeanStdDev(img,&mean,&stddev);
+		cout << "Perimeter: " << t2.Perimeter();
+		cout << "\tArea: " << t2.Area();
+		cout << endl;
+		cout << "ExtPerim: " << t2.ExternPerimeter(Mat());
+		cout << "\tNBlobs: " << t2.getNumJoinedBlobs();
+		cout << endl;
+		cout << "Mean: " << mean;
+		cout << "\tStdDev: " << stddev;
+		cout << endl;
+		cout << "M00: " << t2.Moment(0,0);
 		cout << endl;
 		imshow("temp",im2);
 		waitKey();
 	}
+	destroyAllWindows();
 	cout << t2.getNumJoinedBlobs() << endl;
 	
+}
+
+void testMio()
+{
+	RNG rand;
+	int trials=100;
+	
+	
+	//namedWindow("imgST",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+	namedWindow("image",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+	namedWindow("BlobsST",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+	namedWindow("BlobsMT",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+	Mat image = imread("testImage.png",CV_LOAD_IMAGE_GRAYSCALE);
+	//resize(image,image,Size(14,14),0,0,INTER_NEAREST);
+	Mat imBlobsST(image.size(),CV_8UC3),imBlobsMT(image.size(),CV_8UC3);
+	Mat mask = Mat::zeros(image.size(),CV_8UC1);
+	imBlobsST.setTo(Vec3b(0,0,0));
+	imBlobsMT.setTo(Vec3b(0,0,0));
+	threshold(image,image,250,255,CV_THRESH_BINARY_INV);
+	float time=0;
+	imshow("image",image);
+	CBlobResult res;
+	for(int i=0;i<trials;i++){
+		int64 ticks=getTickCount();
+		CBlobResult res2(image,Mat(),1);
+		time+= (getTickCount()-ticks)/getTickFrequency();
+		res=res2;
+		cout << i << "/"<<trials<<endl;
+	}
+	cout << "TimeBlobNormalST: " << time/trials<<"\tCount: "<<res.GetNumBlobs()<<endl; time=0;
+	for(int i=0;i<res.GetNumBlobs();i++){
+		res.GetBlob(i)->FillBlob(imBlobsST,CV_RGB(rand.uniform(0,255),rand.uniform(0,255),0),0,0,true);
+	}
+	imshow("BlobsST",imBlobsST);
+	waitKey();
+	imBlobsST.setTo(Vec3b(0,0,0));
+
+	//myCompLabeler lbl(image.clone(),Point(0*image.size().width,0),Point(1*image.size().width,image.size().height));
+	//myCompLabelerGroup gro;
+	//gro.set(2,image.clone());
+	//
+	//Blob_vector blobs;
+ // 	imshow("image",image);
+	////waitKey();
+ //     for(int i=0;i<trials;i++){
+ // 		gro.Reset();
+ // 		blobs.clear();
+ //      	int64 ticks=getTickCount();
+ //      	gro.doLabeling(blobs);
+ // 		time+= (getTickCount()-ticks)/getTickFrequency();
+ //     }
+ //     cout << "TimeMT: " << time/trials<<"\tCount: "<<blobs.size()<<endl;
+
+
+	//time =0;
+	//for(int i=0;i<trials;i++){
+	//	lbl.Reset();
+	//	int64 ticks=getTickCount();
+	//	lbl.Label();
+	//	time+= (getTickCount()-ticks)/getTickFrequency();
+	//}
+	//cout << "TimeST: " << time/trials<<"\tCount: "<<lbl.blobs.size()<<endl;
+
+	//for(int i=0;i<lbl.blobs.size();i++){
+	//	lbl.blobs[i]->FillBlob(imBlobsST,CV_RGB(rand.uniform(0,255),rand.uniform(0,255),0),0,0,true);
+	//}
+	//imshow("BlobsST",imBlobsST);
+	//for(int i=0;i<blobs.size();i++){
+	//	blobs[i]->FillBlob(imBlobsMT,CV_RGB(rand.uniform(0,255),rand.uniform(0,255),0),0,0,true);
+	//}
+	//imshow("BlobsMT",imBlobsMT);	
+	//waitKey();
+	destroyAllWindows();
 }
 
