@@ -1,5 +1,5 @@
 #include "BlobContour.h"
-#include "opencv/cxcore.h"
+
 
 CBlobContour::CBlobContour()
 {
@@ -7,28 +7,23 @@ CBlobContour::CBlobContour()
 	m_startPoint.y = 0;
 	m_area = -1;
 	m_perimeter = -1;
-	m_contourPoints = NULL;
 	m_moments.m00 = -1;
-	m_contour = NULL;
-	m_parentStorage = NULL;
 }
-CBlobContour::CBlobContour(CvPoint startPoint, CvMemStorage *storage )
+CBlobContour::CBlobContour(CvPoint startPoint, const Size &imageRes):m_contour(1)
 {
+	
 	m_startPoint.x = startPoint.x;
 	m_startPoint.y = startPoint.y;
 	m_area = -1;
 	m_perimeter = -1;
 	m_moments.m00 = -1;
-
-	m_parentStorage = storage;
-
-	m_contourPoints = NULL;
-
-	// contour sequence: must be compatible with opencv functions
-	m_contour = cvCreateSeq( CV_SEQ_ELTYPE_CODE | CV_SEQ_KIND_CURVE | CV_SEQ_FLAG_CLOSED,
-			     		 sizeof(CvContour),
-			     		 sizeof(t_chainCode),m_parentStorage);
-
+	//Empirical calculations
+	if(imageRes.width==-1 || imageRes.width*imageRes.height > 62500)
+		m_contour[0].reserve(600);
+	else{
+		//I reserve a portion of the image's area
+		m_contour[0].reserve(imageRes.height*imageRes.width/4);
+	}
 }
 
 
@@ -41,11 +36,28 @@ CBlobContour::CBlobContour( CBlobContour *source )
 	}
 }
 
+CBlobContour::CBlobContour( CBlobContour &source )
+{
+	m_area = source.m_area;
+	m_contour = source.m_contour;
+	m_contourPoints = source.m_contourPoints;
+	m_moments = source.m_moments;
+	m_perimeter = source.m_perimeter;
+	m_startPoint = source.m_startPoint;
+}
+
+CBlobContour::CBlobContour( const CBlobContour &source )
+{
+	m_area = source.m_area;
+	m_contour = source.m_contour;
+	m_contourPoints = source.m_contourPoints;
+	m_moments = source.m_moments;
+	m_perimeter = source.m_perimeter;
+	m_startPoint = source.m_startPoint;
+}
+
 CBlobContour::~CBlobContour()
 {
-	// let parent blob deallocate all contour and contour point memory
-	m_contour = NULL;
-	m_contourPoints = NULL;
 }
 
 
@@ -55,29 +67,11 @@ CBlobContour& CBlobContour::operator=( const CBlobContour &source )
 	if( this != &source )
 	{		
 		m_startPoint = source.m_startPoint;
-
-		m_parentStorage = source.m_parentStorage;
-		
-		if (m_contour)
-		{
-			cvClearSeq( m_contour );
-		}
-
-		if (source.m_contour)
-		{
-			m_contour =	cvCloneSeq( source.m_contour, m_parentStorage);
-		}
-		
-		if( source.m_contourPoints )
-		{
-			if( m_contourPoints )
-				cvClearSeq( m_contourPoints );
-			m_contourPoints = cvCloneSeq( source.m_contourPoints, m_parentStorage);
-		}
-
 		m_area = source.m_area;
-		m_perimeter = source.m_area;
+		m_perimeter = source.m_perimeter;
 		m_moments = source.m_moments;
+		m_contour = source.m_contour;
+		m_contourPoints = source.m_contourPoints;
 	}
 	return *this;
 }
@@ -98,22 +92,14 @@ CBlobContour& CBlobContour::operator=( const CBlobContour &source )
 */
 void CBlobContour::AddChainCode(t_chainCode chaincode)
 {
-	cvSeqPush(m_contour, &chaincode);
+	m_contour[0].push_back(chaincode);
 }
 
 //! Clears chain code contour and points
-void CBlobContour::ResetChainCode()
+void CBlobContour::Reset()
 {
-	if( m_contour )
-	{
-		cvClearSeq( m_contour );
-		m_contour = NULL;
-	}
-	if( m_contourPoints )
-	{
-		cvClearSeq( m_contourPoints );
-		m_contourPoints = NULL;
-	}
+	m_contour.clear();
+	m_contourPoints.clear();
 }
 
 /**
@@ -141,8 +127,7 @@ double CBlobContour::GetPerimeter()
 	if( IsEmpty() )
 		return 0;
 
-	m_perimeter = cvContourPerimeter( GetContourPoints() );
-
+	m_perimeter = arcLength(GetContourPoints(),true);
 	return m_perimeter;
 }
 
@@ -170,8 +155,7 @@ double CBlobContour::GetArea()
 
 	if( IsEmpty() )
 		return 0;
-
-	m_area = fabs( cvContourArea( GetContourPoints() ));
+	m_area = fabs(contourArea(GetContourPoints(),false));
 	
 	return m_area;
 }
@@ -191,87 +175,99 @@ double CBlobContour::GetMoment(int p, int q)
 	// it is calculated?
 	if( m_moments.m00 == -1)
 	{
-		cvMoments( GetContourPoints(), &m_moments );
+		//cvMoments( GetContourPoints(), &m_moments );
+		m_moments = moments(GetContourPoints(),true);
 	}
 		
 	return cvGetSpatialMoment( &m_moments, p, q );
 
-	
 }
 
 //! Calculate contour points from crack codes
-t_PointList CBlobContour::GetContourPoints()
+t_PointList& CBlobContour::GetContourPoints()
 {
-	// it is calculated?
-	if( m_contourPoints != NULL )
-		return m_contourPoints;
-
-	if ( m_contour == NULL || m_contour->total <= 0 )
-	{
-		return NULL;
+	if(m_contour.size()==0)
+		return t_PointList();
+	if(m_contourPoints.size()!=0)
+		return m_contourPoints[0];
+	m_contourPoints.push_back(t_PointList());
+	m_contourPoints[0].reserve(m_contour[0].size()+1);
+	m_contourPoints[0].push_back(m_startPoint);
+	t_chainCodeList::iterator it,en;
+	it = m_contour[0].begin();
+	en = m_contour[0].end();
+	Point pt = m_contourPoints[0][m_contourPoints.size()-1];
+	for(it;it!=en;it++){
+		pt = chainCode2Point(pt,*it);
+		m_contourPoints[0].push_back(pt);
 	}
-
-	CvSeq *tmpPoints;
-	CvSeqReader reader;
-	CvSeqWriter writer;
-	CvPoint actualPoint;
-	CvRect boundingBox;
-	
-	// if aproximation is different than simple extern perimeter will not work
-	tmpPoints = cvApproxChains( m_contour, m_parentStorage, CV_CHAIN_APPROX_NONE);
+	return m_contourPoints[0];
+}
 
 
-	// apply an offset to contour points to recover real coordinates
-	
-	cvStartReadSeq( tmpPoints, &reader);
-
-	m_contourPoints = cvCreateSeq( tmpPoints->flags, tmpPoints->header_size, tmpPoints->elem_size, m_parentStorage );
-	cvStartAppendToSeq(m_contourPoints, &writer );
-
-	// also calculate bounding box of the contour to allow cvPointPolygonTest
-	// work correctly on the generated polygon
-	boundingBox.x = boundingBox.y = 100000;
-	boundingBox.width = boundingBox.height = 0;
-	
-	for( int i=0; i< tmpPoints->total; i++)
-	{
-		CV_READ_SEQ_ELEM( actualPoint, reader);
-
-		actualPoint.x += m_startPoint.x;
-		actualPoint.y += m_startPoint.y;
-
-		boundingBox.x = MIN( boundingBox.x, actualPoint.x );
-		boundingBox.y = MIN( boundingBox.y, actualPoint.y );
-		boundingBox.width = MAX( boundingBox.width, actualPoint.x );
-		boundingBox.height = MAX( boundingBox.height, actualPoint.y );
-		
-		CV_WRITE_SEQ_ELEM( actualPoint, writer );
-	}
-	//These 2 lines were missing (Luca & Saverio)
-	boundingBox.width -= boundingBox.x;
-	boundingBox.height -=boundingBox.y;
-
-	cvEndWriteSeq( &writer );
-	cvClearSeq( tmpPoints );
-
-	// assign calculated bounding box
-	((CvContour*)m_contourPoints)->rect = boundingBox;
-
+t_contours& CBlobContour::GetContours()
+{
+	GetContourPoints();
 	return m_contourPoints;
 }
+
 
 void CBlobContour::ShiftBlobContour(int x,int y)
 {
 	m_startPoint.x+=x;
 	m_startPoint.y+=y;
-	if ( m_contour == NULL || m_contour->total <= 0 )
-	{
-		return;
+
+	for(int j=0;j<m_contourPoints.size();j++)
+		for(int i=0;i<m_contourPoints[j].size();i++)
+			m_contourPoints[j][i] += Point(x,y);
+}
+
+
+t_chainCode points2ChainCode( CvPoint p1, CvPoint p2 )
+{
+	//	/* Luca Nardelli & Saverio Murgia
+	//	Freeman Chain Code:	
+	//		321		Values indicate the chain code used to identify next pixel location.
+	//		4-0		If I join 2 blobs I can't just append the 2nd blob chain codes, since they will still start
+	//		567		from the 1st blob start point
+	//	*/
+	Point diff = Point(p2.x-p1.x,p2.y-p1.y);
+	if(diff.x == 1 && diff.y == 0)
+		return 0;
+	else if(diff.x == 1 && diff.y == -1)
+		return 1;
+	else if(diff.x == 0 && diff.y == -1)
+		return 2;
+	else if(diff.x == -1 && diff.y == -1)
+		return 3;
+	else if(diff.x == -1 && diff.y == 0)
+		return 4;
+	else if(diff.x == -1 && diff.y == 1)
+		return 5;
+	else if(diff.x == 0 && diff.y == 1)
+		return 6;
+	else if(diff.x == 1 && diff.y == 1)
+		return 7;
+	else
+		return 200;
+}
+CvPoint chainCode2Point(CvPoint origin,t_chainCode code){
+	//	/* Luca Nardelli & Saverio Murgia
+	//	Freeman Chain Code:	
+	//		321		Values indicate the chain code used to identify next pixel location.
+	//		4-0		If I join 2 blobs I can't just append the 2nd blob chain codes, since they will still start
+	//		567		from the 1st blob start point
+	//	*/
+	CvPoint pt = origin;
+	switch(code){
+	case 0:pt.x++;break;
+	case 1:pt.x++;pt.y--;break;
+	case 2:pt.y--;break;
+	case 3:pt.x--;pt.y--;break;
+	case 4:pt.x--;break;
+	case 5:pt.x--;pt.y++;break;
+	case 6:pt.y++;break;
+	case 7:pt.x++;pt.y++;break;
 	}
-	if(m_contourPoints == NULL)
-		m_contourPoints = GetContourPoints();
-	else{
-		cvClearSeq(m_contourPoints);
-		m_contourPoints = GetContourPoints();
-	}
+	return pt;
 }

@@ -53,34 +53,28 @@ double CBlobGetMoment::operator()(CBlob &blob)
 */
 double CBlobGetHullPerimeter::operator()(CBlob &blob)
 {
-	CvSeq *convexHull;
+	t_contours convexHull;
+	blob.GetConvexHull(convexHull);
 	double perimeter;
 
-	convexHull = blob.GetConvexHull();
-
-	if( convexHull )
-		perimeter = fabs(cvArcLength(convexHull,CV_WHOLE_SEQ,1));
+	if( convexHull.size()!=0 )
+		perimeter = fabs(arcLength(convexHull[0],true));
 	else
 		return 0;
-
-	cvClearSeq(convexHull);
 
 	return perimeter;
 }
 
 double CBlobGetHullArea::operator()(CBlob &blob)
 {
-	CvSeq *convexHull;
+	t_contours convexHull;
+	blob.GetConvexHull(convexHull);
 	double area;
-
-	convexHull = blob.GetConvexHull();
-
-	if( convexHull )
-		area = fabs(cvContourArea(convexHull));
+	
+	if( convexHull.size()==0 )
+		area = fabs(contourArea(convexHull[0],true));
 	else
 		return 0;
-
-	cvClearSeq(convexHull);
 
 	return area;
 }
@@ -104,12 +98,11 @@ double CBlobGetMinXatMinY::operator()(CBlob &blob)
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
-	if( !externContour ) return result;
-	cvStartReadSeq( externContour, &reader);
-
-	for( int i=0; i< externContour->total; i++)
+	if( externContour.size()==0 ) return result;
+	t_PointList::iterator it=externContour.begin(),en=externContour.end();
+	for(it;it!=en;it++)
 	{
-		CV_READ_SEQ_ELEM( actualPoint, reader);
+		Point &actualPoint = *it;
 
 		if( (actualPoint.y == blob.MinY()) && (actualPoint.x < result) )
 		{
@@ -139,12 +132,12 @@ double CBlobGetMinYatMaxX::operator()(CBlob &blob)
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
-	if( !externContour ) return result;
-	cvStartReadSeq( externContour, &reader);
+	if( externContour.size()==0 ) return result;
+	t_PointList::iterator it=externContour.begin(),en=externContour.end();
 
-	for( int i=0; i< externContour->total; i++)
+	for( it;it!=en;it++)
 	{
-		CV_READ_SEQ_ELEM( actualPoint, reader);
+		Point actualPoint = *it;
 
 		if( (actualPoint.x == blob.MaxX()) && (actualPoint.y < result) )
 		{
@@ -174,13 +167,12 @@ double CBlobGetMaxXatMaxY::operator()(CBlob &blob)
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
-	if( !externContour ) return result;
+	if( externContour.size()==0 ) return result;
 
-	cvStartReadSeq( externContour, &reader);
-
-	for( int i=0; i< externContour->total; i++)
+	t_PointList::iterator it=externContour.begin(),en=externContour.end();
+	for( it;it!=en;it++)
 	{
-		CV_READ_SEQ_ELEM( actualPoint, reader);
+		Point &actualPoint = *it;
 
 		if( (actualPoint.y == blob.MaxY()) && (actualPoint.x > result) )
 		{
@@ -210,14 +202,13 @@ double CBlobGetMaxYatMinX::operator()(CBlob &blob)
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
-	if( !externContour ) return result;
+	if( externContour.size()==0 ) return result;
 
-	cvStartReadSeq( externContour, &reader);
 
-	
-	for( int i=0; i< externContour->total; i++)
+	t_PointList::iterator it=externContour.begin(),en=externContour.end();
+	for( it;it!=en;it++)
 	{
-		CV_READ_SEQ_ELEM( actualPoint, reader);
+		Point &actualPoint = *it;
 
 		if( (actualPoint.x == blob.MinX()) && (actualPoint.y > result) )
 		{
@@ -417,9 +408,10 @@ double CBlobGetDistanceFromPoint::operator()(CBlob &blob)
 */
 double CBlobGetXYInside::operator()(CBlob &blob)
 {
-	if( blob.GetExternalContour()->GetContourPoints() )
+	t_PointList &contourPoints = blob.GetExternalContour()->GetContourPoints();
+	if( contourPoints.size()==0 )
 	{
-		return cvPointPolygonTest( blob.GetExternalContour()->GetContourPoints(), m_p,0) >= 0;
+		return pointPolygonTest(contourPoints,m_p,false) >=0;
 	}
 
 	return 0;

@@ -40,12 +40,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\Release\</OutDir>
-    <IntDir>.\Release\</IntDir>
+    <OutDir>.\lib\Release\</OutDir>
+    <IntDir>.\lib\Release\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\Debug\</OutDir>
-    <IntDir>.\Debug\</IntDir>
+    <OutDir>lib\Debug\</OutDir>
+    <IntDir>lib\Debug\</IntDir>
     <TargetName>$(ProjectName)d</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -74,7 +74,7 @@
     </Bscmake>
     <Lib>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <OutputFile>.\Release\$(ProjectName).lib</OutputFile>
+      <OutputFile>lib\Release\$(ProjectName).lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -107,7 +107,7 @@
     </Bscmake>
     <Lib>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <OutputFile>.\Debug\$(ProjectName)d.lib</OutputFile>
+      <OutputFile>lib\Debug\$(ProjectName)d.lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -131,8 +131,6 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"> /fast /Qopenmp /G7 /QaxW /Qvec_report3   /fast /Qopenmp /G7 /QaxW /Qvec_report3 </AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"> /Qopenmp   /Qopenmp </AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="MacroBlob.cpp" />
-    <ClCompile Include="Segment.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blob.h" />
@@ -141,8 +139,6 @@
     <ClInclude Include="BlobOperators.h" />
     <ClInclude Include="BlobResult.h" />
     <ClInclude Include="ComponentLabeling.h" />
-    <ClInclude Include="MacroBlob.h" />
-    <ClInclude Include="Segment.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

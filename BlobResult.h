@@ -20,12 +20,18 @@ MODIFICATIONS (Modification, Author, Date):
 #endif // _MSC_VER > 1000
 
 #include "BlobLibraryConfiguration.h"
+#include "ComponentLabeling.h"
 #include <math.h>
 #include "opencv/cxcore.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/opencv_modules.hpp>
 #include <deque>
-
+#include <limits.h>
+#include <stdio.h>
+#include <functional>
+#include <algorithm>
+#include <opencv2/opencv.hpp>
+#include <opencv2/opencv_modules.hpp>
 
 #ifdef MATRIXCV_ACTIU
 	#include "matrixCV.h"
@@ -83,15 +89,10 @@ class CBlobResult
 {
 public:
 
-	//! Standard constructor, it creates an empty set of blobs
+	//Constructor, opencv 1.0 and 2.0 interfaces.
 	CBlobResult();
-	//! Image constructor, it creates an object with the blobs of the image
-	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor);
-	//! Image constructor, it creates an object with the blobs of the image
-	CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor, Mat &labelled);
-	//! OpenCV2 interface
-	CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numThreads=1);
-	//! Copy constructor
+	CBlobResult(IplImage *source, IplImage *mask = NULL, int numThreads=1);
+	CBlobResult(Mat &source, Mat &mask = Mat(),int numThreads=1);
 	CBlobResult( const CBlobResult &source );
 	//! Destructor
 	virtual ~CBlobResult();
@@ -159,6 +160,7 @@ public:
 
 
 private:
+	myCompLabelerGroup compLabeler;
 
 	//! Funci� per gestionar els errors
 	//! Function to manage the errors
@@ -168,45 +170,6 @@ private:
 	void DoFilter(CBlobResult &dst,
 				int filterAction, funcio_calculBlob *evaluador, 
 				int condition, double lowLimit, double highLimit = 0) const;
-
-	class ThreadMessage{
-	public:
-	Mat labels;
-	Mat image;
-	Mat mask;
-	uchar backColor;
-	int origin;
-	int height;
-	int overlappingLine;
-	Blob_vector vec;
-	ThreadMessage(Mat &img,Mat &msk,uchar backgroundCol,int org,int hei):image(img),mask(msk),backColor(backgroundCol),origin(org),height(hei){}
-	ThreadMessage():image(Mat()),mask(Mat()){}
-	~ThreadMessage(){}
-	ThreadMessage& operator=(ThreadMessage &o){image=o.image;mask=o.mask;backColor=o.backColor;origin=o.origin;height=o.height;overlappingLine=o.overlappingLine;vec=o.vec; return *this;}
-	};
-
-	/*
-	Classe per gestire la sovrapposizione fra i blobs in modo da poterli unire
-	*/
-	class BlobOverlap{
-	public:
-		CBlob *sourceBlob,*joinedBlob;
-		std::map<unsigned int,CBlob*> blobsToJoin;
-		std::map<unsigned int,std::deque<Segment> > matchingSegments;
-		BlobOverlap(CBlob* src){sourceBlob=src;}
-		BlobOverlap(){sourceBlob=NULL;joinedBlob=NULL;}
-		~BlobOverlap(){}
-		void Print();
-	};
-
-	/*class threadMessage{
-	public:
-		CBlobResult& instance;
-		int id;
-		threadMessage(CBlobResult &inst,int i):instance(inst),id(i){}
-		~threadMessage(){}
-	};*/
-	static void* thread_componentLabeling(ThreadMessage *msg);
 
 protected:
 

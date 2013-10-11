@@ -1,36 +1,65 @@
 #if !defined(_COMPONENT_LABELING_H_INCLUDED)
-#define _CLASSE_BLOBRESULT_INCLUDED
+#define _COMPONENT_LABELING_H_INCLUDED
 
 #include "vector"
 #include "BlobContour.h"
 #include "blob.h"
 #include "opencv2/opencv.hpp"
+#include <pthread.h>
 
-
-//! definici� de que es un vector de blobs
+// vector of blob pointers typedef
 typedef std::vector<CBlob*>	Blob_vector;
 
 
-bool ComponentLabeling(	IplImage* inputImage,
-						IplImage* maskImage,
-						unsigned char backgroundColor,
-						Blob_vector &blobs);
+//My implementation of F.Chang algorithm (Luca Nardelli)
+class myCompLabeler{
+	friend class myCompLabelerGroup;
+private:
+	Mat_<int> labels;	//Mat of integers, representing blob pointers!
+	int currentLabel;	//currentLabel = current Blob pointer
+	int r,c,pos;
+	int w,h; //Width & height of image
+	uchar dir;
+	static int freemanR[8],freemanC[8];
+	bool singlePixBlob;
 
-bool ComponentLabeling(	IplImage* inputImage,
-						IplImage* maskImage,
-						unsigned char backgroundColor,
-						Blob_vector &blobs , Mat &labelled);
+	uchar* ptrDataBinary;
+	int* ptrDataLabels;
 
-void contourTracing( IplImage *image, IplImage *mask, CvPoint contourStart, t_labelType *labels, 
-					 bool *visitedPoints, t_labelType label,
-					 bool internalContour, unsigned char backgroundColor,
-					 CBlobContour *currentBlobContour );
+	int tempR,tempC;
 
-CvPoint tracer( IplImage *image, IplImage *mask, CvPoint P, bool *visitedPoints,
-				short initialMovement,
-				unsigned char backgroundColor, short &movement );
-				
+	CBlob *currentBlob;
+public:
+	Blob_vector blobs;
+	Mat binaryImage;
+	Point startPoint,endPoint;
+	myCompLabeler(Mat &binImage,Point start = Point(-1,-1),Point end = Point(-1,-1),Mat &lab = Mat());
+	~myCompLabeler();
 
+	void Label();		//Do labeling in region defined by startpoint and endpoint
+	void Reset(); //Resets internal buffers (label mat, etc..)
+	void TracerExt();	//External contours tracer
+	void TracerInt();	//Internal contours tracer
+	void getNextPointCCW(); //Counter clockwise
+	void getNextPointCW();  //Clockwise
 
+	static void* thread_Labeling(myCompLabeler* o); //Thread function
+};
 
-#endif	//!_CLASSE_BLOBRESULT_INCLUDED
+class myCompLabelerGroup{
+private:
+	myCompLabeler** labelers;
+	int numThreads;
+	pthread_t *tIds;
+	Mat_<int> labels;
+	
+public:
+	myCompLabelerGroup();
+	~myCompLabelerGroup();
+	Mat img;
+	void doLabeling(Blob_vector &blobs);
+	void set(int numThreads, Mat img);
+	void Reset();
+};
+
+#endif	//!_COMPONENT_LABELING_H_INCLUDED

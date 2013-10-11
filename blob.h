@@ -22,8 +22,6 @@ class CBlob;
 #include "opencv2/opencv.hpp"
 #include "BlobLibraryConfiguration.h"
 #include "BlobContour.h"
-#include "Segment.h"
-//#include "abstractsegment.h"
 #include <deque>
 #include <list>
 
@@ -34,16 +32,17 @@ class CBlob;
 #endif
 
 class Segment;
+using namespace cv;
 
 //! Type of labelled images
 typedef unsigned int t_labelType;
+typedef list<CBlob*> t_blobList;
+typedef std::list<CBlobContour*> t_CBlobContourList;
 
-using namespace cv;
 //! Blob class
 class CBlob
 {
-	typedef std::list<CBlobContour> t_contourList;
-
+	friend class myCompLabeler;
 public:
 	CBlob();
 	CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize );
@@ -56,7 +55,7 @@ public:
 	//! Operador d'assignaci�
 	//! Assigment operator
 	CBlob& operator=(const CBlob &src );
-	
+
 	//! Adds a new internal contour to the blob
 	void AddInternalContour( const CBlobContour &newContour );
 	
@@ -66,10 +65,8 @@ public:
 		return &m_externalContour;
 	}
 
-	//! Retrieves blob storage
-	CvMemStorage *GetStorage()
-	{
-		return m_storage;
+	t_CBlobContourList& GetInternalContours(){
+		return m_internalContours;
 	}
 
 	//! Bool to permit deletion with filter function
@@ -107,26 +104,29 @@ public:
 	double StdDev( IplImage *image );
 	//! opencv2 interface
 	double StdDev( Mat image );
+
+	//Since mean and standard deviation are computed with the same function call, this results quicker than
+	//calling separately mean and standard deviation.
+	void MeanStdDev(Mat image, double *mean, double *stddev);
+
 	//! Indica si el blob est� buit ( no t� cap info associada )
 	//! Shows if the blob has associated information
 	bool IsEmpty();
 
 	//! Retorna el poligon convex del blob
 	//! Calculates the convex hull of the blob
-	t_PointList GetConvexHull();
+	void GetConvexHull(t_contours& hull);
 
 	//! Pinta l'interior d'un blob d'un color determinat
-	//! Paints the blob in an image
-	void FillBlob( IplImage *image, CvScalar color, int offsetX = 0, int offsetY = 0 );
-	//! opencv2 interface
-	void FillBlob( Mat image, CvScalar color, int offsetX = 0, int offsetY = 0 );
+	//!  Paints the blob in an image
+	//!	intContours - determines wheter to draw the holes of the blob (true) or not (false)
+	//!	srcImage - image from where to copy the holes contents. If unassigned and intContours is true, the internal pixels will be set to black.
+	void FillBlob( IplImage *image, CvScalar color, int offsetX = 0, int offsetY = 0, bool intContours = false, IplImage *srcImage = NULL );
+	void FillBlob( Mat image, CvScalar color, int offsetX = 0, int offsetY = 0, bool intContours = false, Mat srcImage = Mat() );
+	
 	//! Joins a blob to current one
-	void JoinBlob( CBlob *blob , bool deleteblob=false);
-
-	/*
-		Segments is a vector of vectors of 2 Points, which encode the starting and ending point of every common segment
-	*/
-	void JoinBlobTangent(CBlob *blob,std::deque<Segment> segments);
+	//! NOTE: All the data is copied, a new blob is created and joined to the caller one.
+	void JoinBlob( CBlob *blob);
 
 	//! Get bounding box
 	CvRect GetBoundingBox();
@@ -155,20 +155,21 @@ public:
 	}
 
 	//Shifts the blob by (x,y) 
-	void ShiftBlob(int x,int y){ m_externalContour.ShiftBlobContour(x,y);m_boundingBox.width=-1;}
-	Point getCenter(){return Point(GetBoundingBox().x+GetBoundingBox().width*0.5,GetBoundingBox().y+GetBoundingBox().height*0.5);}
+	void ShiftBlob(int x,int y);
+	Point getCenter();
 	/*
 	Border: 0 = top, 1 = right, 2 = bottom, 3 = left
 	*/
-	vector<vector<Point> > getPointsTouchingBorder(int border);
-	vector<vector<Point> > getMatchingPoints(CBlob* blob);	//Returns a vector of vectors containing all the segments common to the 2 blobs
+	/*t_contours getPointsTouchingBorder(int border);*/
 	
 	int getNumJoinedBlobs(); // For joined blobs, return the number of sub-blobs.
 
 private:
-	
+	//Just for multithread joining routine;
+	bool startPassed;
+
 	bool isJoined;
-	std::list<CBlob*> joinedBlobs;
+	t_blobList joinedBlobs;
 
 	CBlob* deleteRequestOwnerBlob;
 	void requestDeletion(CBlob *blob);
@@ -180,13 +181,10 @@ private:
 	// Blob contours
 	//////////////////////////////////////////////////////////////////////////
 
-
-	//! Contour storage memory
-	CvMemStorage *m_storage;
 	//! External contour of the blob (crack codes)
 	CBlobContour m_externalContour;
 	//! Internal contours (crack codes)
-	t_contourList m_internalContours;
+	t_CBlobContourList m_internalContours;
 
 	//////////////////////////////////////////////////////////////////////////
 	// Blob features
@@ -208,6 +206,7 @@ private:
 	CvRect m_boundingBox;
 	//! Bounding ellipse
 	CvBox2D m_ellipse;
+
 	//! Sizes from image where blob is extracted
 	CvSize m_originalImageSize;
 	public: CvSize OriginalImageSize() const { return m_originalImageSize; }
@@ -219,7 +218,6 @@ private:
 };
 
 
-t_chainCode points2ChainCode(CvPoint p1, CvPoint p2);
-CvPoint chainCode2Point(CvPoint origin,t_chainCode code);
+
 
 #endif //CBLOB_INSPECTA_INCLUDED

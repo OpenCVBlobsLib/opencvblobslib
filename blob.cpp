@@ -25,30 +25,28 @@ CBlob::CBlob()
 	m_externPerimeter = m_meanGray = m_stdDevGray = -1;
 	m_boundingBox.width = -1;
 	m_ellipse.size.width = -1;
-	m_storage = NULL;
 	m_id = -1;
 	to_be_deleted=0;
 	deleteRequestOwnerBlob=NULL;
 	isJoined=false;
+	startPassed=false;
 }
-CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize )
+CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize ):m_externalContour(startPoint,originalImageSize)
 {
 	m_id = id;
 	m_area = m_perimeter = -1;
 	m_externPerimeter = m_meanGray = m_stdDevGray = -1;
 	m_boundingBox.width = -1;
 	m_ellipse.size.width = -1;
-	m_storage = cvCreateMemStorage();
-	m_externalContour = CBlobContour(startPoint, m_storage);
 	m_originalImageSize = originalImageSize;
 	to_be_deleted=0;
 	deleteRequestOwnerBlob=NULL;
 	isJoined=false;
+	startPassed=false;
 }
 //! Copy constructor
 CBlob::CBlob( const CBlob &src )
 {
-	m_storage = NULL;
 	*this = src;	
 }
 
@@ -56,7 +54,6 @@ CBlob::CBlob( const CBlob *src )
 {
 	if (src != NULL )
 	{
-		m_storage = NULL;
 		*this = *src;
 	}
 }
@@ -76,38 +73,24 @@ CBlob& CBlob::operator=(const CBlob &src )
 		m_originalImageSize = src.m_originalImageSize;
 		to_be_deleted=src.to_be_deleted;
 		deleteRequestOwnerBlob=src.deleteRequestOwnerBlob;
+		startPassed=false;
 		// clear all current blob contours
 		ClearContours();
-		
-		if( m_storage )
-			cvReleaseMemStorage( &m_storage );
-
-		m_storage = cvCreateMemStorage();
-
-		m_externalContour = CBlobContour(src.m_externalContour.GetStartPoint(), m_storage );
-		if( src.m_externalContour.m_contour )
-			m_externalContour.m_contour = cvCloneSeq( src.m_externalContour.m_contour, m_storage);
-		//cvCreateSeq(src.m_externalContour.m_contourPoints->flags,src.m_externalContour.m_contourPoints->header_size,src.m_externalContour.m_contourPoints->elem_size,m_storage);
-		//m_externalContour.m_contourPoints = cvCloneSeq(src.m_externalContour.m_contourPoints,m_storage);
-		m_internalContours.clear();
+		m_externalContour = src.m_externalContour;
 
 		// copy all internal contours
-		if( src.m_internalContours.size() )
+		if( src.m_internalContours.size()!=0 )
 		{
-			m_internalContours = t_contourList( src.m_internalContours.size() );
-			t_contourList::const_iterator itSrc;
-			t_contourList::iterator it;
+			//m_internalContours = t_contourList( src.m_internalContours.size() );
+			t_CBlobContourList::const_iterator itSrc,enSrc;
+			t_CBlobContourList::iterator it;
 
 			itSrc = src.m_internalContours.begin();
-			it = m_internalContours.begin();
+			enSrc = src.m_internalContours.end();
 
-			while (itSrc != src.m_internalContours.end())
+			while (itSrc != enSrc)
 			{
-				*it = CBlobContour((*itSrc).GetStartPoint(), m_storage);
-				if( (*itSrc).m_contour )
-					(*it).m_contour = cvCloneSeq( (*itSrc).m_contour, m_storage);
-
-				it++;
+				m_internalContours.push_back(new CBlobContour(*itSrc));
 				itSrc++;
 			}
 		}
@@ -135,45 +118,27 @@ CBlob::~CBlob()
 	}
 
 	ClearContours();
-	
-	if( m_storage )
-		cvReleaseMemStorage( &m_storage );
 }
 
 void CBlob::ClearContours()
-{
-	t_contourList::iterator it;
-
-	it = m_internalContours.begin();
-
-	while (it != m_internalContours.end())
-	{
-		(*it).ResetChainCode();
-		it++;
-	}	
-	m_internalContours.clear();
-
-	m_externalContour.ResetChainCode();
-/*
-	if(isJoined){
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		for(it = joinedBlobs.begin();it!=en;it++){
-			(*it)->ClearContours();
-		}
+{	
+	t_CBlobContourList::iterator it=m_internalContours.begin(),en=m_internalContours.end();
+	for(it;it!=en;it++){
+		delete (*it);
 	}
-*/
-		
+	m_internalContours.clear();
+	m_externalContour.Reset();
 }
 void CBlob::AddInternalContour( const CBlobContour &newContour )
 {
-	m_internalContours.push_back(newContour);
+	m_internalContours.push_back(new CBlobContour(newContour));
 }
 
 //! Indica si el blob est� buit ( no t� cap info associada )
 //! Shows if the blob has associated information
 bool CBlob::IsEmpty()
 {
-	return GetExternalContour()->m_contour == NULL;
+	return GetExternalContour()->m_contour.size()==0;
 }
 
 /**
@@ -192,19 +157,13 @@ bool CBlob::IsEmpty()
 double CBlob::Area()
 {
 	double area=0;
-	t_contourList::iterator itContour; 
+	t_CBlobContourList::iterator itContour; 
 
 
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
 		for(it = joinedBlobs.begin();it!=en;it++){
-			area += (*it)->m_externalContour.GetArea();
-			itContour = (*it)->m_internalContours.begin();
-			while (itContour != (*it)->m_internalContours.end() )
-			{
-				area -= (*itContour).GetArea();
-				itContour++;
-			}
+			area += (*it)->Area();
 		}
 	}
 	else{
@@ -212,13 +171,11 @@ double CBlob::Area()
 		itContour = m_internalContours.begin();
 		while (itContour != m_internalContours.end() )
 		{
-			area -= (*itContour).GetArea();
+			if(*itContour)
+				area -= (*itContour)->GetArea();
 			itContour++;
 		}
 	}
-
-
-
 	return area;
 }
 
@@ -238,18 +195,12 @@ double CBlob::Area()
 double CBlob::Perimeter()
 {
 	double perimeter=0;
-	t_contourList::iterator itContour; 
+	t_CBlobContourList::iterator itContour; 
 
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
 		for(it = joinedBlobs.begin();it!=en;it++){
 			perimeter+= (*it)->Perimeter();
-			itContour = (*it)->m_internalContours.begin();
-			while (itContour != (*it)->m_internalContours.end() )
-			{
-				perimeter += (*itContour).GetPerimeter();
-				itContour++;
-			}
 		}
 	}
 	else{
@@ -257,7 +208,8 @@ double CBlob::Perimeter()
 		itContour = m_internalContours.begin();
 		while (itContour != m_internalContours.end() )
 		{
-			perimeter += (*itContour).GetPerimeter();
+			if(*itContour)
+				perimeter += (*itContour)->GetPerimeter();
 			itContour++;
 		}
 	}
@@ -317,7 +269,7 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 	t_PointList externContour, externalPoints;
 	CvSeqReader reader;
 	CvSeqWriter writer;
-	CvPoint actualPoint, previousPoint;
+	Point actualPoint, previousPoint;
 	bool find = false;
 	int i,j;
 	int delta = 0;
@@ -343,24 +295,19 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 	m_externPerimeter = 0;
 
 	// there are contour pixels?
-	if( externContour == NULL )
+	if( externContour.size()==0 )
 	{
 		return m_externPerimeter;
 	}
 
-	cvStartReadSeq( externContour, &reader);
+	t_PointList::iterator it=externContour.begin(),en=externContour.end();
 
-	// create a sequence with the external points of the blob
-	externalPoints = cvCreateSeq( externContour->flags, externContour->header_size, externContour->elem_size, 
-								  m_storage );
-	cvStartAppendToSeq( externalPoints, &writer );
 	previousPoint.x = -1;
 
 	// which contour pixels touch border?
-	for( j=0; j< externContour->total; j++)
+	for( it;it!=en;it++)
 	{
-		CV_READ_SEQ_ELEM( actualPoint, reader);
-
+		actualPoint = *(it);
 		find = false;
 
 		// pixel is touching border?
@@ -425,27 +372,20 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 			// calculate separately each external contour segment 
 			if( delta > 2 )
 			{
-				cvEndWriteSeq( &writer );
-				m_externPerimeter += cvArcLength( externalPoints, CV_WHOLE_SEQ, 0 );
+				m_externPerimeter += arcLength( externalPoints,false);
 				
-				cvClearSeq( externalPoints );
-				cvStartAppendToSeq( externalPoints, &writer );
+				externalPoints.clear();
 				delta = 0;
 				previousPoint.x = -1;
 			}
-
-			CV_WRITE_SEQ_ELEM( actualPoint, writer );
+			externalPoints.push_back(actualPoint);
 			previousPoint = actualPoint;
 		}
 		
 	}
 
-	cvEndWriteSeq( &writer );
-
-	m_externPerimeter += cvArcLength( externalPoints, CV_WHOLE_SEQ, 0 );
-
-	cvClearSeq( externalPoints );
-
+	if(externalPoints.size()!=0)
+		m_externPerimeter += arcLength( externalPoints,false);
 	// divide by two because external points have one side inside the blob and the other outside
 	// Perimeter of external points counts both sides, so it must be divided
 	m_externPerimeter /= 2.0;
@@ -462,18 +402,12 @@ double CBlob::ExternPerimeter( Mat maskImage, bool xBorder /* = true */, bool yB
 double CBlob::Moment(int p, int q)
 {
 	double moment=0;
-	t_contourList::iterator itContour; 
+	t_CBlobContourList::iterator itContour; 
 
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
 		for(it = joinedBlobs.begin();it!=en;it++){
-			moment += (*it)->m_externalContour.GetMoment(p,q);
-			itContour = (*it)->m_internalContours.begin();
-			while (itContour != (*it)->m_internalContours.end() )
-			{
-				moment -= (*itContour).GetMoment(p,q);
-				itContour++;
-			}
+			moment += (*it)->Moment(p,q);
 		}
 	}
 	else{
@@ -481,7 +415,7 @@ double CBlob::Moment(int p, int q)
 		itContour = m_internalContours.begin();
 		while (itContour != m_internalContours.end() )
 		{
-			moment -= (*itContour).GetMoment(p,q);
+			moment -= (*itContour)->GetMoment(p,q);
 			itContour++;
 		}
 	}
@@ -533,28 +467,35 @@ double CBlob::Mean( IplImage *image )
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
 		for(it = joinedBlobs.begin();it!=en;it++){
-			cvDrawContours( mask, (*it)->m_externalContour.GetContourPoints(), CV_RGB(255,255,255), CV_RGB(255,255,255),0, CV_FILLED, 8,
-				offset );
-			t_contourList::iterator itint = (*it)->m_internalContours.begin();
+// 			cvDrawContours( mask, (*it)->m_externalContour.GetContourPoints(), CV_RGB(255,255,255), CV_RGB(255,255,255),0, CV_FILLED, 8,
+// 				offset );
+// 			vector<t_PointList> conts;
+// 			conts.push_back((*it)->m_externalContour.GetContourPoints());
+			drawContours(Mat(mask),(*it)->m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
+			t_CBlobContourList::iterator itint = (*it)->m_internalContours.begin();
 			while(itint != (*it)->m_internalContours.end() )
 			{
-				cvDrawContours( mask, (*itint).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
-					offset );
+// 				cvDrawContours( mask, (*itint).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
+// 					offset );
+				drawContours(Mat(mask),(*itint)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
 				itint++;
 			}
 		}
 	}
 	else{
 		// draw contours on mask
-		cvDrawContours( mask, m_externalContour.GetContourPoints(), CV_RGB(255,255,255), CV_RGB(255,255,255),0, CV_FILLED, 8,
-						offset );
-
+// 		cvDrawContours( mask, m_externalContour.GetContourPoints(), CV_RGB(255,255,255), CV_RGB(255,255,255),0, CV_FILLED, 8,
+// 						offset );
+// 		vector<t_PointList> conts;
+// 		conts.push_back(m_externalContour.GetContourPoints());
+		drawContours(Mat(mask),m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
 		// draw internal contours
-		t_contourList::iterator it = m_internalContours.begin();
+		t_CBlobContourList::iterator it = m_internalContours.begin();
 		while(it != m_internalContours.end() )
 		{
-			cvDrawContours( mask, (*it).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
-						offset );
+// 			cvDrawContours( mask, (*it).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
+// 						offset );
+			drawContours(Mat(mask),(*it)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
 			it++;
 		}
 	}
@@ -589,6 +530,15 @@ double CBlob::StdDev( IplImage *image )
 double CBlob::StdDev(Mat image){
 	return StdDev(&(IplImage)image);
 }
+
+void CBlob::MeanStdDev( Mat image, double *mean, double *stddev )
+{
+	Mean(&(IplImage)image);
+	*mean = m_meanGray;
+	*stddev = m_stdDevGray;
+	return;
+}
+
 /**
 - FUNCI�: GetBoundingBox
 - FUNCIONALITAT: Get bounding box (without rotation) of a blob
@@ -640,8 +590,6 @@ CvRect CBlob::GetBoundingBox()
 	}
 
 	t_PointList externContour;
-	CvSeqReader reader;
-	CvPoint actualPoint;
 	
 	// get contour pixels
 	externContour = m_externalContour.GetContourPoints();
@@ -649,51 +597,16 @@ CvRect CBlob::GetBoundingBox()
 	//return m_boundingBox;
 
 	// it is an empty blob?
-	if( !externContour )
-	{
-		m_boundingBox.x = 0;
-		m_boundingBox.y = 0;
-		m_boundingBox.width = 0;
-		m_boundingBox.height = 0;
-		if(isJoined){
-			m_boundingBox.x = 1000000;
-			m_boundingBox.y = 1000000;
-			CvRect bigRect = m_boundingBox;
-			list<CBlob *>::iterator it,en = joinedBlobs.end();
-			int maxX=0,maxY=0;
-			for(it = joinedBlobs.begin();it!=en;it++){
-				CvRect temp = (*it)->GetBoundingBox();
-				if(bigRect.x > temp.x){
-					bigRect.x = temp.x;
-				}
-				if(bigRect.y > temp.y){
-					bigRect.y = temp.y;
-				}
-				if(maxX < temp.x+temp.width){
-					maxX = temp.x+temp.width;
-				}
-				if(maxY < temp.y + temp.height){
-					maxY = temp.y + temp.height;
-				}
-			}
-			bigRect.width=maxX - bigRect.x;
-			bigRect.height=maxY - bigRect.y;
-			m_boundingBox=bigRect;
-		}
-		return m_boundingBox;
-	}
-
-	//This part should not be necessary, since getContourPoints already computes the rectangle;
-	cvStartReadSeq( externContour, &reader);
-
 	m_boundingBox.x = 1000000;
 	m_boundingBox.y = 1000000;
 	m_boundingBox.width = 0;
 	m_boundingBox.height = 0;
 
-	for( int i=0; i< externContour->total; i++)
+
+	t_PointList::iterator it=externContour.begin(),en=externContour.end();
+	for( it;it!=en;it++)
 	{
-		CV_READ_SEQ_ELEM( actualPoint, reader);
+		Point &actualPoint = *it;
 
 		m_boundingBox.x = MIN( actualPoint.x, m_boundingBox.x );
 		m_boundingBox.y = MIN( actualPoint.y, m_boundingBox.y );
@@ -810,37 +723,121 @@ CvBox2D CBlob::GetEllipse()
 - FUNCTIONALITY: 
 	- Fills the blob with a specified colour
 - PARAMETERS:
-	- imatge: where to paint
+	- image: where to paint
 	- color: colour to paint the blob
+	- offset: point offset for drawing
+	- intContours: do not paint the internal holes (leave them transparent)
+	- srcImage: image from where to copy the internal holes contents
 - RESULT:
-	- modifies input image and returns the seed point used to fill the blob
+	- modified input image
 - RESTRICTIONS:
 - AUTHOR: Ricard Borr�s
 - CREATION DATE: 25-05-2005.
-- MODIFICATION: Date. Author. Description.
+- MODIFICATION:
+	- sep/2013. Luca Nardelli. Added functionality to consider internal contours when filling the blob.
 */
-void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/) 					  
+void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX , int offsetY, bool intContours, IplImage *srcImage) 					  
 {
-	if(isJoined){
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		for(it = joinedBlobs.begin();it!=en;it++){
-			(*it)->FillBlob(image,color,offsetX,offsetY);
-		}
-
-	}
-			cvDrawContours( image, m_externalContour.GetContourPoints(), color, color,0, CV_FILLED, 8 );
+	if(srcImage==NULL)
+		FillBlob(Mat(image),color,offsetX,offsetY,intContours,Mat());
+	else
+		FillBlob(Mat(image),color,offsetX,offsetY,intContours,Mat(srcImage));
 }
-void CBlob::FillBlob( Mat image, CvScalar color, int offsetX /*=0*/, int offsetY /*=0*/){
+void CBlob::FillBlob( Mat image, CvScalar color, int offsetX, int offsetY, bool intContours, Mat srcImage){
+	CV_FUNCNAME("CBlob::FillBlob");
+	__CV_BEGIN__;
+	if(srcImage.data)
+		CV_ASSERT(image.size()==srcImage.size() && image.type() == srcImage.type());
+	Rect bbox = GetBoundingBox();
+	Point drawOffset(offsetX,offsetY);
+	Size imSz = image.size();
+	if(bbox.x+offsetX+bbox.width >= imSz.width){
+		bbox.width = imSz.width - bbox.x-offsetX;
+	}
+	else if(bbox.x+offsetX < 0){
+		bbox.x = -offsetX;
+		bbox.width= bbox.width +offsetX;
+	}
+	if(bbox.y+offsetY+bbox.height >= imSz.height){
+		bbox.height = imSz.height - bbox.y-offsetY;
+	}
+	else if(bbox.y+offsetY < 0){
+		bbox.y = -offsetY;
+		bbox.height= bbox.height +offsetY;
+	}
+	if(bbox.width <0 || bbox.height <0){
+		return;
+	}
+	if(bbox.width==0)
+		bbox.width++;
+	if(bbox.height==0)
+		bbox.height++;
 	if(isJoined){
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		for(it = joinedBlobs.begin();it!=en;it++){
-			(*it)->FillBlob(&(IplImage)image,color,offsetX,offsetY);
+		list<CBlob *>::iterator itBlob=joinedBlobs.begin(),enBlob = joinedBlobs.end();
+		for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+			(*itBlob)->FillBlob(image,color,offsetX,offsetY,intContours,srcImage);
 		}
-
+// 		if(intContours){
+// 			Point offset(-bbox.x,-bbox.y);
+// 			Size sz(bbox.width,bbox.height);
+// 			Mat temp(sz,image.type());
+// 			Mat mask(sz,CV_8UC1);
+// 			mask.setTo(0);
+// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+// 				CBlob *curBlob = *itBlob;
+// 				t_CBlobContourList::iterator it = curBlob->m_internalContours.begin(),en = curBlob->m_internalContours.end();
+// 				for(it;it!=en;it++){
+// 					drawContours(mask,(*it)->GetContours(),-1,255,CV_FILLED,8,noArray(),2147483647,offset);
+// 				}
+// 			}
+// 			srcImage(bbox).copyTo(temp,mask);
+// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+// 				drawContours(image,(*itBlob)->m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
+// 			}
+// 			temp.copyTo(image(bbox+drawOffset),mask);
+// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+// 				CBlob *curBlob = *itBlob;
+// 				t_CBlobContourList::const_iterator it = curBlob->m_internalContours.begin(),en = curBlob->m_internalContours.end();
+// 				for(it;it!=en;it++){
+// 					drawContours(image,(*it)->GetContours(),-1,color,1,8,noArray(),2147483647,drawOffset);
+// 				}
+// 			}
+// 		}
+// 		else{
+// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+// 				drawContours(image,(*itBlob)->m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
+// 			}
+// 		}
 	}
 	else{
-		FillBlob(&(IplImage)image,color,offsetX,offsetY);
+		if(intContours){
+			Point offset(-bbox.x,-bbox.y);
+			t_CBlobContourList::iterator it = m_internalContours.begin(),en = m_internalContours.end();
+			Mat temp(bbox.height,bbox.width,image.type());
+			drawContours(image,m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
+			if(srcImage.data){
+				Mat mask(bbox.height,bbox.width,CV_8UC1);
+				mask.setTo(0);
+				for(it;it!=en;it++){
+					drawContours(mask,(*it)->GetContours(),-1,255,CV_FILLED,8,noArray(),2147483647,offset);
+				}
+				srcImage(bbox).copyTo(temp,mask);
+				temp.copyTo(image(bbox+drawOffset),mask);
+			}
+			else{
+				for(it;it!=en;it++){
+					drawContours(image,(*it)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,drawOffset);
+				}
+			}
+			
+			for(it=m_internalContours.begin();it!=en;it++){
+				drawContours(image,(*it)->GetContours(),-1,color,1,8,noArray(),2147483647,drawOffset);
+			}
+		}
+		else
+			drawContours(Mat(image),m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
 	}
+	__CV_END__;
 }
 
 /**
@@ -855,15 +852,28 @@ void CBlob::FillBlob( Mat image, CvScalar color, int offsetX /*=0*/, int offsetY
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-t_PointList CBlob::GetConvexHull()
+void CBlob::GetConvexHull( t_contours& hull )
 {
-	CvSeq *convexHull = NULL;
-
-	if( m_externalContour.GetContourPoints() )
-		convexHull = cvConvexHull2( m_externalContour.GetContourPoints(), m_storage,
-					   CV_COUNTER_CLOCKWISE, 1 );
-
-	return convexHull;
+	hull.clear();
+	t_PointList extCont;
+	hull.push_back(t_PointList());
+	if(isJoined){
+		int numPts = 0;
+		t_blobList::iterator it,en=joinedBlobs.end();
+		for(it=joinedBlobs.begin();it!=en;it++){
+			numPts+= (*it)->GetExternalContour()->GetContourPoints().size();
+		}
+		hull[0].reserve(numPts);
+		extCont.reserve(numPts);
+		for(it=joinedBlobs.begin();it!=en;it++){
+			t_PointList& pts = (*it)->GetExternalContour()->GetContourPoints();
+			extCont.insert(extCont.end(),pts.begin(),pts.end());
+		}
+	}
+	else{
+		extCont = m_externalContour.GetContourPoints();	
+	}
+	cv::convexHull(extCont,hull[0],true,true);
 }
 
 /**
@@ -879,11 +889,11 @@ t_PointList CBlob::GetConvexHull()
 - MODIFICATION: 
 	08-2013, Luca Nardelli & Saverio Murgia, Created a working version of the join blob function
 */
-void CBlob::JoinBlob( CBlob *blob, bool deleteblob)
+void CBlob::JoinBlob( CBlob *blob)
 {
 	/* Luca Nardelli & Saverio Murgia */
 	//Check on m_storage in order to not add empty blobs.
-	if(!isJoined && m_storage){
+	if(!isJoined && !IsEmpty()){
 		this->joinedBlobs.push_back(new CBlob(this));
 	}
 	if(blob->isJoined){
@@ -895,10 +905,6 @@ void CBlob::JoinBlob( CBlob *blob, bool deleteblob)
 	else{
 		this->joinedBlobs.push_back(new CBlob(blob));
 	}
-	if(deleteblob){
-		blob->to_be_deleted=true;
-	}
-
 
 	this->isJoined=true;
 	this->m_boundingBox.width=-1;
@@ -907,228 +913,6 @@ void CBlob::JoinBlob( CBlob *blob, bool deleteblob)
 
 }
 
-vector<vector<Point> > CBlob::getPointsTouchingBorder( int border )
-{
-	vector<Point> points;
-	vector<vector<Point> > segments;
-	CvPoint pt,pt2;
-	int pointsIndex;
-	int numPoints = m_externalContour.GetContourPoints()->total;
-	CvSeqReader reader;
-	cvStartReadSeq(m_externalContour.GetContourPoints(),&reader);
-	//Determino quale fra il primo e l'ultimo punto (coincidenti) � da scartare in quanto singolo.
-	CV_READ_SEQ_ELEM(pt,reader);
-	CV_READ_SEQ_ELEM(pt2,reader);
-	bool discardLast = false;
-	m_boundingBox = GetBoundingBox();
-	switch(border){
-	case 0:	//Top
-		discardLast=(pt.y == GetBoundingBox().y && pt2.y==GetBoundingBox().y);break;
-	case 1:	//Right
-		discardLast=(pt.x = GetBoundingBox().width && pt.x == GetBoundingBox().width);break;
-	case 2: // Bottom
-		discardLast=(pt.y = GetBoundingBox().height && pt.y == GetBoundingBox().height );break;
-	case 3: // Left
-		discardLast=(pt.x == GetBoundingBox().x && pt2.x==GetBoundingBox().x);break;
-	}
-	cvStartReadSeq(m_externalContour.GetContourPoints(),&reader);
-	if(discardLast)
-		numPoints--;
-	else{
-		CV_READ_SEQ_ELEM(pt,reader);
-		numPoints--;
-	}
-
-	for(int i=0;i< numPoints;i++){
-		CV_READ_SEQ_ELEM(pt,reader);
-		CvPoint tempPt = pt;
-		tempPt.x -= GetBoundingBox().x;
-		tempPt.y -= GetBoundingBox().y;
-		m_boundingBox;
-		switch(border){
-		case 0:	//Top
-			if(tempPt.y == 0)
-				points.push_back(Point(pt));
-			else if(points.size() != 0){
-				segments.push_back(points);
-				points = vector<Point>();
-			}
-			break;
-		case 1: // Right
-			if(tempPt.x == GetBoundingBox().width )
-				points.push_back(Point(pt));
-			else if(points.size() != 0){
-				segments.push_back(points);
-				points = vector<Point>();
-			}
-			break;
-		case 2: // Bottom
-			if(tempPt.y == GetBoundingBox().height )
-				points.push_back(Point(pt));
-			else if(points.size() != 0){
-				segments.push_back(points);
-				points = vector<Point>();
-			}
-			break;
-		case 3: // Left
-			if(tempPt.x == 0 )
-				points.push_back(Point(pt));
-			else if(points.size() != 0){
-				segments.push_back(points);
-				points = vector<Point>();
-			}
-			break;
-		}
-	}
-	if(points.size()!=0)
-		segments.push_back(points);
-	return segments;
-}
-
-void CBlob::JoinBlobTangent(CBlob *blob,std::deque<Segment> segments){
-	//Per mostrare le mat sotto
-	
-	CvSeqReader readerTop,readerBottom,readerChainTop,readerChainBottom;
-	CvSeqWriter writerSeq,writerChain;
-	t_PointList contourSeqTop = GetExternalContour()->GetContourPoints();
-	t_PointList contourSeqBottom = blob->GetExternalContour()->GetContourPoints();
-	t_chainCodeList contourChainTop = GetExternalContour()->GetChainCode();
-	t_chainCodeList contourChainBottom = blob->GetExternalContour()->GetChainCode();
-	t_chainCodeList newChain;
-	t_PointList newContour;
-	CvPoint pt;
-	t_chainCode chain;
-	Mat temp = Mat::zeros(300,1200,CV_8UC3);
-
-	if(!contourSeqBottom)
-		return;
-
-
-	//Mostro la chain prima del join... Da commentare poi
-	//namedWindow("Prova",CV_WINDOW_KEEPRATIO+CV_WINDOW_NORMAL);
-// 	cvStartReadSeq(contourChainTop,&readerChainTop);
-// 	CvPoint point2 = GetExternalContour()->GetStartPoint();
-// 	temp.at<Vec3b>(point2) = Vec3b(0,255,0);
-// 	for(int i=0;i<contourChainTop->total;i++){
-// 		CV_READ_SEQ_ELEM(chain,readerChainTop);
-// 		point2 = chainCode2Point(point2,chain);
-// 		temp.at<Vec3b>(point2) = Vec3b(0,255,0);
-// 		imshow("Prova",temp);
-// 		waitKey(1);
-// 	}
-// 	CvSeq* approx = cvApproxChains(contourChainTop,m_storage,CV_CHAIN_APPROX_NONE);
-// 	cvStartReadSeq(approx,&readerChainTop);
-// 	CvPoint stpt = GetExternalContour()->GetStartPoint();
-// 	temp.at<Vec3b>(point2) = Vec3b(255,255,0);
-// 	for(int i=0;i<approx->total;i++){
-// 		CV_READ_SEQ_ELEM(point2,readerChainTop);
-// 		point2.x+=stpt.x;point2.y+=stpt.y;
-// 		temp.at<Vec3b>(point2) = Vec3b(255,255,0);
-// 		imshow("Prova",temp);
-// 		waitKey(1);
-// 	}
-	//Mostro i 2 blobs
-// 	FillBlob(temp,Vec3b(200,200,0));
-// 	blob->FillBlob(temp,Vec3b(0,200,200));
-// 	imshow("Prova",temp);
-// 	waitKey();
-	//
-	cvStartWriteSeq(contourSeqTop->flags,contourSeqTop->header_size,contourSeqTop->elem_size,m_storage,&writerSeq);
-	cvStartWriteSeq(contourChainTop->flags,contourChainTop->header_size,contourChainTop->elem_size,m_storage,&writerChain);
-	cvStartReadSeq(contourSeqTop,&readerTop);
-	cvStartReadSeq(contourSeqBottom,&readerBottom);
-	cvStartReadSeq(contourChainTop,&readerChainTop);
-	cvStartReadSeq(contourChainBottom,&readerChainBottom);
-	vector<Point> contourTop,contourBottom;
-
-	Point startPt = segments[0].begin,endPt = segments[segments.size()-1].end;
-	//Scrivo tutti i punti a partire da S1 (startingpoint 1) fino al primo punto di intersezione (il begin del primo segmento coincidente)
-	int indTop = 0;
-	for(indTop;indTop<contourSeqTop->total;indTop++){
-		CV_READ_SEQ_ELEM(pt,readerTop);CV_READ_SEQ_ELEM(chain,readerChainTop);
-		if(pt.x == startPt.x && pt.y == startPt.y){
-			indTop++;
-			break;
-		}
-		CV_WRITE_SEQ_ELEM(pt,writerSeq);CV_WRITE_SEQ_ELEM(chain,writerChain);
-		//contourTop.push_back(Point(pt));
-	}
-	//Scrivo tutti i punti del secondo blob a partire dal primo punto di intersezione fino all'ultimo (end dell'ultimo segmento coincidente)
-	bool write = false;
-	while(true){
-		CV_READ_SEQ_ELEM(pt,readerBottom);CV_READ_SEQ_ELEM(chain,readerChainBottom);
-		if(pt.x == endPt.x && pt.y == endPt.y && write)
-			break;
-		if(pt.x == startPt.x && pt.y == startPt.y)
-			write = true;
-		if(write){
-			CV_WRITE_SEQ_ELEM(pt,writerSeq);CV_WRITE_SEQ_ELEM(chain,writerChain);
-		}
-		//contourBottom.push_back(Point(pt));
-	}
-
-	//Ora scrivo i restanti punti della sequenza 1 a partire da endPoint fino al termine della sequenza stessa
-	write = false;
-	for(indTop;indTop<contourSeqTop->total-1;indTop++){
-		CV_READ_SEQ_ELEM(pt,readerTop);CV_READ_SEQ_ELEM(chain,readerChainTop);
-		if(pt.x == endPt.x && pt.y == endPt.y)
-			write = true;
-		if(write){
-			CV_WRITE_SEQ_ELEM(pt,writerSeq);CV_WRITE_SEQ_ELEM(chain,writerChain);
-		}
-	}
-
-	newContour = cvEndWriteSeq(&writerSeq);
-	cvClearSeq(GetExternalContour()->m_contourPoints);
-	GetExternalContour()->m_contourPoints = cvCloneSeq(newContour,m_storage);
-	cvClearSeq(blob->GetExternalContour()->m_contourPoints);
-	blob->GetExternalContour()->m_contourPoints = cvCloneSeq(newContour,blob->m_storage); //Anche il nuovo blob avr� lo stesso contour!
-	
-	newChain = cvEndWriteSeq(&writerChain);
-	cvClearSeq(GetExternalContour()->m_contour);
-	cvClearSeq(blob->GetExternalContour()->m_contour);
-	GetExternalContour()->m_contour = cvCloneSeq(newChain,m_storage);
-	blob->GetExternalContour()->m_contour = cvCloneSeq(newChain,blob->m_storage);
-
-
-// 	namedWindow("Prova",CV_WINDOW_KEEPRATIO+CV_WINDOW_NORMAL);
-// 	cvStartReadSeq(newContour,&readerTop);
-// 	cvStartReadSeq(newChain,&readerChainTop);
-// 	int key;
-// 	bool disp=true;
-// 	for(int i=0;i<newContour->total;i++){
-// 		CV_READ_SEQ_ELEM(pt,readerTop);
-// 		if(i < newContour->total/2)
-// 			temp.at<Vec3b>(pt) = Vec3b(255,0,0);
-// 		else
-// 			temp.at<Vec3b>(pt) = Vec3b(255,255,0);
-// // 		imshow("Prova",temp);
-// // 		waitKey(1);
-// 	}
-// 	imshow("Prova",temp);
-// 	waitKey();
-// 	CvPoint point = GetExternalContour()->GetStartPoint();
-// 	temp.at<Vec3b>(point) = Vec3b(0,255,0);
-// 	int i=0;
-// 	for(i=0;i<newChain->total;i++){
-// 		CV_READ_SEQ_ELEM(chain,readerChainTop);
-// 		point = chainCode2Point(point,chain);
-// 		if(i < newChain->total/2)
-// 			temp.at<Vec3b>(point) = Vec3b(0,255,0);
-// 		else
-// 			temp.at<Vec3b>(point) = Vec3b(0,255,255);
-// 		if(disp){
-// 			imshow("Prova",temp);
-// 			key = waitKey(1);
-// 			if(key == ' ')
-// 				disp=false;
-// 		}
-// 	}
-// 	imshow("Prova",temp);
-// 	waitKey();
-	cvClearSeq(newContour);
-	cvClearSeq(newChain);
-}
 
 void CBlob::requestDeletion( CBlob *blob )
 {
@@ -1148,51 +932,20 @@ int CBlob::getNumJoinedBlobs()
 	return joinedBlobs.size();
 }
 
-t_chainCode points2ChainCode( CvPoint p1, CvPoint p2 )
+void CBlob::ShiftBlob( int x,int y )
 {
-	//	/* Luca Nardelli & Saverio Murgia
-	//	Freeman Chain Code:	
-	//		321		Values indicate the chain code used to identify next pixel location.
-	//		4-0		If I join 2 blobs I can't just append the 2nd blob chain codes, since they will still start
-	//		567		from the 1st blob start point
-	//	*/
-	Point diff = Point(p2.x-p1.x,p2.y-p1.y);
-	if(diff.x == 1 && diff.y == 0)
-		return 0;
-	else if(diff.x == 1 && diff.y == -1)
-		return 1;
-	else if(diff.x == 0 && diff.y == -1)
-		return 2;
-	else if(diff.x == -1 && diff.y == -1)
-		return 3;
-	else if(diff.x == -1 && diff.y == 0)
-		return 4;
-	else if(diff.x == -1 && diff.y == 1)
-		return 5;
-	else if(diff.x == 0 && diff.y == 1)
-		return 6;
-	else if(diff.x == 1 && diff.y == 1)
-		return 7;
-	else
-		return 200;
-}
-CvPoint chainCode2Point(CvPoint origin,t_chainCode code){
-	//	/* Luca Nardelli & Saverio Murgia
-	//	Freeman Chain Code:	
-	//		321		Values indicate the chain code used to identify next pixel location.
-	//		4-0		If I join 2 blobs I can't just append the 2nd blob chain codes, since they will still start
-	//		567		from the 1st blob start point
-	//	*/
-	CvPoint pt = origin;
-	switch(code){
-	case 0:pt.x++;break;
-	case 1:pt.x++;pt.y--;break;
-	case 2:pt.y--;break;
-	case 3:pt.x--;pt.y--;break;
-	case 4:pt.x--;break;
-	case 5:pt.x--;pt.y++;break;
-	case 6:pt.y++;break;
-	case 7:pt.x++;pt.y++;break;
+	m_externalContour.ShiftBlobContour(x,y);
+	t_CBlobContourList::iterator it,en=m_internalContours.end();
+	for(it=m_internalContours.begin();it!=en;it++){
+		(*it)->ShiftBlobContour(x,y);
 	}
-	return pt;
+	m_boundingBox.x += x;
+	m_boundingBox.y += y;
 }
+
+Point CBlob::getCenter()
+{
+	return Point(GetBoundingBox().x+GetBoundingBox().width*0.5,GetBoundingBox().y+GetBoundingBox().height*0.5);
+}
+
+

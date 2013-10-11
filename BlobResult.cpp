@@ -7,16 +7,7 @@ MODIFICACIONS (Modificaci�, Autor, Data):
  
 **************************************************************************/
 
-#include <limits.h>
-#include <stdio.h>
-#include <functional>
-#include <algorithm>
-#include <opencv2/opencv.hpp>
-#include <opencv2/opencv_modules.hpp>
 #include "BlobResult.h"
-#include "Segment.h"
-#include "MacroBlob.h"
-#include <pthread.h>
 //! Show errors functions: only works for windows releases
 #ifdef _SHOW_ERRORS
 	#include <afx.h>			//suport per a CStrings
@@ -64,13 +55,7 @@ CBlobResult::CBlobResult()
 - PAR�METRES:
 	- source: imatge d'on s'extreuran els blobs
 	- mask: m�scara a aplicar. Nom�s es calcularan els blobs on la m�scara sigui 
-			diferent de 0. Els blobs que toquin a un pixel 0 de la m�scara seran 
-			considerats exteriors.
-	- threshold: llindar que s'aplicar� a la imatge source abans de calcular els blobs
-	- findmoments: indica si s'han de calcular els moments de cada blob
-	- blackBlobs: true per buscar blobs negres a la binaritzazi� (it will join all extern white blobs).
-				  false per buscar blobs negres a la binaritzazi� (it will join all extern black blobs).
-
+			diferent de 0.
 - RESULTAT:
 	- objecte CBlobResult amb els blobs de la imatge source
 - RESTRICCIONS:
@@ -85,38 +70,28 @@ CBlobResult::CBlobResult()
 - PARAMETERS:
 	- source: image to extract the blobs from
 	- mask: optional mask to apply. The blobs will be extracted where the mask is
-			not 0. All the neighbouring blobs where the mask is 0 will be extern blobs
-	- threshold: threshold level to apply to the image before computing blobs
-	- findmoments: true to calculate the blob moments (slower) (needed to calculate elipses!)
- 	- blackBlobs: true to search for black blobs in the binarization (it will join all extern white blobs).
-				  false to search for white blobs in the binarization (it will join all extern black blobs).
+			not 0.
+	- numThreads: number of labelling threads.		
 - RESULT:
-	- object with all the blobs in the image. It throws an EXCEPCIO_CALCUL_BLOBS
-	  if some error appears in the BlobAnalysis function
+	- object with all the blobs in the image.
 - RESTRICTIONS:
 - AUTHOR: Ricard Borr�s
 - CREATION DATE: 25-05-2005.
-- MODIFICATION: Date. Author. Description.
+- MODIFICATION:
+	Oct-2013. Luca Nardelli and Saverio Murgia. Changed to comply with reimplemented labelling algorithm
 */
-CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor)
+CBlobResult::CBlobResult(IplImage *source, IplImage *mask,int numThreads)
 {
-	Mat lbl;
-	*this = CBlobResult(source,mask,backgroundColor,lbl);
-}
-CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor ,Mat &labelled)
-{
-	bool success;
-	try
-	{
-		success = ComponentLabeling( source, mask, backgroundColor, m_blobs,labelled);
-		Blob_vector::iterator it = m_blobs.begin(),en=m_blobs.end();
+	if(mask!=NULL){
+		Mat temp = Mat::zeros(Size(source->width,source->height),CV_8UC1);
+		Mat(source).copyTo(temp,Mat(mask));
+		compLabeler.set(numThreads,temp);
+		compLabeler.doLabeling(m_blobs);
 	}
-	catch(...)
-	{
-		success = false;
+	else{
+		compLabeler.set(numThreads,source);
+		compLabeler.doLabeling(m_blobs);
 	}
-
-	if( !success ) throw EXCEPCIO_CALCUL_BLOBS;
 }
 /**
 - FUNCTION: CBlobResult
@@ -126,132 +101,27 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask, uchar backgroundColor
 	- source: Mat to extract the blobs from, CV_8UC1
 	- mask: optional mask to apply. The blobs will be extracted where the mask is
 			not 0. All the neighbouring blobs where the mask is 0 will be extern blobs
+	- numThreads: number of labelling threads. 
 - RESULT:
-	- object with all the blobs in the image. It throws an EXCEPCIO_CALCUL_BLOBS
-	  if some error appears in the BlobAnalysis function
+	- object with all the blobs in the image.
 - RESTRICTIONS:
 - AUTHOR: Saverio Murgia & Luca Nardelli
 - CREATION DATE: 06-04-2013.
 - MODIFICATION: Date. Author. Description.
 */
-CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numThreads){
-	if(numThreads==1){
-		Mat voidMat;
-		if(mask.data)
-			//*this = CBlobResult(&(IplImage)source,&(IplImage)mask,backgroundColor);
-			ComponentLabeling(&(IplImage)source,&(IplImage)mask,backgroundColor,m_blobs,voidMat);
-		else
-			//*this = CBlobResult(&(IplImage)source,NULL,backgroundColor);
-			ComponentLabeling(&(IplImage)source,NULL,backgroundColor,m_blobs,voidMat);
+CBlobResult::CBlobResult(Mat &source, Mat &mask,int numThreads){
+	if(mask.data){
+		Mat temp=Mat::zeros(source.size(),source.type());
+		source.copyTo(temp,mask);
+		compLabeler.set(numThreads,temp);
+		compLabeler.doLabeling(m_blobs);
 	}
 	else{
-		pthread_t *tIds = new pthread_t[numThreads];
-		Size sz = source.size();
-		int roiHeight = sz.height/numThreads;
-		ThreadMessage *mess = new ThreadMessage[numThreads];
-		mess[numThreads-1] = ThreadMessage(source,mask,0,(numThreads-1)*roiHeight,source.size().height -(numThreads-1)*roiHeight);
-		int64 time = getTickCount();
-		for(int i=0;i<numThreads-1;i++){
-			mess[i] = ThreadMessage(source,mask,0,i*roiHeight,roiHeight);
-			pthread_create(&tIds[i],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[i]);
-		}
-		//The last thread should cover the rest of the image (if I had to round some values).
-		pthread_create(&tIds[numThreads-1],NULL,(void *(*)(void *))thread_componentLabeling,(void*)&mess[numThreads-1]);
-		for(int i=0;i<numThreads;i++){
-			pthread_join(tIds[i],0);
-		}
-		//cout << "Tempo detection: " << (getTickCount()-time)/getTickFrequency()<<endl;time = getTickCount();
-		vector<MacroBlob> macroBlobs;
-		for(int i=numThreads-1;i>0;i--){
-			//cout << "RIGA: "<< i*sz.height/numCores -1 << endl;
-			/*unsigned int last_found_label=0;*/
-			unsigned int prevLabelTop = 0;
-			unsigned int prevLabelBottom = 0;
-			Point segStart(sz.width,mess[i].overlappingLine),segEnd(0,mess[i].overlappingLine);
-			int macroBlobIndex = -1;
-			int commonSegmentsSize=-1;
-			for(int c=0;c<sz.width;c++){
-				//L'ultima riga di labelTop e la prima di labelBottom sono sovrapposte (coincidenti)
-				unsigned int labelBottom = mess[i].labels.at<unsigned int>(0,c);
-				unsigned int labelTop = mess[i-1].labels.at<unsigned int>(mess[i-1].labels.size().height-1,c);
-				if(labelTop!= prevLabelTop && labelTop!=0){
-					CBlob* tempTop = mess[i-1].vec[labelTop-1];
-					CBlob* tempBottom = mess[i].vec[labelBottom-1];
-					bool containsTop=false,containsBottom=false;
-					int p=0,q=0;
-					for(p;p<macroBlobs.size();p++){
-						if(macroBlobs[p].contains(tempTop)){
-							containsTop=true;
-							break;
-						}
-					}
-					for(q;q<macroBlobs.size();q++){
-						if(macroBlobs[q].contains(tempBottom)){
-							containsBottom=true;
-							break;
-						}
-					}
-					//If both blobs are "new", not belonging to a MacroBlob, I have to create a new MacroBlob.
-					if(!(containsTop || containsBottom)){
-						MacroBlob temp;
-						temp.blobsToJoin.push_back(tempTop);
-						temp.blobsToJoin.push_back(tempBottom);
-						macroBlobs.push_back(temp);
-						macroBlobIndex = macroBlobs.size()-1;
-					}
-					//If I have to join 2 adiacent macroblobs (they were created as separate entities if in the image I had a "H" like structure)
-					else if(containsTop && containsBottom && p!=q){
-						int size = macroBlobs[q].blobsToJoin.size();
-						//I add the bottom one to the top one and set the bottom to not be joined afterwards.
-						for(int j=0;j<size;j++){
-							macroBlobs[p].blobsToJoin.push_back(macroBlobs[q].blobsToJoin[j]);
-						}
-						size  = macroBlobs[q].commonSegments.size();
-						for(int j=0;j<size;j++){
-							macroBlobs[p].commonSegments.push_back(macroBlobs[q].commonSegments[j]);
-						}
-						macroBlobs[q].toJoin=false;
-						macroBlobIndex = p;
-					}
-					else{
-						macroBlobIndex = containsTop ? p : q;
-						macroBlobs[macroBlobIndex].blobsToJoin.push_back(containsTop ? tempBottom : tempTop);
-					}
-					macroBlobs[macroBlobIndex].commonSegments.push_back(Segment(Point(segStart),Point(segEnd),tempTop,tempBottom));
-					commonSegmentsSize = macroBlobs[macroBlobIndex].commonSegments.size();
-				}
-				if(labelBottom!=0 && labelTop!=0){
-					macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x = MIN(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].begin.x,c);
-					macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x = MAX(macroBlobs[macroBlobIndex].commonSegments[commonSegmentsSize-1].end.x,c);
-				}
-				prevLabelTop=labelTop;
-				prevLabelBottom=labelBottom;
-			}	
-		}
-		//cout << "Tempo creazione macroblobs: " << (getTickCount()-time)/getTickFrequency()<<endl;time = getTickCount();
-		MacroBlobJoiner joiner(macroBlobs, numThreads);
-		joiner.JoinAll();
-		for(int i=0;i<macroBlobs.size();i++){
-			if(macroBlobs[i].joinedBlob)
-				m_blobs.push_back(new CBlob(macroBlobs[i].joinedBlob));
-		}
-		//cout << "Tempo join + add: " << (getTickCount()-time)/getTickFrequency()<<endl;time = getTickCount();
-		for(int i=0;i<numThreads;i++){
-			for(int j=0;j<mess[i].vec.size();j++){
-				CBlob* temp = mess[i].vec[j];
-				if(temp->to_be_deleted==0)
-					m_blobs.push_back(temp);
-				else
-					delete temp;
-			}
-		}
-		delete [] mess;
-		delete [] tIds;
-		//cout << "Tempo fusion: " << (getTickCount()-time)/getTickFrequency()<<endl; time=getTickCount();
-		//*this = r;
-		//cout << "Tempo assign: " << (getTickCount()-time)/getTickFrequency()<<endl; time=getTickCount();
+		compLabeler.set(numThreads,source);
+		compLabeler.doLabeling(m_blobs);
 	}
 }
+
 /**
 - FUNCI�: CBlobResult
 - FUNCIONALITAT: Constructor de c�pia. Inicialitza la seq��ncia de blobs 
@@ -279,7 +149,8 @@ CBlobResult::CBlobResult(Mat &source, Mat &mask, uchar backgroundColor,int numTh
 CBlobResult::CBlobResult( const CBlobResult &source )
 {	
 	// creem el nou a partir del passat com a par�metre
-	m_blobs = Blob_vector( source.GetNumBlobs() );
+	//m_blobs = Blob_vector( source.GetNumBlobs() );
+	m_blobs.reserve(source.GetNumBlobs());
 	// copiem els blobs de l'origen a l'actual
 	Blob_vector::const_iterator pBlobsSrc = source.m_blobs.begin();
 	Blob_vector::iterator pBlobsDst = m_blobs.begin();
@@ -520,7 +391,7 @@ double_vector CBlobResult::GetResult( funcio_calculBlob *evaluador ) const
 */
 /**
 - FUNCTION: GetResult
-- FUNCTIONALITY: Computes the function evaluador on all the blobs of the class
+- FUNCTIONALITY: Computes the function evaluator on all the blobs of the class
 				 and returns a vector with the result
 - PARAMETERS:
 	- evaluador: function to apply to each blob (any object derived from the 
@@ -1103,59 +974,4 @@ void CBlobResult::PrintBlobs( char *nom_fitxer ) const
 	}
 	fclose( fitxer_sortida );
 
-}
-
-/**
-- FUNCTION: thread_componentLabeling
-- FUNCTIONALITY: Static function needed to create many component labeling threads from the constructor
-- PARAMETERS:
-	- msg: pointer to thread message, which contains the binary image, the mask and the background color
-- RESULT:
-	- returns the CBlobResult created.
-- RESTRICTIONS:
-- AUTHOR: Saverio Murgia & Luca Nardelli
-- CREATION DATE: 06-04-2013.
-- MODIFICATION: Date. Author. Description.
-*/
-void* CBlobResult::thread_componentLabeling( ThreadMessage *msg )
-{
-	//int64 time=getTickCount();
-	int shift = msg->origin > 0 ? msg->origin-1 : msg->origin;
-	int height = msg->origin > 0 ? msg->height+1 : msg->height;
-	Rect roi = Rect(0,shift,msg->image.size().width,height);
-	msg->overlappingLine=shift;
-	if(msg->mask.data){
-		//msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor,msg->labels);
-		ComponentLabeling(&(IplImage)(msg->image(roi)),&(IplImage)(msg->mask(roi)),msg->backColor,msg->vec,msg->labels);
-	}
-	else{
-		//msg->res = new CBlobResult(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->labels);
-		ComponentLabeling(&(IplImage)(msg->image(roi)),NULL,msg->backColor,msg->vec,msg->labels);
-	}
-	//Devo sommare l'offset di ogni punto
-	//int numBlobs = msg->res->GetNumBlobs();
-	int numBlobs = msg->vec.size();
-	for(int i=0;i<numBlobs;i++){
-		CBlob *curBlob;
-// 		curBlob = msg->res->GetBlob(i);
-// 		curBlob->ShiftBlob(0,shift);
-// 		curBlob->m_originalImageSize = msg->image.size();
-		curBlob = msg->vec[i];
-		curBlob->ShiftBlob(0,shift);
-		curBlob->m_originalImageSize = msg->image.size();
-	}
-	//std::cout <<"Tempo Thread: "<<(getTickCount()-time)/getTickFrequency()<<std::endl;
-	return msg;
-}
-
-void CBlobResult::BlobOverlap::Print(){
-	cout << "Source Blob ID: "<< sourceBlob->GetID()<<endl;
-	map<unsigned int,deque<Segment> >::iterator it;
-	for( it = matchingSegments.begin();it!=matchingSegments.end();it++){
-		cout << "Blob to Join ID: " << it->first << endl;
-		cout << "Common Segments: " << endl;
-		for(int i=0; i< it->second.size();i++){
-			cout << it->second[i].begin << "-" << it->second[i].end << endl;
-		}
-	}
 }

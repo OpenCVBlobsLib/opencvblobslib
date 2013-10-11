@@ -1,423 +1,418 @@
 
 #include "ComponentLabeling.h"
 
-//! Conversion from freeman code to coordinate increments (counterclockwise)
-static const CvPoint freemanCodeIncrement[8] =
-    { {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}, {1, 1} };
-
-
-
-/**
-- FUNCI�: 
-- FUNCIONALITAT: 
-- PAR�METRES:
-	- 
-- RESULTAT:
-	- 
-- RESTRICCIONS:
-	- 
-- AUTOR: rborras
-- DATA DE CREACI�: 2008/04/29
-- MODIFICACI�: Data. Autor. Descripci�.
-*/
-inline unsigned char GET_ABOVE_IMAGEPIXEL( unsigned char *currentPixel, IplImage *image )
+myCompLabeler::myCompLabeler(Mat &binImage,Point start,Point end, Mat &lab):
+	startPoint(start),endPoint(end),
+	labels(lab),
+	binaryImage(binImage)
 {
-	return *(currentPixel - image->widthStep);
-}
-inline unsigned char GET_BELOW_IMAGEPIXEL( unsigned char *currentPixel, IplImage *image )
-{
-	return *(currentPixel + image->widthStep);
-}
-
-
-
-inline unsigned char GET_IMAGE_PIXEL( IplImage *image, CvPoint p )
-{
-	return *(image->imageData + p.x + p.y *image->widthStep);
-}
-
-inline bool GET_IMAGEMASK_PIXEL( IplImage *mask, CvPoint p )
-{
-	if( mask != NULL )
-		return ((unsigned char)*(mask->imageData + p.x + p.y *mask->widthStep)) > 0;
-	else
-		return true;
-}
-inline bool GET_BELOW_VISITEDPIXEL( bool *currentPixel, int imageWidth )
-{
-	return *( currentPixel + imageWidth );
-}
-
-/**
-- FUNCI�: ASSIGN_LABEL
-- FUNCIONALITAT: Assigns label value to label image
-- PAR�METRES:
-	- 
-- RESULTAT:
-	- 
-- RESTRICCIONS:
-	- 
-- AUTOR: rborras
-- DATA DE CREACI�: 2008/04/29
-- MODIFICACI�: Data. Autor. Descripci�.
-*/
-inline void ASSIGN_LABEL( CvPoint p, t_labelType *labels, int imageWidth, int newLabel )
-{
-	*(labels + p.y * imageWidth + p.x) = newLabel;
-}
-
-
-inline void ASSIGN_VISITED( CvPoint p, bool *visitedPoints, int imageWidth  )
-{
-	*(visitedPoints + p.y * imageWidth + p.x) = true;
-}
-
-/**
-- FUNCI�: ComponentLabeling
-- FUNCIONALITAT: Calcula els components binaris (blobs) d'una imatge amb connectivitat a 8
-- PAR�METRES:
-	- inputImage: image to segment (pixel values different than blobColor are treated as background)
-	- maskImage: if not NULL, all the pixels equal to 0 in mask are skipped in input image
-	- backgroundColor: color of background (ignored pixels)
-	- blobs: blob vector destination
-- RESULTAT:
-	- 
-- RESTRICCIONS:
-	- 
-- AUTOR: rborras
-- DATA DE CREACI�: 2008/04/21
-- MODIFICACI�: Data. Autor. Descripci�.
-- NOTA: Algorithm based on "A linear-time component labeling algorithm using contour tracing technique", 
-		F.Chang et al
-*/
-
-bool ComponentLabeling(	IplImage* inputImage,
-						IplImage* maskImage,
-						unsigned char backgroundColor,
-						Blob_vector &blobs){
-	Mat lbl;
-	return ComponentLabeling(inputImage,maskImage,backgroundColor,blobs,lbl);
-}
-
-bool ComponentLabeling(	IplImage* inputImage,
-						IplImage* maskImage,
-						unsigned char backgroundColor,
-						Blob_vector &blobs , Mat &labelled)
-{
-	int i,j;
-	// row major vector with visited points 
-	bool *visitedPoints, *pVisitedPoints, internalContour, externalContour;
-	unsigned char *pInputImage, *pMask, *pAboveInputImage, *pBelowInputImage,
-				  *pAboveMask, *pBelowMask;
-	int imageWidth, imageHeight, currentLabel, contourLabel;
-	// row major vector with labelled image 
-	t_labelType *labelledImage, *pLabels;
-	//! current blob pointer
-	CBlob *currentBlob;
-	CvSize imageSizes;
-	CvPoint currentPoint;
-
-	// verify input image
-	if( !CV_IS_IMAGE( inputImage ) )
-		return false;
-
-	// verify that input image and mask image has same size
-	if( maskImage )
-	{
-		if( !CV_IS_IMAGE(maskImage) || 
-			maskImage->width != inputImage->width || 
-			maskImage->height != inputImage->height )
-		return false;
+	if(labels.empty()){
+		labels.create(binImage.size());
+		labels.setTo(-1);
 	}
-	else
-	{
-		pMask = NULL;
-		pAboveMask = NULL;
-		pBelowMask = NULL;
-	}
+	r=0;c=0;
+	dir=0;
+}
 
-	imageSizes = cvSize(inputImage->width,inputImage->height);
-	
-	imageWidth = inputImage->width;
-	imageHeight = inputImage->height;
+myCompLabeler::~myCompLabeler()
+{
 
-	// create auxiliary buffers
-	labelledImage = (t_labelType*) malloc( inputImage->width * inputImage->height * sizeof(t_labelType) );
-	visitedPoints = (bool*) malloc( inputImage->width * inputImage->height * sizeof(bool) );
+}
 
-	// initialize it to 0
-	memset(labelledImage, 0, inputImage->width * inputImage->height * sizeof(t_labelType) ) ;
-	memset(visitedPoints, false, inputImage->width * inputImage->height * sizeof(bool) ) ;
+void myCompLabeler::Reset()
+{
+	labels.setTo(0);
+	blobs.clear();
+}
 
-	// initialize pointers and label counter
-	pLabels = labelledImage;
-	pVisitedPoints = visitedPoints;
-	currentLabel = 1;
+void myCompLabeler::Label()
+{
+	ptrDataBinary = binaryImage.data;
+	ptrDataLabels = (int*)labels.data;
 
-	for (j = 0; j < imageHeight; j++ )
-	{
-		// don't verify if we area on first or last row, it will verified on pointer access
-		pAboveInputImage = (unsigned char*) inputImage->imageData + (j-1) * inputImage->widthStep;
-		pBelowInputImage = (unsigned char*) inputImage->imageData + (j+1) * inputImage->widthStep;
-	
-		pInputImage = (unsigned char*) inputImage->imageData + j * inputImage->widthStep;
-
-		if( maskImage )
-		{
-			pMask = (unsigned char*) maskImage->imageData + j * maskImage->widthStep;
-			// don't verify if we area on first or last row, it will verified on pointer access
-			pAboveMask = (unsigned char*) maskImage->imageData + (j-1) * maskImage->widthStep;
-			pBelowMask = (unsigned char*) maskImage->imageData + (j+1) * maskImage->widthStep;
-
-		}
-		
-		for (i = 0; i < imageWidth; i++, pInputImage++, pMask++, pAboveInputImage++, pBelowInputImage++,
-										 pAboveMask++, pBelowMask++ )
-		{
-			// ignore background pixels or 0 pixels in mask
-			if ( (*pInputImage == backgroundColor) || (maskImage && *pMask == 0 ))
-			{
-				pLabels++;
-				pVisitedPoints++;
-				continue;
-			}
-			
-			// new external contour: current label == 0 and above pixel is background
-			if( j > 0 )
-			{
-				externalContour = ((*pAboveInputImage == backgroundColor) || 
-								  (maskImage && *pAboveMask == 0)) && 
-								  (*pLabels == 0);
-			}
-			else
-				externalContour = (*pLabels == 0);
-
-			// new internal contour: below pixel is background and not visited
-			if( !externalContour && j < imageHeight - 1 )
-			{
-				internalContour = *pBelowInputImage == backgroundColor &&
-								  !GET_BELOW_VISITEDPIXEL( pVisitedPoints, imageWidth);
-			}
-			else
-			{
-				internalContour = false;
-			}
-			
-			
-			if( externalContour )
-			{
-				currentPoint = cvPoint(i,j);
-				// assign label to labelled image
-				*pLabels = currentLabel;
-				
-				// create new blob
-				currentBlob = new CBlob(currentLabel, currentPoint, imageSizes );
-
-				// contour tracing with currentLabel
-				contourTracing( inputImage, maskImage, currentPoint, 
-								labelledImage, visitedPoints, 
-								currentLabel, false, backgroundColor, currentBlob->GetExternalContour() );
-
-				// add new created blob
+	h = binaryImage.size().height;
+	w = binaryImage.size().width;
+	int label=-1;
+	for(r=startPoint.y;r<endPoint.y;r++){
+		//First col
+		pos = r*w;
+		c=startPoint.x;
+		if(ptrDataBinary[pos]){
+			label = ptrDataLabels[pos];
+			if(label!=0)
+				currentBlob = (CBlob *)label;
+			if(ptrDataBinary[pos] && ptrDataLabels[pos]==0){
+				currentBlob = new CBlob(currentLabel,Point(c,r),Size(w,h));
 				blobs.push_back(currentBlob);
-
-				currentLabel++;
+				TracerExt();
 			}
-			else 
-			{
-				if( internalContour )
-				{
-					currentPoint = cvPoint(i,j);
-
-					if( *pLabels == 0 )
-					{
-						// take left neightbour value as current
-						if( i > 0 )
-							contourLabel = *(pLabels - 1);
-					}
-					else
-					{
-						contourLabel = *pLabels;
-					}
-
-					if(contourLabel>0)
-					{
-						currentBlob = blobs[contourLabel-1];
-						CBlobContour newContour(currentPoint, currentBlob->GetStorage());
-						
-
-						// contour tracing with contourLabel
-						contourTracing( inputImage, maskImage, currentPoint, labelledImage, visitedPoints,
-										contourLabel, true, backgroundColor, &newContour ); 
-
-						currentBlob->AddInternalContour( newContour );
-					}
+			if(!ptrDataBinary[pos+1] && ptrDataLabels[pos+1]==0){
+				TracerInt();
+			}
+		}
+		//Other cols
+		for(c=startPoint.x+1;c<endPoint.x-1;c++){
+			pos = r*w+c;
+			if(ptrDataBinary[pos]){
+				label = ptrDataLabels[pos];
+				if(label!=0)
+					currentBlob = (CBlob *)label;
+				else if(!ptrDataBinary[pos-1]){
+					currentBlob = new CBlob(currentLabel,Point(c,r),Size(w,h));
+					blobs.push_back(currentBlob);
+					TracerExt();
 				}
-				// neither internal nor external contour
-				else
-				{
-					// take left neightbour value as current if it is not labelled
-					if( i > 0 && *pLabels == 0 )
-						*pLabels = *(pLabels - 1);
-				}
+ 				if(!ptrDataBinary[pos+1] && ptrDataLabels[pos+1]==0){
+       				TracerInt();
+ 				}
+			}
+		}
+		pos = r*w+c;
+		//Last column
+		if(ptrDataBinary[pos]){
+			label = ptrDataLabels[pos];
+			if(label!=0)
+				currentBlob = (CBlob *)label;
+			else if(!ptrDataBinary[pos-1]){
+				currentBlob = new CBlob(currentLabel,Point(c,r),Size(w,h));
+				blobs.push_back(currentBlob);
+				TracerExt();
+			}
+		}
+	}
+}
+
+void* myCompLabeler::thread_Labeling( myCompLabeler* o )
+{
+	o->Label();
+	return 0;
+}
+
+
+void myCompLabeler::TracerExt()
+{
+	//Dir:
+	//321
+	//4-0
+	//567
+ 	//cout << "TracerExt\t" << col<<","<<row<<endl;
+ 	//bool debugDraw=true;
+
+	int sR=r,sC=c;
+	int startPos = sR*w+sC;
+	dir=6;
+  	getNextPointCCW();
+ 	if(singlePixBlob){
+ 		r=sR;
+ 		c=sC;
+ 		pos = r*w+c;
+		ptrDataLabels[pos] = int(currentBlob);
+ 		return;
+ 	}
+	//ptrDataBinary[pos]= 150;
+	t_chainCodeList *cont = &currentBlob->m_externalContour.m_contour[0];
+	while(pos!=startPos){
+ 		//cout << r << "," << c << endl;
+		//ptrDataBinary[pos]= 150;
+		cont->push_back(dir);
+		ptrDataLabels[pos] = (int)currentBlob;
+		getNextPointCCW();
+   // 	if(debugDraw){
+   // 		namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+   // 		namedWindow("lab",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+   // 		imshow("im",binaryImage);
+   // 		imshow("lab",labels);
+ 		//stringstream ss;
+ 		//ss << c << "," << r;
+ 		//displayOverlay("im",ss.str());
+   // 		int k = waitKey();
+   // 		if(k==' ')
+   // 			debugDraw=false;
+   // 	}	
+	}
+	cont->push_back(dir);
+	ptrDataLabels[pos] = int(currentBlob);
+	
+	for(int i=0;i<3;i++){
+		getNextPointCCW();
+		if(ptrDataLabels[pos]==0){
+			while(pos!=startPos){
+				//cout << r << "," << c << endl;
+				ptrDataLabels[pos] = (int)currentBlob;
+				cont->push_back(dir);
+				getNextPointCCW();
+				// 		ptrDataBinary[pos]= 150;
+				// 		if(debugDraw){
+				// 			namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+				// 			namedWindow("lab",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+				// 			imshow("im",binaryImage);
+				// 			imshow("lab",labels);
+				// 			int k = waitKey();
+				// 			if(k==' ')
+				// 				debugDraw=false;
+				// 		}
 
 			}
-			
-			pLabels++;
-			pVisitedPoints++;
-
+			cont->push_back(dir);
+			ptrDataLabels[pos] = int(currentBlob);
+		}
+		else{
+			r=sR;
+			c=sC;
+			pos = r*w+c;
 		}
 	}
-
-	//Creating a header to export the labelled image
-	Mat labelledMatTemp=Mat(imageSizes.height,imageSizes.width,4,labelledImage);
-	labelled=labelledMatTemp.clone();
-	
-/*
-	FileStorage f;
-	f.open("temp.xml", FileStorage::WRITE);
-	
-	//f << "Label of 3 near pixels"<< labelledMat.at<char>(Point2d(0,0))<< labelledMat.at<char>(Point2d(0,1))<< labelledMat.at<char>(Point2d(1,0))<< labelledMat.at<char>(Point2d(1,1));
-	f << "Labelled" << labelled;*/
-
-	// free auxiliary buffers
-	free( labelledImage );
-	free( visitedPoints );
-
-	return true;
 }
-
-/**
-- FUNCI�: 
-- FUNCIONALITAT: 
-- PAR�METRES:
-	- 
-- RESULTAT:
-	- 
-- RESTRICCIONS:
-	- 
-- AUTOR: rborras
-- DATA DE CREACI�: 2008/04/29
-- MODIFICACI�: Data. Autor. Descripci�.
-*/
-void contourTracing( IplImage *image, 
-					 IplImage *maskImage,
-					 CvPoint contourStart, t_labelType *labels, bool *visitedPoints, t_labelType label,
-					 bool internalContour, unsigned char backgroundColor, CBlobContour *currentBlobcontour )
+void myCompLabeler::TracerInt()
 {
-	CvPoint t, tnext, tsecond;
-	short initialMovement, movement;
-
-	if( internalContour )
-	{
-		initialMovement = 7;//3;
-	}
-	else
-	{
-		initialMovement = 3;//7;
-	}
-
-	tsecond = tracer( image, maskImage, contourStart, visitedPoints, initialMovement, 
-					backgroundColor, movement );
+	//Dir:
+	//321
+	//4-0
+	//567
+	//cout << "TracerInt\t" << col<<","<<row<<endl;
+	//bool debugDraw=true;
 	
-	// assign current label to tnext
-	ASSIGN_LABEL( contourStart, labels, image->width, label );
-	
-
-	// contour corresponds to isolated pixel? 
-	if( tsecond.x == contourStart.x && tsecond.y == contourStart.y )
-	{
-		// we are finished with the contour
-		return;
-	}
-
-	// add chain code to current contour
-	currentBlobcontour->AddChainCode(movement);
-	
-	// assign label to next point 
-	ASSIGN_LABEL( tsecond, labels, image->width, label );
-	
-	tnext.x = tsecond.x;
-	tnext.y = tsecond.y;
-	t.x = tnext.x;
-	t.y = tnext.y;
-	
-	// while T is different than contourStart and Tnext is different than T
-	// follow contour until start point is reached again
-	while ( t.x != contourStart.x || t.y != contourStart.y || 
-			tsecond.x != tnext.x || tsecond.y != tnext.y )
-	{
+	int startPos = r*w+c;
+	CBlobContour* contour = new CBlobContour(Point(c,r),Size(w,h));
+	t_chainCodeList *cont = &contour->m_contour[0];
+	dir=6;
+	getNextPointCW();
+	ptrDataLabels[pos] = (int)currentBlob;
+	cont->push_back(dir);
+	while(pos!=startPos){
+		// 		cout << r << "," << c << endl;
+		getNextPointCW();
+		ptrDataLabels[pos] = (int)currentBlob;
+		cont->push_back(dir);
+		//contour->AddChainCode(dir);
+		//ptrDataBinary[pos] = 100;
 		
-		t.x = tnext.x;
-		t.y = tnext.y;
-		initialMovement = (movement + 5) % 8;
+//  		if(debugDraw){
+//  		 	namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+// 			namedWindow("lab",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+//  		 	imshow("im",binaryImage);
+// 			imshow("lab",labels);
+// 			stringstream ss;
+// 			ss << c << "," << r;
+// 			displayOverlay("im",ss.str());
+//  		 	int k = waitKey();
+//  		 	if(k==' ')
+//  		 		debugDraw=false;
+//  		}
 		
-		// search for next contour point
-		tnext = tracer( image, maskImage, t, visitedPoints, initialMovement, 
-						backgroundColor, movement );
-		
-		// assign label to contour point
-		ASSIGN_LABEL( tnext, labels, image->width, label );
-
-		// add chain code to current contour
-		currentBlobcontour->AddChainCode(movement);
 	}
-
+	currentBlob->m_internalContours.push_back(contour);
 }
 
-/**
-- FUNCI�: tracer
-- FUNCIONALITAT: Searches for next point of a contour
-- PAR�METRES:
-	- 
-- RESULTAT:
-	- 
-- RESTRICCIONS:
-	- 
-- AUTOR: rborras
-- DATA DE CREACI�: 2008/04/30
-- MODIFICACI�: Data. Autor. Descripci�.
-*/
-CvPoint tracer( IplImage *image, IplImage *maskImage, CvPoint P, bool *visitedPoints,
-				short initialMovement,
-				unsigned char backgroundColor, short &movement )
+void myCompLabeler::getNextPointCCW()
 {
-	int d;
-	CvPoint pNext;
-	
-	for (d = 0; d <= 7; d++ )
-	{
-		movement = (initialMovement + d) % 8;
-		
-		pNext.x = P.x + freemanCodeIncrement[movement].x;
-		pNext.y = P.y + freemanCodeIncrement[movement].y;
+	//Dir:
+	//321
+	//4-0
+	//567
 
-		// the point is inside image ?
-		if( pNext.x < 0 || pNext.x >= image->width || 
-			pNext.y < 0 || pNext.y >= image->height )
-		{
-			// try other movement
-			continue;
-		}
-		
-		// image has blobColor value in the new point?
-		if( (GET_IMAGE_PIXEL( image, pNext ) != backgroundColor ) && GET_IMAGEMASK_PIXEL(maskImage, pNext ) )
-		{
-			return pNext;
-		}
-		else
-		{
-			// mark point as visited
-			ASSIGN_VISITED( pNext, visitedPoints, image->width );
+	dir= (dir+6)%8;
+	int i=0;
+	for(i;i<8;i++,dir = (dir+1)%8){
+		tempR = r+freemanR[dir];
+		tempC = c+freemanC[dir];
+ 		if(!(tempR<0 || tempR>=h || tempC<0 || tempC>=w)){
+			pos = tempR*w +tempC;
+			if(ptrDataBinary[pos]){
+				r=tempR;
+				c=tempC;
+				break;
+			}
+			ptrDataLabels[pos] = (int)currentBlob;
 		}
 	}
+	singlePixBlob = i == 8;
+	pos = r*w+c;
 
-	// no possible movement was found
-	movement = -1;
-	pNext.x = P.x;
-	pNext.y = P.y;
+	/*
+	// I tried to pre-create all the various direction vectors in order to avoid checking too many times for the boundary of the image.
+	// However, there was no gain in performance.
+	//It's useless (in terms of performance) to create the direction vectors according to all cases.
+	8 directions
 
-	return pNext;
+	cases:
+	0-r=0
+	1-r=0,c=0
+	2-r=0,c=w
+	3-r=h
+	4-r=h,c=0
+	5-r=h,c=w
+	6-c=0
+	7-c=w
+	8-otherwise
+	total:9
+	*/
+	
+	//static uchar directions[8][9][8] = {{{0,4,5,6,7,0,0,0},{0,6,7,0,0,0,0,0},{5,6,7,0,0,0,0,0},{0,1,2,3,4,0,0,0},{0,1,2,0,0,0,0,0},{2,3,4,0,0,0,0,0},{0,1,2,6,7,0,0,0},{2,3,4,5,6,0,0,0},{0,1,2,3,4,5,6,7}},{{4,5,6,7,0,0,0,0},{6,7,0,0,0,0,0,0},{5,6,7,0,0,0,0,0},{1,2,3,4,0,0,0,0},{1,2,0,0,0,0,0,0},{2,3,4,0,0,0,0,0},{1,2,6,7,0,0,0,0},{2,3,4,5,6,0,0,0},{1,2,3,4,5,6,7,0}},{{4,5,6,7,0,0,0,0},{6,7,0,0,0,0,0,0},{5,6,7,0,0,0,0,0},{2,3,4,0,1,0,0,0},{2,0,1,0,0,0,0,0},{2,3,4,0,0,0,0,0},{2,6,7,0,1,0,0,0},{2,3,4,5,6,0,0,0},{2,3,4,5,6,7,0,1}},{{4,5,6,7,0,0,0,0},{6,7,0,0,0,0,0,0},{5,6,7,0,0,0,0,0},{3,4,0,1,2,0,0,0},{0,1,2,0,0,0,0,0},{3,4,2,0,0,0,0,0},{6,7,0,1,2,0,0,0},{3,4,5,6,2,0,0,0},{3,4,5,6,7,0,1,2}},{{4,5,6,7,0,4,0,0},{6,7,0,0,0,0,0,0},{5,6,7,0,0,0,0,0},{4,0,1,2,3,0,0,0},{0,1,2,0,0,0,0,0},{4,2,3,0,0,0,0,0},{6,7,0,1,2,0,0,0},{4,5,6,2,3,0,0,0},{4,5,6,7,0,1,2,3}},{{5,6,7,0,4,5,0,0},{6,7,0,0,0,0,0,0},{5,6,7,0,0,0,0,0},{0,1,2,3,4,0,0,0},{0,1,2,0,0,0,0,0},{2,3,4,0,0,0,0,0},{6,7,0,1,2,0,0,0},{5,6,2,3,4,0,0,0},{5,6,7,0,1,2,3,4}},{{6,7,0,4,5,6,0,0},{6,7,0,0,0,0,0,0},{6,7,5,0,0,0,0,0},{0,1,2,3,4,0,0,0},{0,1,2,0,0,0,0,0},{2,3,4,0,0,0,0,0},{6,7,0,1,2,0,0,0},{6,2,3,4,5,0,0,0},{6,7,0,1,2,3,4,5}},{{7,0,4,5,6,7,0,0},{7,0,6,0,0,0,0,0},{7,5,6,0,0,0,0,0},{0,1,2,3,4,0,0,0},{0,1,2,0,0,0,0,0},{2,3,4,0,0,0,0,0},{7,0,1,2,6,0,0,0},{2,3,4,5,6,0,0,0},{7,0,1,2,3,4,5,6}}};
+	//static uchar nDirs[8][9] = {{5,3,3,5,3,3,5,5,8},{5,3,3,5,3,3,5,5,8},{5,3,3,5,3,3,5,5,8},{5,3,3,5,3,3,5,5,8},{5,3,3,5,3,3,5,5,8},{5,3,3,5,3,3,5,5,8},{5,3,3,5,3,3,5,5,8},{5,3,3,5,3,3,5,5,8}};
+	//static uchar* dirVec;
+	//int p =-1;
+	//if(r==0){
+	//	if(c==0)
+	//		p=1;
+	//	else if(c==(w-1))
+	//		p=2;
+	//	else
+	//		p=0;
+	//}
+	//else if(r==(h-1)){
+	//	if(c==0)
+	//		p=4;
+	//	else if(c==(w-1))
+	//		p=5;
+	//	else
+	//		p=3;
+	//}
+	//else if(c==0)
+	//	p=6;
+	//else if(c==(w-1))
+	//	p=7;
+	//else
+	//	p=8;
+	//
+	//dirVec = directions[dir][p];
+	//int i=0;
+	//int d=dir;
+	//for(i;i<nDirs[d][p];i++){
+	//	tempR = r+freemanR[dirVec[i]];
+	//	tempC = c+freemanC[dirVec[i]];
+	//	pos = tempR*w +tempC;
+	//	if(ptrDataBinary[pos]){
+	//		r=tempR;
+	//		c=tempC;
+	//		dir = dirVec[i];
+	//		break;
+	//	}
+	//	ptrDataLabels[pos] = (int)currentBlob;
+	//}
+	//singlePixBlob = i == nDirs[d][p];
+	//pos = r*w+c;
+
 }
 
+void myCompLabeler::getNextPointCW()
+{
+	//Dir:
+	//321
+	//4-0
+	//567
+	dir= (dir+2)%8;
+	for(int i=0;i<8;i++){
+		tempR = r+freemanR[dir];
+		tempC = c+freemanC[dir];
+		if(!(tempR<0 || tempR>=h || tempC<0 || tempC>=w)){
+			pos = tempR*w +tempC;
+			if(ptrDataBinary[pos]){
+ 				r=tempR;
+ 				c=tempC;
+				break;
+			}
+			ptrDataLabels[pos] = (int)currentBlob;
+		}
+		dir--;
+		dir = dir%8;	//To cycle through values 7->0
+	}
+	pos = r*w+c;
+}
+
+
+
+int myCompLabeler::freemanC[8] = {1,1,0,-1,-1,-1,0,1};
+
+int myCompLabeler::freemanR[8] = {0,-1,-1,-1,0,1,1,1};
+
+void myCompLabelerGroup::doLabeling(Blob_vector &blobs)
+{	
+	t_labelType label = 0;
+	if(numThreads>1){
+		//Preliminary step in order to pre-compute all the blobs crossing the border
+		for(int i=1;i<numThreads;i++){
+			Point offset(img.size().width,1);
+			myCompLabeler lbl(img,labelers[i]->startPoint,labelers[i]->startPoint+offset,labels);
+			lbl.Label();
+			//cout << "Single pass\t" << lbl.blobs.size()<<endl;
+			for(int i=0;i<lbl.blobs.size();i++){
+				lbl.blobs[i]->SetID(label);
+				label++;
+				blobs.push_back(lbl.blobs[i]);
+			}
+		}
+		for(int i=0;i<numThreads;i++){
+			pthread_create(&tIds[i],NULL,(void*(__cdecl *)(void*))myCompLabeler::thread_Labeling,labelers[i]);
+		}
+		for(int i=0;i<numThreads;i++){
+			pthread_join(tIds[i],0);
+		}
+	}
+	else{
+		labelers[0]->Label();
+	}
+	for(int i=0;i<numThreads;i++){
+		//cout << "MT pass " <<i<<"\t" << labelers[i]->blobs.size()<<endl;
+		for(int j=0;j<labelers[i]->blobs.size();j++){
+			labelers[i]->blobs[j]->SetID(label);
+			label++;
+			blobs.push_back(labelers[i]->blobs[j]);
+		}
+	}
+}
+
+myCompLabelerGroup::myCompLabelerGroup()
+{
+	labelers=NULL;
+	tIds=NULL;
+}
+
+myCompLabelerGroup::~myCompLabelerGroup()
+{
+	if(labelers){
+		for(int i=0;i<numThreads;i++){
+				delete labelers[i];
+		}
+		delete []labelers;
+	}
+	delete [] tIds;
+}
+
+void myCompLabelerGroup::set( int numThreads, Mat img )
+{
+	this->numThreads=numThreads;
+	this->img=img;
+	this->labels = Mat_<int>::zeros(img.size());
+	if(tIds)
+		delete []tIds;
+	if(labelers){
+		for(int i=0;i<numThreads;i++){
+			delete labelers[i];
+		}
+		delete []labelers;
+	}
+	tIds = new pthread_t[numThreads];
+	labelers = new myCompLabeler*[numThreads];
+	Size sz = img.size();
+	int numPx = sz.width*sz.width;
+	int i=0;
+	for(i;i<numThreads-1;i++){
+		int yStart = (float)i/numThreads*sz.height;
+		int yEnd = (float)(i+1)/numThreads*sz.height;
+		Point st(0,yStart);
+		Point en(sz.width,yEnd);
+		labelers[i] = new myCompLabeler(img,st,en,labels);
+	}
+	Point st(0,(float)i/numThreads*sz.height);
+	Point en((float)sz.width,sz.height);
+	labelers[i] = new myCompLabeler(img,st,en,labels);
+}
+
+void myCompLabelerGroup::Reset()
+{
+	labels.setTo(0);
+	for(int i=0;i<numThreads;i++)
+		labelers[i]->Reset();
+}
 
