@@ -154,15 +154,13 @@ CBlobResult::CBlobResult( const CBlobResult &source )
 	// copiem els blobs de l'origen a l'actual
 	Blob_vector::const_iterator pBlobsSrc = source.m_blobs.begin();
 	Blob_vector::iterator pBlobsDst = m_blobs.begin();
-
 	while( pBlobsSrc != source.m_blobs.end() )
 	{
 		// no podem cridar a l'operador = ja que Blob_vector �s un 
 		// vector de CBlob*. Per tant, creem un blob nou a partir del
 		// blob original
-		*pBlobsDst = new CBlob(**pBlobsSrc);
+		m_blobs.push_back(new CBlob(**pBlobsSrc));
 		pBlobsSrc++;
-		pBlobsDst++;
 	}
 }
 
