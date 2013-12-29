@@ -182,7 +182,7 @@ double CBlobContour::GetMoment(int p, int q)
 
 }
 
-const CBlobContour::EMPTY_LIST = t_PointList();
+const t_PointList CBlobContour::EMPTY_LIST = t_PointList();
 //! Calculate contour points from crack codes
 const t_PointList& CBlobContour::GetContourPoints()
 {

@@ -99,7 +99,8 @@ private:
 	double m_perimeter;
 	//! Computed moments from contour
 	CvMoments m_moments;
-   static const t_PointList EMPTY_LIST;
+   	static const t_PointList EMPTY_LIST;
+
 };
 
 t_chainCode points2ChainCode(CvPoint p1, CvPoint p2);
