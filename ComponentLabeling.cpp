@@ -1,7 +1,7 @@
 
 #include "ComponentLabeling.h"
 
-myCompLabeler::myCompLabeler(Mat &binImage,Point start,Point end, Mat &lab):
+myCompLabeler::myCompLabeler(Mat &binImage,Point start,Point end, const Mat &lab):
 	startPoint(start),endPoint(end),
 	labels(lab),
 	binaryImage(binImage)
@@ -82,9 +82,10 @@ void myCompLabeler::Label()
 	}
 }
 
-void* myCompLabeler::thread_Labeling( myCompLabeler* o )
+void* myCompLabeler::thread_Labeling( void* o )
 {
-	o->Label();
+	myCompLabeler *obj = (myCompLabeler*)o;
+	obj->Label();
 	return 0;
 }
 
@@ -343,7 +344,7 @@ void myCompLabelerGroup::doLabeling(Blob_vector &blobs)
 			}
 		}
 		for(int i=0;i<numThreads;i++){
-			pthread_create(&tIds[i],NULL,(void*(__cdecl *)(void*))myCompLabeler::thread_Labeling,labelers[i]);
+			pthread_create(&tIds[i],NULL,myCompLabeler::thread_Labeling,labelers[i]);
 		}
 		for(int i=0;i<numThreads;i++){
 			pthread_join(tIds[i],0);

@@ -33,7 +33,7 @@ public:
 	Blob_vector blobs;
 	Mat binaryImage;
 	Point startPoint,endPoint;
-	myCompLabeler(Mat &binImage,Point start = Point(-1,-1),Point end = Point(-1,-1),Mat &lab = Mat());
+	myCompLabeler(Mat &binImage,Point start = Point(-1,-1),Point end = Point(-1,-1), const Mat &lab = Mat());
 	~myCompLabeler();
 
 	void Label();		//Do labeling in region defined by startpoint and endpoint
@@ -43,7 +43,7 @@ public:
 	void getNextPointCCW(); //Counter clockwise
 	void getNextPointCW();  //Clockwise
 
-	static void* thread_Labeling(myCompLabeler* o); //Thread function
+	static void* thread_Labeling(void* o); //Thread function
 };
 
 class myCompLabelerGroup{

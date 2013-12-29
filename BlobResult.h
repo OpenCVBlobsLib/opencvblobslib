@@ -24,14 +24,12 @@ MODIFICATIONS (Modification, Author, Date):
 #include <math.h>
 #include "opencv/cxcore.h"
 #include <opencv2/opencv.hpp>
-#include <opencv2/opencv_modules.hpp>
 #include <deque>
 #include <limits.h>
 #include <stdio.h>
 #include <functional>
 #include <algorithm>
 #include <opencv2/opencv.hpp>
-#include <opencv2/opencv_modules.hpp>
 
 #ifdef MATRIXCV_ACTIU
 	#include "matrixCV.h"
@@ -47,7 +45,6 @@ MODIFICATIONS (Modification, Author, Date):
 #include "blob.h"
 #include "BlobOperators.h"
 #include "ComponentLabeling.h"
-#include "Segment.h"
 /**************************************************************************
 	Filtres / Filters
 **************************************************************************/
@@ -92,7 +89,7 @@ public:
 	//Constructor, opencv 1.0 and 2.0 interfaces.
 	CBlobResult();
 	CBlobResult(IplImage *source, IplImage *mask = NULL, int numThreads=1);
-	CBlobResult(Mat &source, Mat &mask = Mat(),int numThreads=1);
+	CBlobResult(Mat &source, const Mat &mask = Mat(),int numThreads=1);
 	CBlobResult( const CBlobResult &source );
 	//! Destructor
 	virtual ~CBlobResult();

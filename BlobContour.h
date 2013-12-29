@@ -6,7 +6,7 @@
 #include "opencv/cv.h"
 #include "opencv/cxcore.h"
 #include <opencv2/opencv.hpp>
-#include <opencv2/opencv_modules.hpp>
+#include <opencv2/core/core.hpp>
 #include <list>
 
 using namespace std;
@@ -60,7 +60,7 @@ public:
 	}
 
 	//! Returns first contour
-	t_PointList& GetContourPoints();
+	const t_PointList& GetContourPoints();
 	//! Returns all contours (compatible with drawContours structure)
 	t_contours& GetContours();
 

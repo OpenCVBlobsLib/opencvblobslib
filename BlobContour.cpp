@@ -184,7 +184,7 @@ double CBlobContour::GetMoment(int p, int q)
 }
 
 //! Calculate contour points from crack codes
-t_PointList& CBlobContour::GetContourPoints()
+const t_PointList& CBlobContour::GetContourPoints()
 {
 	if(m_contour.size()==0)
 		return t_PointList();

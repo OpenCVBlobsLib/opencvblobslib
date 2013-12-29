@@ -463,6 +463,8 @@ double CBlob::Mean( IplImage *image )
 	offset.x = -m_boundingBox.x;
 	offset.y = -m_boundingBox.y;
 
+  Mat mask_mat(mask);
+      
 	//If joined
 	if(isJoined){
 		list<CBlob *>::iterator it,en = joinedBlobs.end();
@@ -471,13 +473,13 @@ double CBlob::Mean( IplImage *image )
 // 				offset );
 // 			vector<t_PointList> conts;
 // 			conts.push_back((*it)->m_externalContour.GetContourPoints());
-			drawContours(Mat(mask),(*it)->m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
+			drawContours(mask_mat,(*it)->m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
 			t_CBlobContourList::iterator itint = (*it)->m_internalContours.begin();
 			while(itint != (*it)->m_internalContours.end() )
 			{
 // 				cvDrawContours( mask, (*itint).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
 // 					offset );
-				drawContours(Mat(mask),(*itint)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
+				drawContours(mask_mat,(*itint)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
 				itint++;
 			}
 		}
@@ -488,14 +490,14 @@ double CBlob::Mean( IplImage *image )
 // 						offset );
 // 		vector<t_PointList> conts;
 // 		conts.push_back(m_externalContour.GetContourPoints());
-		drawContours(Mat(mask),m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
+		drawContours(mask_mat,m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
 		// draw internal contours
 		t_CBlobContourList::iterator it = m_internalContours.begin();
 		while(it != m_internalContours.end() )
 		{
 // 			cvDrawContours( mask, (*it).GetContourPoints(), CV_RGB(0,0,0), CV_RGB(0,0,0),0, CV_FILLED, 8,
 // 						offset );
-			drawContours(Mat(mask),(*it)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
+			drawContours(mask_mat,(*it)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
 			it++;
 		}
 	}
@@ -748,95 +750,98 @@ void CBlob::FillBlob( Mat image, CvScalar color, int offsetX, int offsetY, bool 
 	__CV_BEGIN__;
 	if(srcImage.data)
 		CV_ASSERT(image.size()==srcImage.size() && image.type() == srcImage.type());
-	Rect bbox = GetBoundingBox();
-	Point drawOffset(offsetX,offsetY);
-	Size imSz = image.size();
-	if(bbox.x+offsetX+bbox.width >= imSz.width){
-		bbox.width = imSz.width - bbox.x-offsetX;
-	}
-	else if(bbox.x+offsetX < 0){
-		bbox.x = -offsetX;
-		bbox.width= bbox.width +offsetX;
-	}
-	if(bbox.y+offsetY+bbox.height >= imSz.height){
-		bbox.height = imSz.height - bbox.y-offsetY;
-	}
-	else if(bbox.y+offsetY < 0){
-		bbox.y = -offsetY;
-		bbox.height= bbox.height +offsetY;
-	}
-	if(bbox.width <0 || bbox.height <0){
-		return;
-	}
-	if(bbox.width==0)
-		bbox.width++;
-	if(bbox.height==0)
-		bbox.height++;
-	if(isJoined){
-		list<CBlob *>::iterator itBlob=joinedBlobs.begin(),enBlob = joinedBlobs.end();
-		for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
-			(*itBlob)->FillBlob(image,color,offsetX,offsetY,intContours,srcImage);
-		}
-// 		if(intContours){
-// 			Point offset(-bbox.x,-bbox.y);
-// 			Size sz(bbox.width,bbox.height);
-// 			Mat temp(sz,image.type());
-// 			Mat mask(sz,CV_8UC1);
-// 			mask.setTo(0);
-// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
-// 				CBlob *curBlob = *itBlob;
-// 				t_CBlobContourList::iterator it = curBlob->m_internalContours.begin(),en = curBlob->m_internalContours.end();
-// 				for(it;it!=en;it++){
-// 					drawContours(mask,(*it)->GetContours(),-1,255,CV_FILLED,8,noArray(),2147483647,offset);
-// 				}
-// 			}
-// 			srcImage(bbox).copyTo(temp,mask);
-// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
-// 				drawContours(image,(*itBlob)->m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
-// 			}
-// 			temp.copyTo(image(bbox+drawOffset),mask);
-// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
-// 				CBlob *curBlob = *itBlob;
-// 				t_CBlobContourList::const_iterator it = curBlob->m_internalContours.begin(),en = curBlob->m_internalContours.end();
-// 				for(it;it!=en;it++){
-// 					drawContours(image,(*it)->GetContours(),-1,color,1,8,noArray(),2147483647,drawOffset);
-// 				}
-// 			}
-// 		}
-// 		else{
-// 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
-// 				drawContours(image,(*itBlob)->m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
-// 			}
-// 		}
-	}
-	else{
-		if(intContours){
-			Point offset(-bbox.x,-bbox.y);
-			t_CBlobContourList::iterator it = m_internalContours.begin(),en = m_internalContours.end();
-			Mat temp(bbox.height,bbox.width,image.type());
-			drawContours(image,m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
-			if(srcImage.data){
-				Mat mask(bbox.height,bbox.width,CV_8UC1);
-				mask.setTo(0);
-				for(it;it!=en;it++){
-					drawContours(mask,(*it)->GetContours(),-1,255,CV_FILLED,8,noArray(),2147483647,offset);
-				}
-				srcImage(bbox).copyTo(temp,mask);
-				temp.copyTo(image(bbox+drawOffset),mask);
-			}
-			else{
-				for(it;it!=en;it++){
-					drawContours(image,(*it)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,drawOffset);
-				}
-			}
+  {
+    Rect bbox = GetBoundingBox();
+    Point drawOffset(offsetX,offsetY);
+    Size imSz = image.size();
+    if(bbox.x+offsetX+bbox.width >= imSz.width){
+      bbox.width = imSz.width - bbox.x-offsetX;
+    }
+    else if(bbox.x+offsetX < 0){
+      bbox.x = -offsetX;
+      bbox.width= bbox.width +offsetX;
+    }
+    if(bbox.y+offsetY+bbox.height >= imSz.height){
+      bbox.height = imSz.height - bbox.y-offsetY;
+    }
+    else if(bbox.y+offsetY < 0){
+      bbox.y = -offsetY;
+      bbox.height= bbox.height +offsetY;
+    }
+    if(bbox.width <0 || bbox.height <0){
+      return;
+    }
+    if(bbox.width==0)
+      bbox.width++;
+    if(bbox.height==0)
+      bbox.height++;
+    if(isJoined){
+      list<CBlob *>::iterator itBlob=joinedBlobs.begin(),enBlob = joinedBlobs.end();
+      for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+        (*itBlob)->FillBlob(image,color,offsetX,offsetY,intContours,srcImage);
+      }
+      // 		if(intContours){
+      // 			Point offset(-bbox.x,-bbox.y);
+      // 			Size sz(bbox.width,bbox.height);
+      // 			Mat temp(sz,image.type());
+      // 			Mat mask(sz,CV_8UC1);
+      // 			mask.setTo(0);
+      // 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+      // 				CBlob *curBlob = *itBlob;
+      // 				t_CBlobContourList::iterator it = curBlob->m_internalContours.begin(),en = curBlob->m_internalContours.end();
+      // 				for(it;it!=en;it++){
+      // 					drawContours(mask,(*it)->GetContours(),-1,255,CV_FILLED,8,noArray(),2147483647,offset);
+      // 				}
+      // 			}
+      // 			srcImage(bbox).copyTo(temp,mask);
+      // 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+      // 				drawContours(image,(*itBlob)->m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
+      // 			}
+      // 			temp.copyTo(image(bbox+drawOffset),mask);
+      // 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+      // 				CBlob *curBlob = *itBlob;
+      // 				t_CBlobContourList::const_iterator it = curBlob->m_internalContours.begin(),en = curBlob->m_internalContours.end();
+      // 				for(it;it!=en;it++){
+      // 					drawContours(image,(*it)->GetContours(),-1,color,1,8,noArray(),2147483647,drawOffset);
+      // 				}
+      // 			}
+      // 		}
+      // 		else{
+      // 			for(itBlob = joinedBlobs.begin();itBlob!=enBlob;itBlob++){
+      // 				drawContours(image,(*itBlob)->m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
+      // 			}
+      // 		}
+    }
+    else{
+      if(intContours){
+        Point offset(-bbox.x,-bbox.y);
+        t_CBlobContourList::iterator it = m_internalContours.begin(),en = m_internalContours.end();
+        Mat temp(bbox.height,bbox.width,image.type());
+        drawContours(image,m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
+        if(srcImage.data){
+          Mat mask(bbox.height,bbox.width,CV_8UC1);
+          mask.setTo(0);
+          for(it;it!=en;it++){
+            drawContours(mask,(*it)->GetContours(),-1,255,CV_FILLED,8,noArray(),2147483647,offset);
+          }
+          srcImage(bbox).copyTo(temp,mask);
+          Mat image_roi = image(bbox+drawOffset);
+          temp.copyTo(image_roi,mask);
+        }
+        else{
+          for(it;it!=en;it++){
+            drawContours(image,(*it)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,drawOffset);
+          }
+        }
 			
-			for(it=m_internalContours.begin();it!=en;it++){
-				drawContours(image,(*it)->GetContours(),-1,color,1,8,noArray(),2147483647,drawOffset);
-			}
-		}
-		else
-			drawContours(Mat(image),m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
-	}
+        for(it=m_internalContours.begin();it!=en;it++){
+          drawContours(image,(*it)->GetContours(),-1,color,1,8,noArray(),2147483647,drawOffset);
+        }
+      }
+      else
+        drawContours(image,m_externalContour.GetContours(),-1,color,CV_FILLED,8,noArray(),2147483647,drawOffset);
+    }
+  }
 	__CV_END__;
 }
 
@@ -866,7 +871,7 @@ void CBlob::GetConvexHull( t_contours& hull )
 		hull[0].reserve(numPts);
 		extCont.reserve(numPts);
 		for(it=joinedBlobs.begin();it!=en;it++){
-			t_PointList& pts = (*it)->GetExternalContour()->GetContourPoints();
+			const t_PointList& pts = (*it)->GetExternalContour()->GetContourPoints();
 			extCont.insert(extCont.end(),pts.begin(),pts.end());
 		}
 	}

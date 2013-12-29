@@ -408,7 +408,7 @@ double CBlobGetDistanceFromPoint::operator()(CBlob &blob)
 */
 double CBlobGetXYInside::operator()(CBlob &blob)
 {
-	t_PointList &contourPoints = blob.GetExternalContour()->GetContourPoints();
+	const t_PointList &contourPoints = blob.GetExternalContour()->GetContourPoints();
 	if( contourPoints.size()==0 )
 	{
 		return pointPolygonTest(contourPoints,m_p,false) >=0;

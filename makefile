@@ -11,9 +11,7 @@ CPPFILES= \
 	blob.cpp\
 	BlobOperators.cpp\
 	BlobResult.cpp\
-	ComponentLabeling.cpp\
-	MacroBlob.cpp\
-	Segment.cpp
+	ComponentLabeling.cpp
 
 .SUFFIXES: .cpp.o
 .cpp.o:	; echo 'Compiling $*.cpp' ; $(CXX) $(CFLAGS) -c $*.cpp

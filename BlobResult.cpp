@@ -109,7 +109,7 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask,int numThreads)
 - CREATION DATE: 06-04-2013.
 - MODIFICATION: Date. Author. Description.
 */
-CBlobResult::CBlobResult(Mat &source, Mat &mask,int numThreads){
+CBlobResult::CBlobResult(Mat &source, const Mat &mask,int numThreads){
 	if(mask.data){
 		Mat temp=Mat::zeros(source.size(),source.type());
 		source.copyTo(temp,mask);
