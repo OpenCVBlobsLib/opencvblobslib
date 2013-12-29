@@ -60,7 +60,6 @@ CBlobContour::~CBlobContour()
 {
 }
 
-
 //! Copy operator
 CBlobContour& CBlobContour::operator=( const CBlobContour &source )
 {
@@ -183,11 +182,12 @@ double CBlobContour::GetMoment(int p, int q)
 
 }
 
+const CBlobContour::EMPTY_LIST = t_PointList();
 //! Calculate contour points from crack codes
 const t_PointList& CBlobContour::GetContourPoints()
 {
 	if(m_contour.size()==0)
-		return t_PointList();
+		return EMPTY_LIST;
 	if(m_contourPoints.size()!=0)
 		return m_contourPoints[0];
 	m_contourPoints.push_back(t_PointList());

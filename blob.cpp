@@ -244,7 +244,8 @@ int	CBlob::Exterior(IplImage *mask, bool xBorder /* = true */, bool yBorder /* =
 }
 int	CBlob::Exterior(Mat mask, bool xBorder /* = true */, bool yBorder /* = true */)
 {
-	return Exterior(&(IplImage) mask, xBorder, yBorder);	 
+	IplImage temp = (IplImage) mask;
+	return Exterior(&temp, xBorder, yBorder);	 
 }
 /**
 - FUNCI�: ExternPerimeter
@@ -395,8 +396,10 @@ double CBlob::ExternPerimeter( Mat maskImage, bool xBorder /* = true */, bool yB
 	if(!maskImage.data){
 		return ExternPerimeter( NULL, xBorder /* = true */, yBorder /* = true */);
 	}
-	else
-		return ExternPerimeter( &(IplImage) maskImage, xBorder /* = true */, yBorder /* = true */);
+	else{
+		IplImage temp = (IplImage) maskImage;
+		return ExternPerimeter( &temp, xBorder /* = true */, yBorder /* = true */);
+	}
 }
 //! Compute blob's moment (p,q up to MAX_CALCULATED_MOMENTS)
 double CBlob::Moment(int p, int q)
@@ -514,7 +517,8 @@ double CBlob::Mean( IplImage *image )
 	return m_meanGray;
 }
 double CBlob::Mean(Mat image ){
-	return Mean(&(IplImage)image);
+	IplImage temp = (IplImage) image;
+	return Mean(&temp);
 }
 double CBlob::StdDev( IplImage *image )
 {
@@ -530,12 +534,14 @@ double CBlob::StdDev( IplImage *image )
 	return m_stdDevGray;
 }
 double CBlob::StdDev(Mat image){
-	return StdDev(&(IplImage)image);
+	IplImage temp = (IplImage) image;
+	return StdDev(&temp);
 }
 
 void CBlob::MeanStdDev( Mat image, double *mean, double *stddev )
 {
-	Mean(&(IplImage)image);
+	IplImage temp = (IplImage) image;
+	Mean(&temp);
 	*mean = m_meanGray;
 	*stddev = m_stdDevGray;
 	return;
