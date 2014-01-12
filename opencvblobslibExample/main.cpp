@@ -9,7 +9,7 @@ using namespace std;
 
 
 //iter = iterations for every resolution, in order to be able to compute a mean computation time.
-void testTimes(int startRes,int endRes, int step,string fileName,int iter=1);
+//void testTimes(int startRes,int endRes, int step,string fileName,int iter=1);
 
 void test();
 void opencvLogo();
@@ -29,7 +29,7 @@ int main(){
 	return 0;
 }
 
-void testTimes(int startRes,int endRes, int step,string fileName, int iter){
+/*void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 	ofstream fileOutST(fileName+"ST.txt");
 	ofstream fileOutMT(fileName+"MT.txt");
 	ofstream fileOutInfo(fileName+"Info.txt");
@@ -81,7 +81,7 @@ void testTimes(int startRes,int endRes, int step,string fileName, int iter){
 	fileOutST.close();
 	fileOutMT.close();
 	fileOutInfo.close();
-}
+}*/
 void test()
 {
 	int64 time;
@@ -101,7 +101,8 @@ void test()
 	CBlobResult blobs;
 	color_img.setTo(Vec3b(0,0,0));
 	time=getTickCount();
-	blobs = CBlobResult(&(IplImage)binary_img,NULL,1);
+	IplImage temp = (IplImage)binary_img;
+	blobs = CBlobResult(&temp,NULL,1);
 	cout <<"found: "<<blobs.GetNumBlobs()<<endl;
 	cout <<"Tempo ST: "<<(getTickCount() -time)/getTickFrequency()<<endl;
 	for(int i=0;i<blobs.GetNumBlobs();i++){
