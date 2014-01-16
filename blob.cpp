@@ -268,24 +268,25 @@ int	CBlob::Exterior(Mat mask, bool xBorder /* = true */, bool yBorder /* = true 
 double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, bool yBorder /* = true */)
 {
 	t_PointList externContour, externalPoints;
-	CvSeqReader reader;
-	CvSeqWriter writer;
 	Point actualPoint, previousPoint;
 	bool find = false;
-	int i,j;
+	//int i,j;
 	int delta = 0;
 	
 	// it is calculated?
-	if( m_externPerimeter != -1 )
+	/*if( m_externPerimeter != -1 )
 	{
 		return m_externPerimeter;
-	}
+	}*/
 
 
 	if(isJoined){
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		for(it = joinedBlobs.begin();it!=en;it++){
-			m_externPerimeter+=(*it)->ExternPerimeter(maskImage, xBorder /* = true */, yBorder /* = true */);
+		//it an en are always different at first assignment (if isJoined is true I have at least one joined blob).
+		list<CBlob *>::iterator it =joinedBlobs.begin(),en = joinedBlobs.end();
+		m_externPerimeter=(*it)->ExternPerimeter(maskImage, xBorder, yBorder);
+		it++;
+		for(it;it!=en;it++){
+			m_externPerimeter+=(*it)->ExternPerimeter(maskImage, xBorder, yBorder);
 		}
 		return m_externPerimeter;
 	}
@@ -326,7 +327,7 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 				
 				pMask = (maskImage->imageData + actualPoint.x - 1 + (actualPoint.y - 1) * maskImage->widthStep);
 				
-				for ( i = 0; i < 3; i++, pMask++ )
+				for ( int i = 0; i < 3; i++, pMask++ )
 				{
 					if(*pMask == 0 && !find ) 
 					{
@@ -339,7 +340,7 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 				{
 					pMask = (maskImage->imageData + actualPoint.x - 1 + (actualPoint.y ) * maskImage->widthStep);
 				
-					for ( i = 0; i < 3; i++, pMask++ )
+					for ( int i = 0; i < 3; i++, pMask++ )
 					{
 						if(*pMask == 0 && !find ) 
 						{
@@ -353,7 +354,7 @@ double CBlob::ExternPerimeter( IplImage *maskImage, bool xBorder /* = true */, b
 				{
 					pMask = (maskImage->imageData + actualPoint.x - 1 + (actualPoint.y + 1) * maskImage->widthStep);
 
-					for ( i = 0; i < 3; i++, pMask++ )
+					for ( int i = 0; i < 3; i++, pMask++ )
 					{
 						if(*pMask == 0 && !find ) 
 						{
@@ -677,13 +678,13 @@ CvBox2D CBlob::GetEllipse()
 
 	// elipse calculation
 	delta = sqrt( 4*u11*u11 + (u20-u02)*(u20-u02) );
-	m_ellipse.center.x = u10;
-	m_ellipse.center.y = u01;
+	m_ellipse.center.x = (float)u10;
+	m_ellipse.center.y = (float)u01;
 	
 	temp = u20 + u02 + delta;
 	if( temp > 0 )
 	{
-		m_ellipse.size.width = sqrt( 2*(u20 + u02 + delta ));
+		m_ellipse.size.width = (float)sqrt( 2*(u20 + u02 + delta ));
 	}	
 	else
 	{
@@ -694,7 +695,7 @@ CvBox2D CBlob::GetEllipse()
 	temp = u20 + u02 - delta;
 	if( temp > 0 )
 	{
-		m_ellipse.size.height = sqrt( 2*(u20 + u02 - delta ) );
+		m_ellipse.size.height = (float)sqrt( 2*(u20 + u02 - delta ) );
 	}
 	else
 	{
@@ -715,7 +716,7 @@ CvBox2D CBlob::GetEllipse()
     }
 	if( num != 0 && den  != 00 )
 	{
-		m_ellipse.angle = 180.0 + (180.0 / CV_PI) * atan( num / den );
+		m_ellipse.angle = (float)(180.0 + (180.0 / CV_PI) * atan( num / den ));
 	}
 	else
 	{
@@ -956,7 +957,7 @@ void CBlob::ShiftBlob( int x,int y )
 
 Point CBlob::getCenter()
 {
-	return Point(GetBoundingBox().x+GetBoundingBox().width*0.5,GetBoundingBox().y+GetBoundingBox().height*0.5);
+	return Point((int)(GetBoundingBox().x+GetBoundingBox().width*0.5),(int)(GetBoundingBox().y+GetBoundingBox().height*0.5));
 }
 
 

@@ -24,7 +24,7 @@ int main(){
 	//test();
 	testJoin();
 	//testMio();
-	cout <<"Premere un tasto per continuare...."<<endl;
+	cout <<"Press a key to continue..."<<endl;
 	cin.get();
 	return 0;
 }
@@ -134,7 +134,7 @@ void test()
 		// 			}
 		// 		}
 		s<<i;
-		putText(color_img,s.str(),curblob->getCenter(),1.6,binary_img.size().width/200,CV_RGB(200,200,200),3);
+		putText(color_img,s.str(),curblob->getCenter(),1,binary_img.size().width/400,CV_RGB(200,200,200),3);
 		s.str("");
 		// 		displayOverlay("Blobs Image","Press a key to show the next blob",500);
 		// 		imshow("Blobs Image",color_img);
@@ -169,8 +169,9 @@ void testJoin(){
 	Mat img,imt,im2;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,imt,254,255,CV_THRESH_BINARY_INV);
-	CBlobResult res(imt,Mat(),1);
+	CBlobResult res(imt,Mat(),NUMCORES);
 	im2 = im.clone();
+	stringstream s;
 	for(int i=0;i<res.GetNumBlobs();i++){
 		double mean, stddev;
 		CBlob t2 = res.GetBlob(i);
@@ -196,10 +197,19 @@ void testJoin(){
 		cout << "ID: " << t2.GetID();
 		cout << endl;
 	}
+	for(int i=0;i<res.GetNumBlobs();i++){
+		CBlob *t2 = res.GetBlob(i);
+		s << i;
+		putText(im2,s.str(),t2->getCenter(),1,im2.size().width/400,CV_RGB(0,0,0),2);
+		s.str("");
+	}
+	res.PrintBlobs("testFile.txt");
 	imshow("temp",im2);
-	displayOverlay("temp","Press a key to continue and join blobs.");
+	cout << "======================================="<<endl;
+	cout << "Focus on the window and press a key to continue and join blobs"<<endl;
+	cout << "======================================="<<endl;
 	waitKey();
-	displayOverlay("temp","Press a key to continue and join blobs.",10);
+	/*displayOverlay("temp","Press a key to continue and join blobs.",10);*/
 	CBlob temp,t2;
 	for(int i=0;i<res.GetNumBlobs();i++){
 		double mean, stddev;
@@ -250,7 +260,7 @@ void testMio()
 	imBlobsST.setTo(Vec3b(0,0,0));
 	imBlobsMT.setTo(Vec3b(0,0,0));
 	threshold(image,image,250,255,CV_THRESH_BINARY_INV);
-	float time=0;
+	double time=0;
 	imshow("image",image);
 	CBlobResult res;
 	for(int i=0;i<trials;i++){

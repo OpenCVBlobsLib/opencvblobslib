@@ -963,7 +963,7 @@ void CBlobResult::PrintBlobs( char *nom_fitxer ) const
 	externPerimeter = GetSTLResult( CBlobGetExternPerimeter());
 	perimetreConvex = GetSTLResult( CBlobGetHullPerimeter());
 
-	fitxer_sortida = fopen( nom_fitxer, "w" );
+	fitxer_sortida = fopen(nom_fitxer, "w" );
 
 	for(i=0; i<GetNumBlobs(); i++)
 	{

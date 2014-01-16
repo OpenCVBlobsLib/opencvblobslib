@@ -31,7 +31,6 @@ class CBlob;
 	#include "..\inspecta\DesignPatterns\ObjectFactory.h"
 #endif
 
-class Segment;
 using namespace cv;
 
 //! Type of labelled images
@@ -156,6 +155,8 @@ public:
 
 	//Shifts the blob by (x,y) 
 	void ShiftBlob(int x,int y);
+
+	//Returns blob center in pixels (integers).
 	Point getCenter();
 	/*
 	Border: 0 = top, 1 = right, 2 = bottom, 3 = left
@@ -214,7 +215,6 @@ private:
 
 
 	friend class CBlobResult;
-	friend class MacroBlob;
 };
 
 

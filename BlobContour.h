@@ -37,8 +37,8 @@ public:
 	//This can be a help for very small images, where the vector would be too large.
 	CBlobContour(CvPoint startPoint, const Size &imageRes = Size(-1,-1));
 	//! Copy constructor
-	CBlobContour( CBlobContour *source );
-	CBlobContour(CBlobContour &source);
+	CBlobContour(CBlobContour *source );
+	//CBlobContour(CBlobContour &source);
 	CBlobContour(const CBlobContour &source);
 
 	~CBlobContour();

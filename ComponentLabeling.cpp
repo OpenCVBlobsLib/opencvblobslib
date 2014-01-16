@@ -332,7 +332,7 @@ void myCompLabelerGroup::doLabeling(Blob_vector &blobs)
 			myCompLabeler lbl(img,labels,labelers[i]->startPoint,labelers[i]->startPoint+offset);
 			lbl.Label();
 			//cout << "Single pass\t" << lbl.blobs.size()<<endl;
-			for(int i=0;i<lbl.blobs.size();i++){
+			for(unsigned int i=0;i<lbl.blobs.size();i++){
 				lbl.blobs[i]->SetID(label);
 				label++;
 				blobs.push_back(lbl.blobs[i]);
@@ -350,7 +350,7 @@ void myCompLabelerGroup::doLabeling(Blob_vector &blobs)
 	}
 	for(int i=0;i<numThreads;i++){
 		//cout << "MT pass " <<i<<"\t" << labelers[i]->blobs.size()<<endl;
-		for(int j=0;j<labelers[i]->blobs.size();j++){
+		for(unsigned int j=0;j<labelers[i]->blobs.size();j++){
 			labelers[i]->blobs[j]->SetID(label);
 			label++;
 			blobs.push_back(labelers[i]->blobs[j]);
@@ -405,14 +405,14 @@ void myCompLabelerGroup::set( int numThreads, Mat img )
 	int numPx = sz.width*sz.width;
 	int i=0;
 	for(i;i<numThreads-1;i++){
-		int yStart = (float)i/numThreads*sz.height;
-		int yEnd = (float)(i+1)/numThreads*sz.height;
+		int yStart = (int)((float)i/numThreads*sz.height);
+		int yEnd = (int)((float)(i+1)/numThreads*sz.height);
 		Point st(0,yStart);
 		Point en(sz.width,yEnd);
 		labelers[i] = new myCompLabeler(img,labels,st,en);
 	}
-	Point st(0,(float)i/numThreads*sz.height);
-	Point en((float)sz.width,sz.height);
+	Point st(0,(int)((float)i/numThreads*sz.height));
+	Point en(sz.width,sz.height);
 	labelers[i] = new myCompLabeler(img,labels,st,en);
 }
 

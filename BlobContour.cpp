@@ -36,15 +36,15 @@ CBlobContour::CBlobContour( CBlobContour *source )
 	}
 }
 
-CBlobContour::CBlobContour( CBlobContour &source )
-{
-	m_area = source.m_area;
-	m_contour = source.m_contour;
-	m_contourPoints = source.m_contourPoints;
-	m_moments = source.m_moments;
-	m_perimeter = source.m_perimeter;
-	m_startPoint = source.m_startPoint;
-}
+//CBlobContour::CBlobContour( CBlobContour &source )
+//{
+//	m_area = source.m_area;
+//	m_contour = source.m_contour;
+//	m_contourPoints = source.m_contourPoints;
+//	m_moments = source.m_moments;
+//	m_perimeter = source.m_perimeter;
+//	m_startPoint = source.m_startPoint;
+//}
 
 CBlobContour::CBlobContour( const CBlobContour &source )
 {
@@ -217,8 +217,8 @@ void CBlobContour::ShiftBlobContour(int x,int y)
 	m_startPoint.x+=x;
 	m_startPoint.y+=y;
 
-	for(int j=0;j<m_contourPoints.size();j++)
-		for(int i=0;i<m_contourPoints[j].size();i++)
+	for(unsigned int j=0;j<m_contourPoints.size();j++)
+		for(unsigned int i=0;i<m_contourPoints[j].size();i++)
 			m_contourPoints[j][i] += Point(x,y);
 }
 

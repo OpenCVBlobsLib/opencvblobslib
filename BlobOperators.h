@@ -122,8 +122,8 @@ public:
 	CBlobGetExterior()
 	{
 		m_mask = NULL;
-		m_xBorder = false;
-		m_yBorder = false;
+		m_xBorder = true;
+		m_yBorder = true;
 	}
 	CBlobGetExterior(IplImage *mask, bool xBorder = true, bool yBorder = true)
 	{
@@ -484,8 +484,8 @@ public:
 	CBlobGetExternPerimeter()
 	{
 		m_mask = NULL;
-		m_xBorder = false;
-		m_yBorder = false;
+		m_xBorder = true;
+		m_yBorder = true;
 	}
 	CBlobGetExternPerimeter( IplImage *mask, bool xBorder = true, bool yBorder = true )
 	{

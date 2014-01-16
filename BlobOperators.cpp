@@ -93,8 +93,8 @@ double CBlobGetMinXatMinY::operator()(CBlob &blob)
 {
 	double result = LONG_MAX;
 	
-	CvSeqReader reader;
-	CvPoint actualPoint;
+	//CvSeqReader reader;
+	//CvPoint actualPoint;
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
@@ -127,8 +127,8 @@ double CBlobGetMinYatMaxX::operator()(CBlob &blob)
 {
 	double result = LONG_MAX;
 	
-	CvSeqReader reader;
-	CvPoint actualPoint;
+	//CvSeqReader reader;
+	//CvPoint actualPoint;
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
@@ -162,8 +162,8 @@ double CBlobGetMaxXatMaxY::operator()(CBlob &blob)
 {
 	double result = LONG_MIN;
 	
-	CvSeqReader reader;
-	CvPoint actualPoint;
+	//CvSeqReader reader;
+	//CvPoint actualPoint;
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
@@ -197,8 +197,8 @@ double CBlobGetMaxYatMinX::operator()(CBlob &blob)
 {
 	double result = LONG_MIN;
 	
-	CvSeqReader reader;
-	CvPoint actualPoint;
+	//CvSeqReader reader;
+	//CvPoint actualPoint;
 	t_PointList externContour;
 	
 	externContour = blob.GetExternalContour()->GetContourPoints();
