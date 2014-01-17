@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Opencvcblobslib by OpenCVBlobsLib</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Opencvcblobslib</h1>
+        <h2></h2>
+        <a href="https://github.com/OpenCVBlobsLib/opencvcblobslib" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <p><img src="https://opencvblobslib.googlecode.com/files/Logo.png" alt="opencvblobslib logo"></p>
+
+<h1>
+<a name="opencvblobslib" class="anchor" href="#opencvblobslib"><span class="octicon octicon-link"></span></a>OpenCVBlobsLib</h1>
+
+<h3>
+<a name="this-project-aims-to-upgrade-the-old-cvblobslib-library-with-new-features-like-the-use-of-mat-objects-instead-of-iplimage-and-multi-core-support" class="anchor" href="#this-project-aims-to-upgrade-the-old-cvblobslib-library-with-new-features-like-the-use-of-mat-objects-instead-of-iplimage-and-multi-core-support"><span class="octicon octicon-link"></span></a>This Project aims to upgrade the old cvBlobsLib library with new features like the use of Mat objects instead of IplImage and multi core support.</h3>
+
+<p>For who doesn't know cvBlobsLib yet, here is a brief list of features:</p>
+
+<ul>
+<li>Binary image 8-connected component labelling/blob extraction.</li>
+<li>Blob filtering (based on size or other user-defined features).</li>
+<li>Blob properties computation, e.g.: 
+
+<ul>
+<li>Mean and standard deviation of the pixel values in the covered region.</li>
+<li>Area and perimeter.</li>
+<li>Bounding box.</li>
+<li>Containing ellipse.</li>
+<li>Moments computation.</li>
+<li>Color-fill of the blob region.</li>
+</ul>
+</li>
+</ul><p>OpenCVBlobsLib added Features:</p>
+
+<ul>
+<li>Multi core support for the extraction stage.</li>
+<li>OpenCV 2.0 compliant interface.</li>
+<li>Blob joining, allowing for distinct regions to be grouped as one.</li>
+<li>Generic bug fixing.</li>
+<li>Linux compatibility.</li>
+</ul><hr><h3>
+<a name="download-link" class="anchor" href="#download-link"><span class="octicon octicon-link"></span></a>Download link:</h3>
+
+<p>Download link of the archive containing the latest available compiled version of the library for Windows: <a href="https://opencvblobslib.googlecode.com/files/Snapshot20131229.zip">Snapshot20131229.zip - Version 1.0.1</a></p>
+
+<p>Download link of the Windows installer: <a href="https://opencvblobslib.googlecode.com/files/OpenCVBlobsLibSetupv101.exe">Windows Installer - v1.0.1</a></p>
+
+<p>Download link of the archive containing the latest available compiled version of the library for Linux x64: <a href="https://opencvblobslib.googlecode.com/files/Snapshot20131229Linux.tar.gz">Snapshot for Linux x64 29-12-2013</a></p>
+
+<p>Example program (downloadable syncing the repository): <a href="https://code.google.com/p/opencvblobslib/source/browse/trunk/opencvblobslibExample/main.cpp">Source code</a></p>
+
+<hr><h3>
+<a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News:</h3>
+
+<p>[Changelog Changelog and old news]</p>
+
+<ul>
+<li>16/01/2014
+
+<ul>
+<li>Version 1.0.3</li>
+<li>Warning removal.</li>
+<li>Unreferecenced variables or classes removal.</li>
+<li>Fix at ExternPerimeter function, where it returned wrong values if called many times with different parameters (xBorder,yBorder and mask). Now the value is always recalculated, since the parameters can change from one call to the other.</li>
+<li>Fix at CBlobGetExterior and CBlobGetExternPerimeter classes, where xBorder and yBorder had different default values from the default constructor. Now they are correctly always initialised to true.</li>
+</ul>
+</li>
+<li>14/01/2013
+
+<ul>
+<li>Version 1.0.2</li>
+<li>Fixed a bug with x64 systems (bad conversion from pointer to int)</li>
+</ul>
+</li>
+<li>29/12/2013
+
+<ul>
+<li>Version 1.0.1.</li>
+<li>Potential stack corruption issues fix.</li>
+<li>Linux compilation issues fix.</li>
+<li>Thanks to <a href="mailto:nmaludy@gmail.com">nmaludy@gmail.com</a>
+</li>
+</ul>
+</li>
+</ul><hr><h3>
+<a name="building-notes" class="anchor" href="#building-notes"><span class="octicon octicon-link"></span></a>Building notes:</h3>
+
+<p>Pay attention to the OpenCV directory: we use a system variable called OPENCV_DIR, if you do so you'll be able to compile immediately after syncing the repository, otherwise you'll have to modify that property to suit your environment.</p>
+
+<p>Other environment variables:</p>
+
+<ul>
+<li>PTHREADS_DIR: directory to the pthread library</li>
+</ul><hr><h3>
+<a name="to-do-list" class="anchor" href="#to-do-list"><span class="octicon octicon-link"></span></a>To do list:</h3>
+
+<ul>
+<li>[x] Adapt all the functions to work with joined blobs</li>
+<li>[x] Further enhance performance in multi-threading algorithm</li>
+<li>[x] Create more comparison graphs</li>
+<li>[ ] Add a function that counts how many pixels are in a certain range of colour in a blob</li>
+<li>[ ] Create a CMake script</li>
+<li>[ ] Finish the example</li>
+<li>[ ] Start to write tutorials and the wiki</li>
+</ul><hr><p><strong>Stay tuned!</strong></p>
+
+<p>All the credits for the original code go to its Author (Ricard Borras).</p>
+
+<p><em>Saverio Murgia and Luca Nardelli</em></p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/OpenCVBlobsLib/opencvcblobslib/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/OpenCVBlobsLib/opencvcblobslib/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/OpenCVBlobsLib/opencvcblobslib"></a> is maintained by <a href="https://github.com/OpenCVBlobsLib">OpenCVBlobsLib</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
