@@ -8,6 +8,7 @@ CBlobContour::CBlobContour()
 	m_area = -1;
 	m_perimeter = -1;
 	m_moments.m00 = -1;
+	parent=NULL;
 }
 CBlobContour::CBlobContour(CvPoint startPoint, const Size &imageRes):m_contour(1)
 {
@@ -17,6 +18,7 @@ CBlobContour::CBlobContour(CvPoint startPoint, const Size &imageRes):m_contour(1
 	m_area = -1;
 	m_perimeter = -1;
 	m_moments.m00 = -1;
+	parent=NULL;
 	//Empirical calculations
 	if(imageRes.width==-1 || imageRes.width*imageRes.height > 62500)
 		m_contour[0].reserve(600);
@@ -36,16 +38,6 @@ CBlobContour::CBlobContour( CBlobContour *source )
 	}
 }
 
-//CBlobContour::CBlobContour( CBlobContour &source )
-//{
-//	m_area = source.m_area;
-//	m_contour = source.m_contour;
-//	m_contourPoints = source.m_contourPoints;
-//	m_moments = source.m_moments;
-//	m_perimeter = source.m_perimeter;
-//	m_startPoint = source.m_startPoint;
-//}
-
 CBlobContour::CBlobContour( const CBlobContour &source )
 {
 	m_area = source.m_area;
@@ -54,6 +46,7 @@ CBlobContour::CBlobContour( const CBlobContour &source )
 	m_moments = source.m_moments;
 	m_perimeter = source.m_perimeter;
 	m_startPoint = source.m_startPoint;
+	parent=NULL;
 }
 
 CBlobContour::~CBlobContour()
@@ -72,6 +65,7 @@ CBlobContour& CBlobContour::operator=( const CBlobContour &source )
 		m_contour = source.m_contour;
 		m_contourPoints = source.m_contourPoints;
 	}
+	parent = NULL;
 	return *this;
 }
 

@@ -1,10 +1,11 @@
 
 #include "ComponentLabeling.h"
 
-myCompLabeler::myCompLabeler(Mat &binImage,CBlob** lab,Point start,Point end):
+myCompLabeler::myCompLabeler(Mat &binImage,CBlobContour** lab,Point start,Point end):
 	startPoint(start),endPoint(end),
 	binaryImage(binImage)
 {
+	parent=NULL;
 	labels = lab;
 	r=0;c=0;
 	dir=0;
@@ -24,10 +25,11 @@ void myCompLabeler::Label()
 {
 	ptrDataBinary = binaryImage.data;
 	ptrDataLabels = labels;
+	currentBlob=NULL;
 
 	h = binaryImage.size().height;
 	w = binaryImage.size().width;
-	CBlob* label=NULL;
+	CBlobContour* label=NULL;
 	for(r=startPoint.y;r<endPoint.y;r++){
 		//First col
 		pos = r*w;
@@ -35,7 +37,7 @@ void myCompLabeler::Label()
 		if(ptrDataBinary[pos]){
 			label = ptrDataLabels[pos];
 			if(label){
-				currentBlob = label;
+				currentBlob = label->parent;
 			}
 			//Else if so to not check for label==NULL
 			else if(ptrDataBinary[pos] /*&& ptrDataLabels[pos]==NULL*/){
@@ -53,7 +55,7 @@ void myCompLabeler::Label()
 			if(ptrDataBinary[pos]){
 				label = ptrDataLabels[pos];
 				if(label!=0)
-					currentBlob = label;
+					currentBlob = label->parent;
 				else if(!ptrDataBinary[pos-1]){
 					currentBlob = new CBlob(currentLabel,Point(c,r),Size(w,h));
 					blobs.push_back(currentBlob);
@@ -69,7 +71,7 @@ void myCompLabeler::Label()
 		if(ptrDataBinary[pos]){
 			label = ptrDataLabels[pos];
 			if(label!=0)
-				currentBlob = label;
+				currentBlob = label->parent;
 			else if(!ptrDataBinary[pos-1]){
 				currentBlob = new CBlob(currentLabel,Point(c,r),Size(w,h));
 				blobs.push_back(currentBlob);
@@ -92,114 +94,182 @@ void myCompLabeler::TracerExt()
 	//321
 	//4-0
 	//567
- 	//cout << "TracerExt\t" << col<<","<<row<<endl;
- 	//bool debugDraw=true;
-
+	//cout << "TracerExt\t" << c<<","<<r<<endl;
+	currentContour=&currentBlob->m_externalContour;
+#ifdef DEBUG_COMPONENT_LABELLING
+ 	cout << "TracerExt\t" << c<<","<<r<<endl;
+ 	bool debugDraw=true;
+#endif
 	int sR=r,sC=c;
 	int startPos = sR*w+sC;
 	dir=6;
+#ifdef DEBUG_COMPONENT_LABELLING
+	ptrDataBinary[pos]= 150; //Debug
+#endif
   	getNextPointCCW();
  	if(singlePixBlob){
  		r=sR;
  		c=sC;
  		pos = r*w+c;
-		ptrDataLabels[pos] = currentBlob;
+		ptrDataLabels[pos] = currentContour;
  		return;
  	}
-	//ptrDataBinary[pos]= 150;
 	t_chainCodeList *cont = &currentBlob->m_externalContour.m_contour[0];
 	while(pos!=startPos){
- 		//cout << r << "," << c << endl;
-		//ptrDataBinary[pos]= 150;
+#ifdef DEBUG_COMPONENT_LABELLING
+		ptrDataBinary[pos]= 150;
+#endif
 		cont->push_back(dir);
-		ptrDataLabels[pos] = currentBlob;
+		ptrDataLabels[pos] = currentContour;
 		getNextPointCCW();
-   // 	if(debugDraw){
-   // 		namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-   // 		namedWindow("lab",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-   // 		imshow("im",binaryImage);
-   // 		imshow("lab",labels);
- 		//stringstream ss;
- 		//ss << c << "," << r;
- 		//displayOverlay("im",ss.str());
-   // 		int k = waitKey();
-   // 		if(k==' ')
-   // 			debugDraw=false;
-   // 	}	
+#ifdef DEBUG_COMPONENT_LABELLING
+		if(debugDraw){
+    		namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+    		imshow("im",binaryImage);
+ 		stringstream ss;
+ 		ss << c << "," << r;
+ 		displayOverlay("im",ss.str());
+    		int k = waitKey();
+    		if(k==' ')
+    			debugDraw=false;
+    	}	
+#endif
 	}
 	cont->push_back(dir);
-	ptrDataLabels[pos] = currentBlob;
-	
+	ptrDataLabels[pos] = currentContour;
+	//For blobs in which the starting point must be crossed many times
 	for(int i=0;i<3;i++){
 		getNextPointCCW();
 		if(ptrDataLabels[pos]==0){
+#ifdef DEBUG_COMPONENT_LABELLING
+			ptrDataBinary[pos]=150;
+#endif
 			while(pos!=startPos){
 				//cout << r << "," << c << endl;
-				ptrDataLabels[pos] = currentBlob;
+				ptrDataLabels[pos] = currentContour;
 				cont->push_back(dir);
 				getNextPointCCW();
-				// 		ptrDataBinary[pos]= 150;
-				// 		if(debugDraw){
-				// 			namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-				// 			namedWindow("lab",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-				// 			imshow("im",binaryImage);
-				// 			imshow("lab",labels);
-				// 			int k = waitKey();
-				// 			if(k==' ')
-				// 				debugDraw=false;
-				// 		}
-
+#ifdef DEBUG_COMPONENT_LABELLING
+				ptrDataBinary[pos]= 150;
+				if(debugDraw){
+				 	namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+				 	imshow("im",binaryImage);
+				 	int k = waitKey();
+				 	if(k==' ')
+				 		debugDraw=false;
+				}
+#endif
 			}
 			cont->push_back(dir);
-			ptrDataLabels[pos] = currentBlob;
+			ptrDataLabels[pos] = currentContour;
 		}
 		else{
 			r=sR;
 			c=sC;
 			pos = r*w+c;
+			break;
 		}
 	}
 }
 
-void myCompLabeler::TracerInt()
+void myCompLabeler::TracerInt( int startDir /*= 5*/ )
 {
 	//Dir:
 	//321
 	//4-0
 	//567
-	//cout << "TracerInt\t" << col<<","<<row<<endl;
-	//bool debugDraw=true;
-	
-	int startPos = r*w+c;
-	CBlobContour* contour = new CBlobContour(Point(c,r),Size(w,h));
-	t_chainCodeList *cont = &contour->m_contour[0];
-	dir=6;
+	//cout << "TracerInt\t" << c<<","<<r<<endl;
+#ifdef DEBUG_COMPONENT_LABELLING
+	cout << "TracerInt\t" << c<<","<<r<<endl;
+	bool debugDraw=true;
+#endif
+	int sR=r,sC=c;
+	int startPos = sR*w+sC;
+	currentContour = new CBlobContour(Point(c,r),Size(w,h));
+	currentContour->parent=currentBlob;
+	t_chainCodeList *cont = &currentContour->m_contour[0];
+	dir=startDir;
+#ifdef DEBUG_COMPONENT_LABELLING
+	ptrDataBinary[pos] = 50;
+#endif
 	getNextPointCW();
-	ptrDataLabels[pos] = currentBlob;
+	uchar firstDir = dir;
+#ifdef DEBUG_COMPONENT_LABELLING
+	ptrDataBinary[pos] = 100;
+#endif
 	cont->push_back(dir);
+	ptrDataLabels[pos] = currentContour;
 	while(pos!=startPos){
 		// 		cout << r << "," << c << endl;
 		getNextPointCW();
-		ptrDataLabels[pos] = currentBlob;
+		ptrDataLabels[pos] = currentContour;
 		cont->push_back(dir);
-		//contour->AddChainCode(dir);
-		//ptrDataBinary[pos] = 100;
-		
-//  		if(debugDraw){
-//  		 	namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-// 			namedWindow("lab",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-//  		 	imshow("im",binaryImage);
-// 			imshow("lab",labels);
-// 			stringstream ss;
-// 			ss << c << "," << r;
-// 			displayOverlay("im",ss.str());
-//  		 	int k = waitKey();
-//  		 	if(k==' ')
-//  		 		debugDraw=false;
-//  		}
-		
+#ifdef DEBUG_COMPONENT_LABELLING
+		ptrDataBinary[pos] = 100;
+  		if(debugDraw){
+  		 	namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+  		 	imshow("im",binaryImage);
+ 			stringstream ss;
+ 			ss << c << "," << r;
+ 			displayOverlay("im",ss.str());
+  		 	int k = waitKey();
+  		 	if(k==' ')
+  		 		debugDraw=false;
+  		}
+#endif
 	}
-	currentBlob->m_internalContours.push_back(contour);
+
+	//For internal contours in which the starting point must be crossed many times, like:
+	//	ooooooooooooooo
+	//	ooooos        o
+ 	//	ooooo o       o
+	//	ooooo  o      o
+	//	ooooo         o
+	//	ooooooooooooooo
+	for(int i=0;i<3;i++){
+		getNextPointCW();
+		//In tracerExt i check for label==0, beacuse there can not be situations in which a pixel belongs to 2 contours.
+		//This can happen with internal contorus, so I have to modify the condition.
+		if(ptrDataLabels[pos]!=currentContour){ 
+#ifdef DEBUG_COMPONENT_LABELLING
+			ptrDataBinary[pos]=100;
+#endif
+			while(pos!=startPos){
+				ptrDataLabels[pos] = currentContour;
+				cont->push_back(dir);
+				getNextPointCW();
+#ifdef DEBUG_COMPONENT_LABELLING
+				ptrDataBinary[pos]= 100;
+				if(debugDraw){
+					namedWindow("im",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
+					imshow("im",binaryImage);
+					int k = waitKey();
+					if(k==' ')
+						debugDraw=false;
+				}
+#endif
+			}
+			cont->push_back(dir);
+			ptrDataLabels[pos] = currentContour;
+		}
+		else{
+			r=sR;
+			c=sC;
+			pos = r*w+c;
+			break;
+		}
+	}
+
+
+	//If labeler has parent it means that I'm using more than 1 thread.
+	//Then I must check for collisions when adding internal contours to the same blob.
+	if(parent){
+		parent->acquireMutex();
+		currentBlob->m_internalContours.push_back(currentContour);
+		parent->releaseMutex();
+	}
+	else
+		currentBlob->m_internalContours.push_back(currentContour);
 }
 
 void myCompLabeler::getNextPointCCW()
@@ -221,7 +291,7 @@ void myCompLabeler::getNextPointCCW()
 				c=tempC;
 				break;
 			}
-			ptrDataLabels[pos] = currentBlob;
+			ptrDataLabels[pos] = currentContour;
 		}
 	}
 	singlePixBlob = i == 8;
@@ -310,7 +380,7 @@ void myCompLabeler::getNextPointCW()
  				c=tempC;
 				break;
 			}
-			ptrDataLabels[pos] = currentBlob;
+			ptrDataLabels[pos] = currentContour;
 		}
 		dir--;
 		dir = dir%8;	//To cycle through values 7->0
@@ -330,6 +400,7 @@ void myCompLabelerGroup::doLabeling(Blob_vector &blobs)
 		for(int i=1;i<numThreads;i++){
 			Point offset(img.size().width,1);
 			myCompLabeler lbl(img,labels,labelers[i]->startPoint,labelers[i]->startPoint+offset);
+			lbl.parent=this;
 			lbl.Label();
 			//cout << "Single pass\t" << lbl.blobs.size()<<endl;
 			for(unsigned int i=0;i<lbl.blobs.size();i++){
@@ -360,6 +431,7 @@ void myCompLabelerGroup::doLabeling(Blob_vector &blobs)
 
 myCompLabelerGroup::myCompLabelerGroup()
 {
+	mutexBlob = PTHREAD_MUTEX_INITIALIZER;
 	labels=NULL;
 	labelers=NULL;
 	tIds=NULL;
@@ -388,7 +460,7 @@ void myCompLabelerGroup::set( int numThreads, Mat img )
 		delete [] labels;
 	}
 	int nPts = img.size().width*img.size().height;
-	labels = new CBlob*[nPts];
+	labels = new CBlobContour*[nPts];
 	memset(labels,0,nPts*sizeof(CBlob*));
 
 	if(tIds)
@@ -410,10 +482,13 @@ void myCompLabelerGroup::set( int numThreads, Mat img )
 		Point st(0,yStart);
 		Point en(sz.width,yEnd);
 		labelers[i] = new myCompLabeler(img,labels,st,en);
+		labelers[i]->parent=this;
 	}
 	Point st(0,(int)((float)i/numThreads*sz.height));
 	Point en(sz.width,sz.height);
+	//st = Point(0,187);
 	labelers[i] = new myCompLabeler(img,labels,st,en);
+	labelers[i]->parent=this;
 }
 
 void myCompLabelerGroup::Reset()
@@ -424,5 +499,15 @@ void myCompLabelerGroup::Reset()
 	}
 	for(int i=0;i<numThreads;i++)
 		labelers[i]->Reset();
+}
+
+void myCompLabelerGroup::acquireMutex()
+{
+	pthread_mutex_lock(&mutexBlob);
+}
+
+void myCompLabelerGroup::releaseMutex()
+{
+	pthread_mutex_unlock(&mutexBlob);
 }
 

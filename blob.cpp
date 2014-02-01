@@ -33,6 +33,7 @@ CBlob::CBlob()
 }
 CBlob::CBlob( t_labelType id, CvPoint startPoint, CvSize originalImageSize ):m_externalContour(startPoint,originalImageSize)
 {
+	m_externalContour.parent=this;
 	m_id = id;
 	m_area = m_perimeter = -1;
 	m_externPerimeter = m_meanGray = m_stdDevGray = -1;

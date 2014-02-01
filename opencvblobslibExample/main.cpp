@@ -14,7 +14,7 @@ using namespace std;
 void test();
 void opencvLogo();
 void testJoin();
-void testMio();
+void testRandomImage(); //Generate a random image and test blobs.
 
 int main(){
 //  	testTimes(500,3000,250,"TempiHR",20);
@@ -24,6 +24,8 @@ int main(){
 	//test();
 	testJoin();
 	//testMio();
+	//testRandomImage();
+
 	cout <<"Press a key to continue..."<<endl;
 	cin.get();
 	return 0;
@@ -82,6 +84,7 @@ int main(){
 	fileOutMT.close();
 	fileOutInfo.close();
 }*/
+
 void test()
 {
 	int64 time;
@@ -169,6 +172,7 @@ void testJoin(){
 	Mat img,imt,im2;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,imt,254,255,CV_THRESH_BINARY_INV);
+	imshow("binImage",imt);
 	CBlobResult res(imt,Mat(),NUMCORES);
 	im2 = im.clone();
 	stringstream s;
@@ -243,76 +247,33 @@ void testJoin(){
 	
 }
 
-void testMio()
+void testRandomImage()
 {
-	RNG rand;
-	int trials=100;
-	
-	
-	//namedWindow("imgST",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-	namedWindow("image",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-	namedWindow("BlobsST",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-	namedWindow("BlobsMT",CV_WINDOW_NORMAL + CV_GUI_EXPANDED + CV_WINDOW_KEEPRATIO);
-	Mat image = imread("testImage.png",CV_LOAD_IMAGE_GRAYSCALE);
-	//resize(image,image,Size(14,14),0,0,INTER_NEAREST);
-	Mat imBlobsST(image.size(),CV_8UC3),imBlobsMT(image.size(),CV_8UC3);
-	Mat mask = Mat::zeros(image.size(),CV_8UC1);
-	imBlobsST.setTo(Vec3b(0,0,0));
-	imBlobsMT.setTo(Vec3b(0,0,0));
-	threshold(image,image,250,255,CV_THRESH_BINARY_INV);
-	double time=0;
-	imshow("image",image);
-	CBlobResult res;
-	for(int i=0;i<trials;i++){
-		int64 ticks=getTickCount();
-		CBlobResult res2(image,Mat(),1);
-		time+= (getTickCount()-ticks)/getTickFrequency();
-		res=res2;
-		cout << i << "/"<<trials<<endl;
+	cout << "Random test: Press esc to quit"<<endl;
+	namedWindow("Binary Image",CV_WINDOW_NORMAL);
+	namedWindow("Blobs Image",CV_WINDOW_NORMAL);
+	Mat image(256,256,CV_8UC1),nulMask;
+	Mat out(image.size(),CV_8UC3);
+	RNG rand(0);
+	while(true){
+		out.setTo(0);
+		rand.fill(image,CV_8UC1,0,256);
+		threshold(image,image,127,255,CV_THRESH_BINARY);
+		CBlobResult res(image,nulMask,2);
+		cout << "Nblobs: "<< res.GetNumBlobs()<<endl;
+		for(int i=0;i<res.GetNumBlobs();i++){
+			CBlob *blob = res.GetBlob(i);
+			Scalar color(rand.uniform(0,256),rand.uniform(0,256),rand.uniform(0,256));
+			blob->FillBlob(out,color,0,0,true);
+			Point s = blob->GetExternalContour()->GetStartPoint();
+			out.at<Vec3b>(s) = Vec3b(255,255,255);
+		}
+		imshow("Binary Image",image);
+		imshow("Blobs Image",out);
+		int k = waitKey(1);
+		if(k==27)
+			break;
 	}
-	cout << "TimeBlobNormalST: " << time/trials<<"\tCount: "<<res.GetNumBlobs()<<endl; time=0;
-	for(int i=0;i<res.GetNumBlobs();i++){
-		res.GetBlob(i)->FillBlob(imBlobsST,CV_RGB(rand.uniform(0,255),rand.uniform(0,255),0),0,0,true);
-	}
-	imshow("BlobsST",imBlobsST);
-	waitKey();
-	imBlobsST.setTo(Vec3b(0,0,0));
-
-	//myCompLabeler lbl(image.clone(),Point(0*image.size().width,0),Point(1*image.size().width,image.size().height));
-	//myCompLabelerGroup gro;
-	//gro.set(2,image.clone());
-	//
-	//Blob_vector blobs;
- // 	imshow("image",image);
-	////waitKey();
- //     for(int i=0;i<trials;i++){
- // 		gro.Reset();
- // 		blobs.clear();
- //      	int64 ticks=getTickCount();
- //      	gro.doLabeling(blobs);
- // 		time+= (getTickCount()-ticks)/getTickFrequency();
- //     }
- //     cout << "TimeMT: " << time/trials<<"\tCount: "<<blobs.size()<<endl;
-
-
-	//time =0;
-	//for(int i=0;i<trials;i++){
-	//	lbl.Reset();
-	//	int64 ticks=getTickCount();
-	//	lbl.Label();
-	//	time+= (getTickCount()-ticks)/getTickFrequency();
-	//}
-	//cout << "TimeST: " << time/trials<<"\tCount: "<<lbl.blobs.size()<<endl;
-
-	//for(int i=0;i<lbl.blobs.size();i++){
-	//	lbl.blobs[i]->FillBlob(imBlobsST,CV_RGB(rand.uniform(0,255),rand.uniform(0,255),0),0,0,true);
-	//}
-	//imshow("BlobsST",imBlobsST);
-	//for(int i=0;i<blobs.size();i++){
-	//	blobs[i]->FillBlob(imBlobsMT,CV_RGB(rand.uniform(0,255),rand.uniform(0,255),0),0,0,true);
-	//}
-	//imshow("BlobsMT",imBlobsMT);	
-	//waitKey();
 	destroyAllWindows();
 }
 
