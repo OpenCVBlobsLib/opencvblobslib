@@ -21,8 +21,8 @@ int main(){
   	//testTimes(1000,1000,20,"TempiLR",40);
 	//testTimes(10,2000,50,"TempiRandom",15);
 	//opencvLogo();
-	//test();
-	testJoin();
+	test();
+	//testJoin();
 	//testMio();
 	//testRandomImage();
 
@@ -143,6 +143,9 @@ void test()
 		// 		imshow("Blobs Image",color_img);
 		// 		waitKey();
 	}
+
+	rectangle(color_img,blobs.getBlobNearestTo(Point(color_img.size().width/2,color_img.size().height/2))->GetBoundingBox(),CV_RGB(200,100,50),3);
+
 	displayOverlay("Blobs Image","Multi Thread");
 	imshow("Blobs Image",color_img);
 	waitKey();
