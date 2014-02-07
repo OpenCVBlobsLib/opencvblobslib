@@ -973,3 +973,22 @@ void CBlobResult::PrintBlobs( char *nom_fitxer ) const
 	fclose( fitxer_sortida );
 
 }
+
+CBlob* CBlobResult::getBlobNearestTo( Point pt )
+{
+	float minD = FLT_MAX,d=0;
+	int numBlobs = m_blobs.size();
+	int indNearest = -1;
+	for(int i=0;i<numBlobs;i++){
+		Point diff = m_blobs[i]->getCenter() - pt;
+		d = diff.x*diff.x+diff.y*diff.y;
+		if(minD > d){
+			indNearest = i;
+			minD=d;
+		}
+	}
+	if(indNearest!=-1)
+		return m_blobs[indNearest];
+	else
+		return NULL;
+}

@@ -30,6 +30,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include <functional>
 #include <algorithm>
 #include <opencv2/opencv.hpp>
+#include <cfloat>
 
 #ifdef MATRIXCV_ACTIU
 	#include "matrixCV.h"
@@ -145,6 +146,8 @@ public:
 	//! Prints some features of all the blobs in a file
 	void PrintBlobs( char *nom_fitxer ) const;
 
+	// Returns blob with center nearest to point pt
+	CBlob* getBlobNearestTo(Point pt);
 
 //Metodes GET/SET
 
