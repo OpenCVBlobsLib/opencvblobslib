@@ -9,6 +9,9 @@
 #include <opencv2/core/core.hpp>
 #include <list>
 
+
+class CBlob; //Forward declaration in order to enable the "parent" field
+
 using namespace std;
 using namespace cv;
 
@@ -102,7 +105,7 @@ private:
    	static const t_PointList EMPTY_LIST;
 
 	//This value is actually used mainly in the detection part, for the labels.
-	CBlob *parent;
+	CBlob* parent;
 };
 
 t_chainCode points2ChainCode(CvPoint p1, CvPoint p2);

@@ -9,6 +9,8 @@
 #include "opencv2/opencv.hpp"
 #include <pthread.h>
 
+class myCompLabelerGroup; //forward decl. for "parent" field of myCompLabeler.
+
 // vector of blob pointers typedef
 typedef std::vector<CBlob*>	Blob_vector;
 
