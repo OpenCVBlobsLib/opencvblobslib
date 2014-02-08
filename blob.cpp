@@ -442,12 +442,6 @@ double CBlob::Moment(int p, int q)
 */
 double CBlob::Mean( IplImage *image )
 {
-	// it is calculated?
-/*	if( m_meanGray != -1 )
-	{
-		return m_meanGray;
-	}
-*/	
 	// Create a mask with same size as blob bounding box
 	IplImage *mask;
 	CvScalar mean, std;
@@ -518,18 +512,13 @@ double CBlob::Mean( IplImage *image )
 
 	return m_meanGray;
 }
+
 double CBlob::Mean(Mat image ){
 	IplImage temp = (IplImage) image;
 	return Mean(&temp);
 }
 double CBlob::StdDev( IplImage *image )
 {
-	// it is calculated?
-/*	if( m_stdDevGray != -1 )
-	{
-		return m_stdDevGray;
-	}
-*/
 	// call mean calculation (where also standard deviation is calculated)
 	Mean( image );
 
@@ -540,13 +529,48 @@ double CBlob::StdDev(Mat image){
 	return StdDev(&temp);
 }
 
-void CBlob::MeanStdDev( Mat image, double *mean, double *stddev )
+//void CBlob::MeanStdDev( Mat image, double *mean, double *stddev )
+//{
+//	IplImage temp = (IplImage) image;
+//	Mean(&temp);
+//	*mean = m_meanGray;
+//	*stddev = m_stdDevGray;
+//	return;
+//}
+
+void CBlob::MeanStdDev( Mat image, Scalar &mean, Scalar &stddev )
 {
-	IplImage temp = (IplImage) image;
-	Mean(&temp);
-	*mean = m_meanGray;
-	*stddev = m_stdDevGray;
-	return;
+	GetBoundingBox();
+	// Create a mask with same size as blob bounding box and set it to 0
+	Mat mask_mat = Mat(m_boundingBox.height,m_boundingBox.width,CV_8UC1,Scalar(0));
+	Point offset(-m_boundingBox.x,-m_boundingBox.y);
+
+	//If joined
+	if(isJoined){
+		list<CBlob *>::iterator it,en = joinedBlobs.end();
+		for(it = joinedBlobs.begin();it!=en;it++){
+			drawContours(mask_mat,(*it)->m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
+			t_CBlobContourList::iterator itint = (*it)->m_internalContours.begin();
+			while(itint != (*it)->m_internalContours.end() )
+			{
+				drawContours(mask_mat,(*itint)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
+				itint++;
+			}
+		}
+	}
+	else{
+		// draw contours on mask
+		drawContours(mask_mat,m_externalContour.GetContours(),-1,CV_RGB(255,255,255),CV_FILLED,8,noArray(),2147483647,offset);
+		// draw internal contours
+		t_CBlobContourList::iterator it = m_internalContours.begin();
+		while(it != m_internalContours.end() )
+		{
+			drawContours(mask_mat,(*it)->GetContours(),-1,CV_RGB(0,0,0),CV_FILLED,8,noArray(),2147483647,offset);
+			it++;
+		}
+	}
+
+	cv::meanStdDev(image(m_boundingBox),mean,stddev,mask_mat);
 }
 
 /**
@@ -586,15 +610,17 @@ CvRect CBlob::GetBoundingBox()
 			if(bigRect.y > temp.y){
 				bigRect.y = temp.y;
 			}
+			//-1 in order to obtain the correct measure (I'm looking for the points)
 			if(maxX < temp.x+temp.width){
-				maxX = temp.x+temp.width;
+				maxX = temp.x+temp.width-1;
 			}
 			if(maxY < temp.y + temp.height){
-				maxY = temp.y + temp.height;
+				maxY = temp.y + temp.height-1;
 			}
 		}
-		bigRect.width=maxX - bigRect.x;
-		bigRect.height=maxY - bigRect.y;
+		//+1 in order to obtain the correct measure
+		bigRect.width=maxX - bigRect.x+1;
+		bigRect.height=maxY - bigRect.y+1;
 		m_boundingBox=bigRect;
 		return m_boundingBox;
 	}
@@ -603,8 +629,6 @@ CvRect CBlob::GetBoundingBox()
 	
 	// get contour pixels
 	externContour = m_externalContour.GetContourPoints();
-	//m_boundingBox = ((CvContour*)GetExternalContour()->GetContourPoints())->rect;
-	//return m_boundingBox;
 
 	// it is an empty blob?
 	m_boundingBox.x = 1000000;
@@ -625,11 +649,10 @@ CvRect CBlob::GetBoundingBox()
 		m_boundingBox.height = MAX( actualPoint.y, m_boundingBox.height );
 	}
 
-	//m_boundingBox.x = max( m_boundingBox.x , 0 );
-	//m_boundingBox.y = max( m_boundingBox.y , 0 );
-
-	m_boundingBox.width -= m_boundingBox.x;
-	m_boundingBox.height -= m_boundingBox.y;
+	//+1 in order to take into account single pixel blobs.
+	//In this case, a single pixel has a bounding box like Rect(x,y,1,1), which is ok with opencv functions
+	m_boundingBox.width = m_boundingBox.width - m_boundingBox.x+1;
+	m_boundingBox.height = m_boundingBox.height - m_boundingBox.y+1;
 
 	return m_boundingBox;
 }

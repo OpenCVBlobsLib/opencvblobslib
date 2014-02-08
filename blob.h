@@ -94,19 +94,26 @@ public:
 	double ExternPerimeter( IplImage *mask, bool xBorder  = true, bool yBorder = true );
 	//! opencv2 interface
 	double ExternPerimeter( Mat mask, bool xBorder  = true, bool yBorder = true );
+	
 	//! Get mean grey color
+	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
 	double Mean( IplImage *image );
 	//! opencv2 interface
+	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
 	double Mean(Mat image );
-	//!opencv2 interface
 	//! Get standard deviation grey color
+	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
 	double StdDev( IplImage *image );
 	//! opencv2 interface
+	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
 	double StdDev( Mat image );
 
+	//Computes mean and standard deviation of image, which can be in any opencv format
 	//Since mean and standard deviation are computed with the same function call, this results quicker than
 	//calling separately mean and standard deviation.
-	void MeanStdDev(Mat image, double *mean, double *stddev);
+	void MeanStdDev(Mat image, Scalar &mean, Scalar &stddev);
+
+	//void MeanStdDev(Mat image, double *mean, double *stddev);
 
 	//! Indica si el blob est� buit ( no t� cap info associada )
 	//! Shows if the blob has associated information
