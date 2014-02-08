@@ -21,8 +21,8 @@ int main(){
   	//testTimes(1000,1000,20,"TempiLR",40);
 	//testTimes(10,2000,50,"TempiRandom",15);
 	//opencvLogo();
-	test();
-	//testJoin();
+	//test();
+	testJoin();
 	//testMio();
 	//testRandomImage();
 
@@ -144,7 +144,7 @@ void test()
 		// 		waitKey();
 	}
 
-	rectangle(color_img,blobs.getBlobNearestTo(Point(color_img.size().width/2,color_img.size().height/2))->GetBoundingBox(),CV_RGB(200,100,50),3);
+	rectangle(color_img,blobs.getBlobNearestTo(Point(color_img.size().width/2,color_img.size().height/2))->GetBoundingBox(),CV_RGB(200,100,50),1);
 
 	displayOverlay("Blobs Image","Multi Thread");
 	imshow("Blobs Image",color_img);
@@ -180,16 +180,16 @@ void testJoin(){
 	im2 = im.clone();
 	stringstream s;
 	for(int i=0;i<res.GetNumBlobs();i++){
-		double mean, stddev;
+		Scalar mean, stddev;
 		CBlob t2 = res.GetBlob(i);
 		Rect bbox = t2.GetBoundingBox();
-		rectangle(im2,bbox,Scalar(0,220,0),3);
+		rectangle(im2,bbox,Scalar(0,220,0),1);
 		t2.FillBlob(im2,Scalar(200,200,0),0,0,true,im);
 		ellipse(im2,t2.GetEllipse(),Scalar(220,0,0),2);
 		t_contours hull;
 		t2.GetConvexHull(hull);
 		drawContours(im2,hull,-1,Scalar(0,0,220),2);
-		t2.MeanStdDev(img,&mean,&stddev);
+		t2.MeanStdDev(im,mean,stddev);
 		cout << "Perimeter: " << t2.Perimeter();
 		cout << "\tArea: " << t2.Area();
 		cout << endl;
@@ -219,18 +219,18 @@ void testJoin(){
 	/*displayOverlay("temp","Press a key to continue and join blobs.",10);*/
 	CBlob temp,t2;
 	for(int i=0;i<res.GetNumBlobs();i++){
-		double mean, stddev;
+		Scalar mean, stddev;
 		im2 = im.clone();
 		temp.JoinBlob(res.GetBlob(i));
 		t2 = CBlob(temp);
 		Rect bbox = t2.GetBoundingBox();
-		rectangle(im2,bbox,Scalar(0,220,0),3);
+		rectangle(im2,bbox,Scalar(0,220,0),1);
 		t2.FillBlob(im2,Scalar(200,200,0),0,0,true,im);
 		ellipse(im2,t2.GetEllipse(),Scalar(220,0,0),2);
 		t_contours hull;
 		t2.GetConvexHull(hull);
 		drawContours(im2,hull,-1,Scalar(0,0,220),2);
-		t2.MeanStdDev(img,&mean,&stddev);
+		t2.MeanStdDev(im,mean,stddev);
 		cout << "Perimeter: " << t2.Perimeter();
 		cout << "\tArea: " << t2.Area();
 		cout << endl;
