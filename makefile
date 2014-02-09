@@ -37,4 +37,13 @@ clean:
 	@echo Cleaning...
 	rm -f $(CFILES:.cpp=.o)
 	rm -f libopencvblobslib.a
+install:
+	@echo Installing...
+	sudo cp libopencvblobslib.a /usr/local/lib
+	sudo mkdir /usr/local/include/opencvblobslib
+	sudo cp *.h /usr/local/include/opencvblobslib
+uninstall:
+	@echo Uninstalling...
+	sudo rm /usr/local/lib/libopencvblobslib.a
+	sudo rm -rf /usr/local/include/opencvblobslib
 
