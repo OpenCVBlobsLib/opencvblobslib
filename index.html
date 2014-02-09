@@ -69,9 +69,15 @@
 <hr><h3>
 <a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News:</h3>
 
-<p>[Changelog Changelog and old news]</p>
+<ul>
+<li>08/02/2014
 
 <ul>
+<li>Modified function MeanStdDev in order to return Scalar objects instead of doubles. In this way RGB images can be handled.</li>
+<li>Modified GetBoundingBox in order to return the actual width and height (before they were 1 pixel less). Now a 1 pixel blob has its width and height set to 1.</li>
+<li>Added a new function GetBlobNearestTo, to obtain the blob nearest to a user-defined point.</li>
+</ul>
+</li>
 <li>31/01/2014
 
 <ul>
