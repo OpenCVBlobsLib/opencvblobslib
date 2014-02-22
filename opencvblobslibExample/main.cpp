@@ -210,6 +210,9 @@ void testJoin(){
 		putText(im2,s.str(),t2->getCenter(),1,im2.size().width/400,CV_RGB(0,0,0),2);
 		s.str("");
 	}
+	//Example of filter using (I have to delete some blobs in the previous cycle though!
+	//res.Filter(res,FilterAction::FLT_EXCLUDE,CBlobGetTBDeleted(),FilterCondition::FLT_EQUAL,1);
+	//
 	res.PrintBlobs("testFile.txt");
 	imshow("temp",im2);
 	cout << "======================================="<<endl;
