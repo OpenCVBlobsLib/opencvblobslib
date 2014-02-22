@@ -20,7 +20,7 @@ class COperadorBlob
 public:
 	virtual ~COperadorBlob(){};
 
-	//! Aply operator to blob
+	//! Apply operator to blob
 	virtual double operator()(CBlob &blob) = 0;
 	//! Get operator name
 	virtual const char *GetNom() = 0;
@@ -31,7 +31,7 @@ public:
 	}
 };
 
-typedef COperadorBlob funcio_calculBlob;
+typedef COperadorBlob blobOperator;
 
 #ifdef BLOB_OBJECT_FACTORY
 	/**
