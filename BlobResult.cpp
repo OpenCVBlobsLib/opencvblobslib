@@ -351,7 +351,7 @@ void CBlobResult::AddBlob( CBlob *blob )
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-double_vector CBlobResult::GetResult( funcio_calculBlob *evaluador ) const
+double_vector CBlobResult::GetResult( blobOperator *evaluador ) const
 {
 	if( GetNumBlobs() <= 0 )
 	{
@@ -401,7 +401,7 @@ double_vector CBlobResult::GetResult( funcio_calculBlob *evaluador ) const
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-double_stl_vector CBlobResult::GetSTLResult( funcio_calculBlob *evaluador ) const
+double_stl_vector CBlobResult::GetSTLResult( blobOperator *evaluador ) const
 {
 	if( GetNumBlobs() <= 0 )
 	{
@@ -450,7 +450,7 @@ double_stl_vector CBlobResult::GetSTLResult( funcio_calculBlob *evaluador ) cons
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-double CBlobResult::GetNumber( int indexBlob, funcio_calculBlob *evaluador ) const
+double CBlobResult::GetNumber( int indexBlob, blobOperator *evaluador ) const
 {
 	if( indexBlob < 0 || indexBlob >= GetNumBlobs() )
 		RaiseError( EXCEPTION_BLOB_OUT_OF_BOUNDS );
@@ -511,7 +511,7 @@ double CBlobResult::GetNumber( int indexBlob, funcio_calculBlob *evaluador ) con
 /////////////////////////// FILTRAT DE BLOBS ////////////////////////////////////
 void CBlobResult::Filter(CBlobResult &dst, 
 						 int filterAction, 
-						 funcio_calculBlob *evaluador, 
+						 blobOperator *evaluador, 
 						 int condition, 
 						 double lowLimit, double highLimit /*=0*/) const
 							
@@ -574,7 +574,7 @@ void CBlobResult::Filter(CBlobResult &dst,
 */
 void CBlobResult::Filter(CBlobResult &dst, 
 						 int filterAction, 
-						 funcio_calculBlob *evaluador, 
+						 blobOperator *evaluador, 
 						 int condition, 
 						 double lowLimit, double highLimit /*=0*/)
 							
@@ -599,9 +599,14 @@ void CBlobResult::Filter(CBlobResult &dst,
 	}
 }
 
+void CBlobResult::Filter( CBlobResult &dst, FilterAction filterAction, blobOperator *evaluador, FilterCondition condition, double lowLimit, double highLimit /*= 0 */ )
+{
+	Filter(dst,(int)filterAction,evaluador,(int)condition,lowLimit,highLimit);
+}
+
 
 //! Does the Filter method job
-void CBlobResult::DoFilter(CBlobResult &dst, int filterAction, funcio_calculBlob *evaluador, 
+void CBlobResult::DoFilter(CBlobResult &dst, int filterAction, blobOperator *evaluador, 
 						   int condition, double lowLimit, double highLimit/* = 0*/) const
 {
 	int i, numBlobs;
@@ -793,7 +798,7 @@ CBlob *CBlobResult::GetBlobByID(t_labelType id){
 - CREATION DATE: 25-05-2005.
 - MODIFICATION: Date. Author. Description.
 */
-void CBlobResult::GetNthBlob( funcio_calculBlob *criteri, int nBlob, CBlob &dst ) const
+void CBlobResult::GetNthBlob( blobOperator *criteri, int nBlob, CBlob &dst ) const
 {
 	// verifiquem que no estem accedint fora el vector de blobs
 	if( nBlob < 0 || nBlob >= GetNumBlobs() )
