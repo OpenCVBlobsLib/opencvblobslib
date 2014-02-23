@@ -1,4 +1,3 @@
-
 #include "ComponentLabeling.h"
 
 myCompLabeler::myCompLabeler(Mat &binImage,CBlobContour** lab,Point start,Point end):
@@ -431,7 +430,7 @@ void myCompLabelerGroup::doLabeling(Blob_vector &blobs)
 
 myCompLabelerGroup::myCompLabelerGroup()
 {
-	mutexBlob = PTHREAD_MUTEX_INITIALIZER;
+	mutexBlob = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 	labels=NULL;
 	labelers=NULL;
 	tIds=NULL;
