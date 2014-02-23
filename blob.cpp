@@ -984,4 +984,18 @@ Point CBlob::getCenter()
 	return Point((int)(GetBoundingBox().x+GetBoundingBox().width*0.5),(int)(GetBoundingBox().y+GetBoundingBox().height*0.5));
 }
 
+int CBlob::overlappingPixels(CBlob *blob )
+{
+	Rect r1 = GetBoundingBox(),r2 = blob->GetBoundingBox();
+	Rect interRect = r1 & r2;
+	if(interRect.width == 0 || interRect.height==0)
+		return 0;
+	Rect minContainingRect = r1 | r2; //Minimum containing rectangle
+	Mat m1 = Mat::zeros(minContainingRect.height,minContainingRect.width,CV_8UC1);
+	Mat m2 = Mat::zeros(minContainingRect.height,minContainingRect.width,CV_8UC1);
+	FillBlob(m1,Scalar(255),-minContainingRect.x,-minContainingRect.y,true);
+	blob->FillBlob(m2,Scalar(255),-minContainingRect.x,-minContainingRect.y,true);
+	return countNonZero(m1&m2);
+}
+
 

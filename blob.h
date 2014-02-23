@@ -163,6 +163,10 @@ public:
 	//Shifts the blob by (x,y) 
 	void ShiftBlob(int x,int y);
 
+	//Returns the number of overlapping pixels between the caller blob and blob.
+	//A preliminary check is performed with respect to the bounding boxes in order to avoid unnecessary computations
+	int overlappingPixels(CBlob *blob);
+
 	//Returns blob center in pixels (integers).
 	Point getCenter();
 	/*
