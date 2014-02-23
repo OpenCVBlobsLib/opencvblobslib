@@ -210,12 +210,37 @@ void testJoin(){
 		putText(im2,s.str(),t2->getCenter(),1,im2.size().width/400,CV_RGB(0,0,0),2);
 		s.str("");
 	}
+	
+	//Test Overlapping
+	//The entire part before the call to overlappingPixels is just for visualisation purposes!
+	cout << "======================================="<<endl;
+	cout << "Overlapping blobs test"<<endl;
+	cout << "======================================="<<endl;
+	CBlob *b1 = res.GetBlob(1);
+	CBlob *b2 = res.GetBlob(2);
+	b2->ShiftBlob(-30,0); //The shift is just to create an actual overlap between the first 2 blobs, when using 2 threads!
+	Rect r1 = b1->GetBoundingBox(),r2 = b2->GetBoundingBox();
+	Rect minContainingRect = r1 | r2; //Minimum containing rectangle
+	Mat m1 = Mat::zeros(minContainingRect.height,minContainingRect.width,CV_8UC3);
+	Mat m2 = Mat::zeros(minContainingRect.height,minContainingRect.width,CV_8UC3);
+	b1->FillBlob(m1,Scalar(100,0,0),-minContainingRect.x,-minContainingRect.y,true);
+	b2->FillBlob(m2,Scalar(0,100,0),-minContainingRect.x,-minContainingRect.y,true);
+	imshow("Overlap",m1+m2);
+	cout << "Overlapping pixels: "<<b1->overlappingPixels(b2)<<endl; //Actual call that computes pixels
+	cout << "Focus on the window and press a key to continue to the next test"<<endl;
+	cout << endl<<endl<<endl;
+	b2->ShiftBlob(30,0); //To reset the state as it was before
+	waitKey();
+	//
+
 	//Example of filter using (I have to delete some blobs in the previous cycle though!
 	//res.Filter(res,FilterAction::FLT_EXCLUDE,CBlobGetTBDeleted(),FilterCondition::FLT_EQUAL,1);
 	//
 	res.PrintBlobs("testFile.txt");
 	imshow("temp",im2);
+	//Test Overlapping
 	cout << "======================================="<<endl;
+	cout << "Blob joining test"<<endl;
 	cout << "Focus on the window and press a key to continue and join blobs"<<endl;
 	cout << "======================================="<<endl;
 	waitKey();
