@@ -199,6 +199,9 @@ void testJoin(){
 		cout << "Mean: " << mean;
 		cout << "\tStdDev: " << stddev;
 		cout << endl;
+		cout << "DensityPixel: " << t2.density(PIXELWISE);
+		cout << "\tDensityGreen: " << t2.density(GREEN);
+		cout << endl;
 		cout << "M00: " << t2.Moment(0,0);
 		cout << endl;
 		cout << "ID: " << t2.GetID();
@@ -217,7 +220,7 @@ void testJoin(){
 	cout << "Overlapping blobs test"<<endl;
 	cout << "======================================="<<endl;
 	CBlob *b1 = res.GetBlob(1);
-	CBlob *b2 = res.GetBlob(2);
+	CBlob *b2 = res.GetBlob(1);
 	b2->ShiftBlob(-30,0); //The shift is just to create an actual overlap between the first 2 blobs, when using 2 threads!
 	Rect r1 = b1->GetBoundingBox(),r2 = b2->GetBoundingBox();
 	Rect minContainingRect = r1 | r2; //Minimum containing rectangle
@@ -267,6 +270,9 @@ void testJoin(){
 		cout << endl;
 		cout << "Mean: " << mean;
 		cout << "\tStdDev: " << stddev;
+		cout << endl;
+		cout << "DensityPixel: " << t2.density(PIXELWISE);
+		cout << "\tDensityGreen: " << t2.density(GREEN);
 		cout << endl;
 		cout << "M00: " << t2.Moment(0,0);
 		cout << endl;
