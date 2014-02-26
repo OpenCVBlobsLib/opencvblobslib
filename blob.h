@@ -38,6 +38,8 @@ typedef unsigned int t_labelType;
 typedef list<CBlob*> t_blobList;
 typedef std::list<CBlobContour*> t_CBlobContourList;
 
+enum AreaMode {GREEN, PIXELWISE};
+
 //! Blob class
 class CBlob
 {
@@ -166,6 +168,12 @@ public:
 	//Returns the number of overlapping pixels between the caller blob and blob.
 	//A preliminary check is performed with respect to the bounding boxes in order to avoid unnecessary computations
 	int overlappingPixels(CBlob *blob);
+
+	//Computes the density of the blob, i.e. the ratio (blob Area) / (ConvexHullArea)
+	// areaCalculationMode defines which way to compute the areas:
+	// - Using green's formula (not exact result, probably faster)
+	// - Counting the pixels
+	double density(AreaMode areaCalculationMode);
 
 	//Returns blob center in pixels (integers).
 	Point getCenter();

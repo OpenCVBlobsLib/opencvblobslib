@@ -998,4 +998,38 @@ int CBlob::overlappingPixels(CBlob *blob )
 	return countNonZero(m1&m2);
 }
 
+double CBlob::density( AreaMode areaCalculationMode )
+{
+	double density = 0;
+	t_CBlobContourList::iterator itContour; 
+	switch (areaCalculationMode){
+	case GREEN:
+		{
+			double blobArea = Area();
+			t_contours cHull,cHullPts;
+			GetConvexHull(cHull);
+			//approxPolyDP(cHull, cHullPts, 0.001, true);
+			double cHullArea = fabs(contourArea(cHull[0],false));
+			density = blobArea/cHullArea;
+			break;
+		}
+	case PIXELWISE:
+		{
+			t_contours cHull;
+			GetConvexHull(cHull);
+			Rect bbox = GetBoundingBox();
+			Mat blMat = Mat::zeros(bbox.height,bbox.width,CV_8UC1);
+			Mat cHullMat = Mat::zeros(bbox.height,bbox.width,CV_8UC1);
+			FillBlob(blMat,Scalar(255),-bbox.x,-bbox.y,true);
+			drawContours(cHullMat,cHull,-1,Scalar(255),-1,8,noArray(),2147483647,Point(-bbox.x,-bbox.y));
+			int totArea = countNonZero(cHullMat);
+			int actArea = countNonZero(blMat);
+			density = (double)actArea/totArea;
+			break;
+		}
+	}
+	
+	return density;
+}
+
 
