@@ -191,7 +191,9 @@ void testJoin(){
 		drawContours(im2,hull,-1,Scalar(0,0,220),2);
 		t2.MeanStdDev(im,mean,stddev);
 		cout << "Perimeter: " << t2.Perimeter();
-		cout << "\tArea: " << t2.Area();
+		cout << endl;
+		cout << "AreaPixel: " << t2.Area(PIXELWISE);
+		cout << "\tAreaGreen: " << t2.Area(GREEN);
 		cout << endl;
 		cout << "ExtPerim: " << t2.ExternPerimeter(Mat());
 		cout << "\tNBlobs: " << t2.getNumJoinedBlobs();
@@ -263,7 +265,9 @@ void testJoin(){
 		drawContours(im2,hull,-1,Scalar(0,0,220),2);
 		t2.MeanStdDev(im,mean,stddev);
 		cout << "Perimeter: " << t2.Perimeter();
-		cout << "\tArea: " << t2.Area();
+		cout << endl;
+		cout << "AreaPixel: " << t2.Area(PIXELWISE);
+		cout << "\tAreaGreen: " << t2.Area(GREEN);
 		cout << endl;
 		cout << "ExtPerim: " << t2.ExternPerimeter(Mat());
 		cout << "\tNBlobs: " << t2.getNumJoinedBlobs();
