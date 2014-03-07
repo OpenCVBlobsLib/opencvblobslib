@@ -155,28 +155,42 @@ bool CBlob::IsEmpty()
 - DATA DE CREACI�: 2008/04/30
 - MODIFICACI�: Data. Autor. Descripci�.
 */
-double CBlob::Area()
+double CBlob::Area(AreaMode areaCompMode)
 {
 	double area=0;
-	t_CBlobContourList::iterator itContour; 
-
-
-	if(isJoined){
-		list<CBlob *>::iterator it,en = joinedBlobs.end();
-		for(it = joinedBlobs.begin();it!=en;it++){
-			area += (*it)->Area();
-		}
-	}
-	else{
-		area = m_externalContour.GetArea();
-		itContour = m_internalContours.begin();
-		while (itContour != m_internalContours.end() )
+	switch (areaCompMode)
+	{
+	case GREEN:
 		{
-			if(*itContour)
-				area -= (*itContour)->GetArea();
-			itContour++;
+			t_CBlobContourList::iterator itContour; 
+			if(isJoined){
+				list<CBlob *>::iterator it,en = joinedBlobs.end();
+				for(it = joinedBlobs.begin();it!=en;it++){
+					area += (*it)->Area();
+				}
+			}
+			else{
+				area = m_externalContour.GetArea();
+				itContour = m_internalContours.begin();
+				while (itContour != m_internalContours.end() )
+				{
+					if(*itContour)
+						area -= (*itContour)->GetArea();
+					itContour++;
+				}
+			}
+			break;
+		}
+	case PIXELWISE:
+		{
+			Rect bbox = GetBoundingBox();
+			Mat image = Mat::zeros(bbox.height,bbox.width,CV_8UC1);
+			FillBlob(image,Scalar(255),-bbox.x,-bbox.y,true);
+			area = countNonZero(image);
+			break;
 		}
 	}
+
 	return area;
 }
 

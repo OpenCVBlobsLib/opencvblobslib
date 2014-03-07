@@ -86,7 +86,7 @@ public:
 	//! opencv2 Interface
 	int	  Exterior( Mat mask, bool xBorder = true, bool yBorder = true );
 	//! Compute blob's area
-	double Area();
+	double Area(AreaMode areaCompMode = GREEN);
 	//! Compute blob's perimeter
 	double Perimeter();
 	//! Compute blob's moment (p,q up to MAX_CALCULATED_MOMENTS)
