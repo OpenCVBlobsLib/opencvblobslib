@@ -85,7 +85,10 @@ public:
 	int	  Exterior( IplImage *mask, bool xBorder = true, bool yBorder = true );
 	//! opencv2 Interface
 	int	  Exterior( Mat mask, bool xBorder = true, bool yBorder = true );
-	//! Compute blob's area
+	//Computes the area of the blob.
+	// areaCompMode defines which way to compute the areas:
+	// - Using green's formula (not exact result, probably faster)
+	// - Counting the pixels (probably slower)
 	double Area(AreaMode areaCompMode = GREEN);
 	//! Compute blob's perimeter
 	double Perimeter();
