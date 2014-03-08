@@ -70,6 +70,13 @@
 <a name="news" class="anchor" href="#news"><span class="octicon octicon-link"></span></a>News:</h3>
 
 <ul>
+<li>08/03/2014
+
+<ul>
+<li>Modified the area function, in order to choose between Green's formula and pixelwise calculation</li>
+<li>Changed the repository structure in order to allow CMake building.</li>
+</ul>
+</li>
 <li>26/02/2014
 
 <ul>
@@ -124,13 +131,9 @@
 </ul><hr><h3>
 <a name="building-notes" class="anchor" href="#building-notes"><span class="octicon octicon-link"></span></a>Building notes:</h3>
 
-<p>Pay attention to the OpenCV directory: we use a system variable called OPENCV_DIR, if you do so you'll be able to compile immediately after syncing the repository, otherwise you'll have to modify that property to suit your environment.</p>
+<p>The building system moved to using Cmake! See <a href="http://www.cmake.org/">http://www.cmake.org/</a></p>
 
-<p>Other environment variables:</p>
-
-<ul>
-<li>PTHREADS_DIR: directory to the pthread library</li>
-</ul><hr><h3>
+<hr><h3>
 <a name="to-do-list" class="anchor" href="#to-do-list"><span class="octicon octicon-link"></span></a>To do list:</h3>
 
 <ul>
@@ -138,9 +141,9 @@
 <li>[x] Further enhance performance in multi-threading algorithm</li>
 <li>[x] Create more comparison graphs</li>
 <li>[ ] Add a function that counts how many pixels are in a certain range of colour in a blob</li>
-<li>[ ] Create a CMake script</li>
+<li>[x] Create a CMake script</li>
 <li>[ ] Finish the example</li>
-<li>[ ] Start to write tutorials and the wiki</li>
+<li>[x] Start to write tutorials and the wiki</li>
 </ul><hr><p><strong>Stay tuned!</strong></p>
 
 <p>All the credits for the original code go to its Author (Ricard Borras).</p>
