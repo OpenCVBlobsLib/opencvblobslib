@@ -1,0 +1,18 @@
+# - Config file for the opencvblobslib package
+# It defines the following variables
+#  OPENCVBLOBSLIB_INCLUDE_DIRS - include directories for opencvblobslib
+#  OPENCVBLOBSLIB_LIBRARIES    - libraries to link against
+#  OPENCVBLOBSLIB_EXECUTABLE   - the opencvblobslibExample executable
+ 
+# Compute paths
+get_filename_component(OPENCVBLOBSLIB_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(OPENCVBLOBSLIB_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+ 
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET opencvblobslib AND NOT OPENCVBLOBSLIB_BINARY_DIR)
+  include("${OPENCVBLOBSLIB_CMAKE_DIR}/opencvblobslibTargets.cmake")
+endif()
+ 
+# These are IMPORTED targets created by opencvblobslibTargets.cmake
+set(OPENCVBLOBSLIB_LIBRARIES opencvblobslib)
+set(OPENCVBLOBSLIB_EXECUTABLE opencvblobslibExample)
