@@ -1,5 +1,6 @@
 #include "BlobContour.h"
 
+using namespace cv;
 
 CBlobContour::CBlobContour()
 {

@@ -1,6 +1,6 @@
 #include <limits.h>
 #include "BlobOperators.h"
-
+using namespace cv;
 /***************************************************************************
   Implementació de les classes per al càlcul de característiques sobre el blob
 

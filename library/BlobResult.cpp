@@ -15,6 +15,7 @@ MODIFICACIONS (Modificaci�, Autor, Data):
 #endif
 
 using namespace std;
+using namespace cv;
 
 /**************************************************************************
 		Constructors / Destructors

@@ -6,6 +6,7 @@
 
 const int NUMCORES = 2;
 using namespace std;
+using namespace cv;
 
 
 //iter = iterations for every resolution, in order to be able to compute a mean computation time.

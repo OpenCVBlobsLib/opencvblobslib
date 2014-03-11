@@ -31,11 +31,9 @@ class CBlob;
 	#include "..\inspecta\DesignPatterns\ObjectFactory.h"
 #endif
 
-using namespace cv;
-
 //! Type of labelled images
 typedef unsigned int t_labelType;
-typedef list<CBlob*> t_blobList;
+typedef std::list<CBlob*> t_blobList;
 typedef std::list<CBlobContour*> t_CBlobContourList;
 
 enum AreaMode {GREEN, PIXELWISE};
@@ -84,7 +82,7 @@ public:
 	//! > 0 for extern blobs, 0 if not
 	int	  Exterior( IplImage *mask, bool xBorder = true, bool yBorder = true );
 	//! opencv2 Interface
-	int	  Exterior( Mat mask, bool xBorder = true, bool yBorder = true );
+	int	  Exterior( cv::Mat mask, bool xBorder = true, bool yBorder = true );
 	//Computes the area of the blob.
 	// areaCompMode defines which way to compute the areas:
 	// - Using green's formula (not exact result, probably faster)
@@ -98,25 +96,25 @@ public:
 	//! Compute extern perimeter 
 	double ExternPerimeter( IplImage *mask, bool xBorder  = true, bool yBorder = true );
 	//! opencv2 interface
-	double ExternPerimeter( Mat mask, bool xBorder  = true, bool yBorder = true );
+	double ExternPerimeter( cv::Mat mask, bool xBorder  = true, bool yBorder = true );
 	
 	//! Get mean grey color
 	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
 	double Mean( IplImage *image );
 	//! opencv2 interface
 	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
-	double Mean(Mat image );
+	double Mean( cv::Mat image );
 	//! Get standard deviation grey color
 	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
 	double StdDev( IplImage *image );
 	//! opencv2 interface
 	//(Warning: use MeanStdDev for simultaneous computation of mean and std. dev, and for RGB images).
-	double StdDev( Mat image );
+	double StdDev( cv::Mat image );
 
 	//Computes mean and standard deviation of image, which can be in any opencv format
 	//Since mean and standard deviation are computed with the same function call, this results quicker than
 	//calling separately mean and standard deviation.
-	void MeanStdDev(Mat image, Scalar &mean, Scalar &stddev);
+	void MeanStdDev(cv::Mat image, cv::Scalar &mean, cv::Scalar &stddev);
 
 	//void MeanStdDev(Mat image, double *mean, double *stddev);
 
@@ -132,8 +130,8 @@ public:
 	//!  Paints the blob in an image
 	//!	intContours - determines wheter to draw the holes of the blob (true) or not (false)
 	//!	srcImage - image from where to copy the holes contents. If unassigned and intContours is true, the internal pixels will be set to black.
-	void FillBlob( IplImage *image, CvScalar color, int offsetX = 0, int offsetY = 0, bool intContours = false, IplImage *srcImage = NULL );
-	void FillBlob( Mat image, CvScalar color, int offsetX = 0, int offsetY = 0, bool intContours = false, Mat srcImage = Mat() );
+	void FillBlob( IplImage *image, CvScalar color, int offsetX = 0, int offsetY = 0, bool intContours = false, const IplImage *srcImage = NULL );
+	void FillBlob( cv::Mat image, CvScalar color, int offsetX = 0, int offsetY = 0, bool intContours = false, const cv::Mat srcImage = cv::Mat() );
 	
 	//! Joins a blob to current one
 	//! NOTE: All the data is copied, a new blob is created and joined to the caller one.
@@ -179,7 +177,7 @@ public:
 	double density(AreaMode areaCalculationMode);
 
 	//Returns blob center in pixels (integers).
-	Point getCenter();
+	cv::Point getCenter();
 	/*
 	Border: 0 = top, 1 = right, 2 = bottom, 3 = left
 	*/

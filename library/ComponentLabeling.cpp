@@ -1,5 +1,7 @@
 #include "ComponentLabeling.h"
 
+using namespace cv;
+
 myCompLabeler::myCompLabeler(Mat &binImage,CBlobContour** lab,Point start,Point end):
 	startPoint(start),endPoint(end),
 	binaryImage(binImage)

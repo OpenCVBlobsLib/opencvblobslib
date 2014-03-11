@@ -18,6 +18,7 @@ MODIFICATIONS (Modification, Author, Date):
 #include <list>
 
 using namespace std;
+using namespace cv;
 
 CBlob::CBlob()
 {
@@ -783,14 +784,14 @@ CvBox2D CBlob::GetEllipse()
 - MODIFICATION:
 	- sep/2013. Luca Nardelli. Added functionality to consider internal contours when filling the blob.
 */
-void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX , int offsetY, bool intContours, IplImage *srcImage) 					  
+void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX , int offsetY, bool intContours, const IplImage *srcImage) 					  
 {
 	if(srcImage==NULL)
 		FillBlob(Mat(image),color,offsetX,offsetY,intContours,Mat());
 	else
 		FillBlob(Mat(image),color,offsetX,offsetY,intContours,Mat(srcImage));
 }
-void CBlob::FillBlob( Mat image, CvScalar color, int offsetX, int offsetY, bool intContours, Mat srcImage){
+void CBlob::FillBlob( Mat image, CvScalar color, int offsetX, int offsetY, bool intContours, const Mat srcImage){
 	CV_FUNCNAME("CBlob::FillBlob");
 	__CV_BEGIN__;
 	if(srcImage.data)

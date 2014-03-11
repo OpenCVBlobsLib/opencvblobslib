@@ -85,7 +85,7 @@ enum FilterCondition {FLT_EQUAL=3,FLT_NOTEQUAL,FLT_GREATER,FLT_LESS,FLT_GREATERO
 	on them. Also, the class provides functions to filter the blobs using
 	some criteria.
 */
-using namespace cv;
+
 class CBlobResult  
 {
 public:
@@ -93,7 +93,7 @@ public:
 	//Constructor, opencv 1.0 and 2.0 interfaces.
 	CBlobResult();
 	CBlobResult(IplImage *source, IplImage *mask = NULL, int numThreads=1);
-	CBlobResult(Mat &source, const Mat &mask = Mat(),int numThreads=1);
+	CBlobResult(cv::Mat &source, const cv::Mat &mask = cv::Mat(),int numThreads=1);
 	CBlobResult( const CBlobResult &source );
 	//! Destructor
 	virtual ~CBlobResult();
@@ -153,7 +153,7 @@ public:
 	void PrintBlobs( char *nom_fitxer ) const;
 
 	// Returns blob with center nearest to point pt
-	CBlob* getBlobNearestTo(Point pt);
+	CBlob* getBlobNearestTo(cv::Point pt);
 
 //Metodes GET/SET
 

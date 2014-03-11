@@ -37,10 +37,10 @@ private:
 	CBlobContour *currentContour;
 public:
 	Blob_vector blobs;
-	Mat binaryImage;
-	Point startPoint,endPoint;
+	cv::Mat binaryImage;
+	cv::Point startPoint,endPoint;
 	//Double pointer so to pass the array of blob pointers
-	myCompLabeler(Mat &binImage,CBlobContour** lab,Point start = Point(-1,-1),Point end = Point(-1,-1));
+	myCompLabeler(cv::Mat &binImage,CBlobContour** lab,cv::Point start = cv::Point(-1,-1),cv::Point end = cv::Point(-1,-1));
 	~myCompLabeler();
 
 	void Label();		//Do labeling in region defined by startpoint and endpoint
@@ -68,9 +68,9 @@ private:
 public:
 	myCompLabelerGroup();
 	~myCompLabelerGroup();
-	Mat img;
+	cv::Mat img;
 	void doLabeling(Blob_vector &blobs);
-	void set(int numThreads, Mat img);
+	void set(int numThreads, cv::Mat img);
 	void Reset();
 
 friend class myCompLabeler;

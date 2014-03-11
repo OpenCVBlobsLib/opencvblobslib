@@ -12,17 +12,14 @@
 
 class CBlob; //Forward declaration in order to enable the "parent" field
 
-using namespace std;
-using namespace cv;
-
 //! Type of chain codes
 typedef unsigned char t_chainCode;
 //! Type of list of chain codes
-typedef vector<t_chainCode> t_chainCodeList;
-typedef vector<t_chainCodeList> t_chainCodeContours;	//In order to emulate CvSeq objects and to comply with opencv 2.0 interface
+typedef std::vector<t_chainCode> t_chainCodeList;
+typedef std::vector<t_chainCodeList> t_chainCodeContours;	//In order to emulate CvSeq objects and to comply with opencv 2.0 interface
 //! Type of list of points
-typedef vector<Point> t_PointList;
-typedef vector<t_PointList> t_contours;
+typedef std::vector<cv::Point> t_PointList;
+typedef std::vector<t_PointList> t_contours;
 
 
 //! Max order of calculated moments
@@ -38,7 +35,7 @@ public:
 	CBlobContour();
 	//Size is used to empirically reserve internal vectors for contour points.
 	//This can be a help for very small images, where the vector would be too large.
-	CBlobContour(CvPoint startPoint, const Size &imageRes = Size(-1,-1));
+	CBlobContour(CvPoint startPoint, const cv::Size &imageRes = cv::Size(-1,-1));
 	//! Copy constructor
 	CBlobContour(CBlobContour *source );
 	//CBlobContour(CBlobContour &source);
