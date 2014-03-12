@@ -58,10 +58,10 @@ export(TARGETS opencvblobslib opencvblobslibExample
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
 export(PACKAGE opencvblobslib)
- 
+
 # Create the opencvblobslibConfig.cmake and opencvblobslibConfigVersion files
 file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
-   "${INSTALL_INCLUDE_DIR}")
+   "${INSTALL_INCLUDE_DIR}/opencvblobslib")
 
 # ... for the build tree
 set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/library")
