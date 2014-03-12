@@ -10,7 +10,7 @@ include_directories(${PTHREADS_INCLUDE_DIR})
 add_library(opencvblobslib STATIC ${cpp} ${head})
 
 set_target_properties(opencvblobslib PROPERTIES
-  PUBLIC_HEADER "CBlobResult.h")
+  PUBLIC_HEADER "${head}")
  
 install(TARGETS opencvblobslib
   # IMPORTANT: Add the opencvblobslib library to the "export-set"
