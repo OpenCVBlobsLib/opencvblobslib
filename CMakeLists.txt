@@ -34,6 +34,8 @@ find_package( OpenCV REQUIRED )
 IF(WIN32)
     set(PTHREADS_INCLUDE_DIR "" CACHE PATH "Pthreads Include Directory")
 	set(PTHREADS_LIB_DIR "" CACHE PATH "Pthreads Lib Directory")
+ELSEIF(UNIX)
+	find_package(Threads)
 ENDIF()
 
 # uninstall target

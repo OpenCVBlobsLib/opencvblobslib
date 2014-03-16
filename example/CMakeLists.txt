@@ -18,6 +18,9 @@ if(WIN32)
 		target_link_libraries(opencvblobslibExample ${PTHREADS_LIB_DIR}/pthreadVC2.lib)
 		message("Linked " ${PTHREADS_LIB_DIR}/pthreadVC2.lib)
 	endif()
+elseif(UNIX)
+	target_link_libraries(opencvblobslibExample ${CMAKE_THREAD_LIBS_INIT})
+	message("Linked " ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 #I copy the images needed for the example to run
