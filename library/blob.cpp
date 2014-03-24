@@ -794,7 +794,7 @@ void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX , int offsetY
 void CBlob::FillBlob( Mat image, CvScalar color, int offsetX, int offsetY, bool intContours, const Mat srcImage){
 	CV_FUNCNAME("CBlob::FillBlob");
 	__CV_BEGIN__;
-	if(srcImage.data)
+	if(srcImage.data && intContours)
 		CV_ASSERT(image.size()==srcImage.size() && image.type() == srcImage.type());
   {
     Rect bbox = GetBoundingBox();

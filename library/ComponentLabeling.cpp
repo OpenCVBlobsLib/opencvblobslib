@@ -452,40 +452,45 @@ myCompLabelerGroup::~myCompLabelerGroup()
 		delete [] labels;
 }
 
-void myCompLabelerGroup::set( int numThreads, Mat img )
+void myCompLabelerGroup::set( int nThreads, Mat binIm )
 {
-	this->numThreads=numThreads;
-	this->img=img;
+	this->numThreads=nThreads;
+	if(binIm.isContinuous()){
+		this->img=binIm;
+	}
+	else{
+		this->img=binIm.clone();
+	}
 	//this->labels = Mat_<int>::zeros(img.size());
 	if (labels){
 		delete [] labels;
 	}
-	int nPts = img.size().width*img.size().height;
+	int nPts = binIm.size().width*binIm.size().height;
 	labels = new CBlobContour*[nPts];
 	memset(labels,0,nPts*sizeof(CBlob*));
 
 	if(tIds)
 		delete []tIds;
 	if(labelers){
-		for(int i=0;i<numThreads;i++){
+		for(int i=0;i<nThreads;i++){
 			delete labelers[i];
 		}
 		delete []labelers;
 	}
-	tIds = new pthread_t[numThreads];
-	labelers = new myCompLabeler*[numThreads];
-	Size sz = img.size();
+	tIds = new pthread_t[nThreads];
+	labelers = new myCompLabeler*[nThreads];
+	Size sz = binIm.size();
 	int numPx = sz.width*sz.width;
 	int i=0;
-	for(i;i<numThreads-1;i++){
-		int yStart = (int)((float)i/numThreads*sz.height);
-		int yEnd = (int)((float)(i+1)/numThreads*sz.height);
+	for(i;i<nThreads-1;i++){
+		int yStart = (int)((float)i/nThreads*sz.height);
+		int yEnd = (int)((float)(i+1)/nThreads*sz.height);
 		Point st(0,yStart);
 		Point en(sz.width,yEnd);
 		labelers[i] = new myCompLabeler(img,labels,st,en);
 		labelers[i]->parent=this;
 	}
-	Point st(0,(int)((float)i/numThreads*sz.height));
+	Point st(0,(int)((float)i/nThreads*sz.height));
 	Point en(sz.width,sz.height);
 	//st = Point(0,187);
 	labelers[i] = new myCompLabeler(img,labels,st,en);

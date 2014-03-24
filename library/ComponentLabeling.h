@@ -23,7 +23,7 @@ private:
 	CBlobContour** labels;
 	int currentLabel;	//currentLabel
 	int r,c,pos;
-	int w,h; //Width & height of image
+	int w,h; //Width& Height of image
 	uchar dir;
 	static int freemanR[8],freemanC[8];
 	bool singlePixBlob;
