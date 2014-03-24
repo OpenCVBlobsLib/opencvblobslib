@@ -176,9 +176,11 @@ void testJoin(){
 	Mat img,imt,im2;
 	cvtColor(im,img,CV_BGR2GRAY);
 	threshold(img,imt,254,255,CV_THRESH_BINARY_INV);
+	//imt = imt(Rect(30,50,100,100));
 	imshow("binImage",imt);
 	CBlobResult res(imt,Mat(),NUMCORES);
 	im2 = im.clone();
+	//im2 = im(Rect(30,50,100,100)).clone();
 	stringstream s;
 	for(int i=0;i<res.GetNumBlobs();i++){
 		Scalar mean, stddev;
