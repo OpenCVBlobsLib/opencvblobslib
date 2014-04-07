@@ -91,7 +91,8 @@ public:
 	//! Compute blob's perimeter
 	double Perimeter();
 	//! Compute blob's moment (p,q up to MAX_CALCULATED_MOMENTS)
-	double Moment(int p, int q);
+	//  if intContours = false, internal contours do not count for moment computation (i.e. the blob is considered without holes).
+	double Moment(int p, int q, bool intContours = true);
 
 	//! Compute extern perimeter 
 	double ExternPerimeter( IplImage *mask, bool xBorder  = true, bool yBorder = true );
@@ -163,6 +164,14 @@ public:
 		return GetBoundingBox().y + GetBoundingBox().height;
 	}
 
+	/*
+		Computes extremes for the contour (i.e. 4 points, respectively with max X, max Y, min X, minY)
+		In case of perfect rectangular shapes, the code will return the vertexes in counterclockwise order.
+		TODO: Extend function to joined blobs
+	*/
+	void getExtremes(cv::Point &xmax,cv::Point &xmin, cv::Point &ymax, cv::Point &ymin);
+
+
 	//Shifts the blob by (x,y) 
 	void ShiftBlob(int x,int y);
 
@@ -178,6 +187,10 @@ public:
 
 	//Returns blob center in pixels (integers).
 	cv::Point getCenter();
+
+	//Return blob centroid
+	cv::Point2f getCentroid(bool useInternalContours);
+
 	/*
 	Border: 0 = top, 1 = right, 2 = bottom, 3 = left
 	*/

@@ -419,7 +419,7 @@ double CBlob::ExternPerimeter( Mat maskImage, bool xBorder /* = true */, bool yB
 	}
 }
 //! Compute blob's moment (p,q up to MAX_CALCULATED_MOMENTS)
-double CBlob::Moment(int p, int q)
+double CBlob::Moment( int p, int q, bool intContours /*= true*/ )
 {
 	double moment=0;
 	t_CBlobContourList::iterator itContour; 
@@ -432,11 +432,13 @@ double CBlob::Moment(int p, int q)
 	}
 	else{
 		moment = m_externalContour.GetMoment(p,q);
-		itContour = m_internalContours.begin();
-		while (itContour != m_internalContours.end() )
-		{
-			moment -= (*itContour)->GetMoment(p,q);
-			itContour++;
+		if(intContours){
+			itContour = m_internalContours.begin();
+			while (itContour != m_internalContours.end() )
+			{
+				moment -= (*itContour)->GetMoment(p,q);
+				itContour++;
+			}
 		}
 	}
 	return moment;
@@ -1045,6 +1047,37 @@ double CBlob::density( AreaMode areaCalculationMode )
 	}
 	
 	return density;
+}
+
+void CBlob::getExtremes( cv::Point &xmax,cv::Point &xmin, cv::Point &ymax, cv::Point &ymin )
+{
+	const t_PointList &pts = m_externalContour.GetContourPoints();
+	/*t_contours hull;
+	GetConvexHull(hull);
+	const t_PointList &pts = hull[0];*/
+	int nPts = pts.size();
+	xmax = pts[0];
+	xmin = pts[0];
+	ymax = pts[0];
+	ymin = pts[0];
+	for(int i=1;i<nPts;i++){
+		if(xmax.x < pts[i].x)
+			xmax = pts[i];
+		else if(xmin.x > pts[i].x)
+			xmin = pts[i];
+		if (ymax.y < pts[i].y)
+			ymax = pts[i];
+		else if (ymin.y > pts[i].y)
+			ymin = pts[i];
+	}
+}
+
+cv::Point2f CBlob::getCentroid( bool useInternalContours )
+{
+	float m00 = Moment(0,0,useInternalContours),m10 = Moment(1,0,useInternalContours);
+	float m01 = Moment(0,1,useInternalContours);
+	float x = m10/m00, y = m01/m00;
+	return Point2f(x,y);
 }
 
 
