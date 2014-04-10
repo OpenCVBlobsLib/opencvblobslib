@@ -98,6 +98,9 @@ public:
 	//! Destructor
 	virtual ~CBlobResult();
 
+	// Function to detect blobs in a new image
+	void detect(cv::Mat &source, const cv::Mat &mask = cv::Mat(),int numThreads=1);
+
 	//! operador = per a fer assignacions entre CBlobResult
 	//! Assigment operator
 	CBlobResult& operator=(const CBlobResult& source);

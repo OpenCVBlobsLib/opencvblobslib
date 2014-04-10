@@ -123,6 +123,38 @@ CBlobResult::CBlobResult(Mat &source, const Mat &mask,int numThreads){
 	}
 }
 
+
+/**
+- FUNCTION: detect
+- FUNCTIONALITY: detects blob in the image
+- PARAMETERS:
+	- source: Mat to extract the blobs from, CV_8UC1
+	- mask: optional mask to apply. The blobs will be extracted where the mask is
+			not 0. All the neighbouring blobs where the mask is 0 will be extern blobs
+	- numThreads: number of labelling threads. 
+- RESULT:
+	- the object will contain the detected blobs.
+- RESTRICTIONS:
+- AUTHOR: Saverio Murgia & Luca Nardelli
+- CREATION DATE: 10-04-2014.
+- MODIFICATION: Date. Author. Description.
+*/
+void CBlobResult::detect( cv::Mat &source, const cv::Mat &mask /*= cv::Mat()*/,int numThreads/*=1*/ )
+{
+	m_blobs.clear();
+	if(mask.data){
+		Mat temp=Mat::zeros(source.size(),source.type());
+		source.copyTo(temp,mask);
+		compLabeler.set(numThreads,temp);
+		compLabeler.doLabeling(m_blobs);
+	}
+	else{
+		compLabeler.set(numThreads,source);
+		compLabeler.doLabeling(m_blobs);
+	}
+}
+
+
 /**
 - FUNCI�: CBlobResult
 - FUNCIONALITAT: Constructor de c�pia. Inicialitza la seq��ncia de blobs 
