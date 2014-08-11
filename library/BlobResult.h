@@ -167,6 +167,8 @@ public:
 		return(m_blobs.size()); 
 	}
 
+    const Blob_vector& getBlobVector(){return m_blobs;}
+
 
 private:
 	myCompLabelerGroup compLabeler;
