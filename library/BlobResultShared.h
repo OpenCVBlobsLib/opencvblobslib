@@ -12,8 +12,8 @@ MODIFICATIONS (Modification, Author, Date):
 **************************************************************************/
 
 
-#if !defined(_CLASSE_BLOBRESULT_INCLUDED)
-#define _CLASSE_BLOBRESULT_INCLUDED
+#if !defined(_CLASSE_BLOBRESULTSHARED_INCLUDED)
+#define _CLASSE_BLOBRESULTSHARED_INCLUDED
 
 #if _MSC_VER > 1000 
 #pragma once
@@ -21,6 +21,7 @@ MODIFICATIONS (Modification, Author, Date):
 
 #include "BlobLibraryConfiguration.h"
 #include "ComponentLabeling.h"
+#include "defines.h"
 #include <math.h>
 #include "opencv/cxcore.h"
 #include <opencv2/opencv.hpp>
@@ -31,15 +32,6 @@ MODIFICATIONS (Modification, Author, Date):
 #include <algorithm>
 #include <cfloat>
 
-#ifdef MATRIXCV_ACTIU
-	#include "matrixCV.h"
-#else
-	// llibreria STL
-	#include "vector"
-	//! Vector de doubles
-	typedef std::vector<double> double_stl_vector;
-#endif
-
 #include <vector>		// vectors de la STL
 #include <functional>
 #include <memory>
@@ -48,30 +40,6 @@ MODIFICATIONS (Modification, Author, Date):
 #include "blob.h"
 #include "BlobOperators.h"
 #include "ComponentLabeling.h"
-
-
-typedef std::vector<std::shared_ptr<CBlob>>	Shared_Blob_Vector;
-
-
-/**************************************************************************
-	Filtres / Filters
-**************************************************************************/
-
-//! accions que es poden fer amb els filtres
-//! Actions performed by a filter (include or exclude blobs)
-enum FilterAction {FLT_INCLUDE=1,FLT_EXCLUDE};
-
-//! condicions sobre els filtres
-//! Conditions to apply the filters
-enum FilterCondition {FLT_EQUAL=3,FLT_NOTEQUAL,FLT_GREATER,FLT_LESS,FLT_GREATEROREQUAL,FLT_LESSOREQUAL,FLT_INSIDE,FLT_OUTSIDE};
-
-/**************************************************************************
-	Excepcions / Exceptions
-**************************************************************************/
-
-//! Excepcions llen�ades per les funcions:
-#define EXCEPTION_BLOB_OUT_OF_BOUNDS	1000
-#define EXCEPCIO_CALCUL_BLOBS			1001
 
 /** 
 	Classe que cont� un conjunt de blobs i permet extreure'n propietats 
@@ -135,4 +103,4 @@ protected:
 };
 
 
-#endif // !defined(_CLASSE_BLOBRESULT_INCLUDED)
+#endif // !defined(_CLASSE_BLOBRESULTSHARED_INCLUDED)
