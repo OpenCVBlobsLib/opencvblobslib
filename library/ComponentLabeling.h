@@ -43,7 +43,7 @@ public:
 	myCompLabeler(cv::Mat &binImage,CBlobContour** lab,cv::Point start = cv::Point(-1,-1),cv::Point end = cv::Point(-1,-1));
 	~myCompLabeler();
 
-	void Label();		//Do labeling in region defined by startpoint and endpoint
+    void Label();		//Do labeling in region defined by startpoint and endpoint, populating blobs
 	void Reset(); //Resets internal buffers
 	void TracerExt();	//External contours tracer
 	void TracerInt(int startDir = 5);	//Internal contours tracer
@@ -59,7 +59,6 @@ private:
 	int numThreads;
 	pthread_t *tIds;
 	pthread_mutex_t mutexBlob;
-	//Mat_<int> labels;
 	CBlobContour** labels;
 
 	void acquireMutex();

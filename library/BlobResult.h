@@ -29,7 +29,6 @@ MODIFICATIONS (Modification, Author, Date):
 #include <stdio.h>
 #include <functional>
 #include <algorithm>
-#include <opencv2/opencv.hpp>
 #include <cfloat>
 
 #ifdef MATRIXCV_ACTIU
@@ -183,7 +182,6 @@ private:
 				int condition, double lowLimit, double highLimit = 0) const;
 
 protected:
-
 	//! Vector with all the blobs
 	Blob_vector		m_blobs;
 };

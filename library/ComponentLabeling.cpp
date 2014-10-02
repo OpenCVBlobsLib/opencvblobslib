@@ -79,7 +79,7 @@ void myCompLabeler::Label()
 				TracerExt();
 			}
 		}
-	}
+    }
 }
 
 void* myCompLabeler::thread_Labeling( void* o )
