@@ -3,6 +3,7 @@
 #include <fstream>
 #include "blob.h"
 #include "BlobResult.h"
+#include "highgui.h" //include it to use GUI functions.
 
 const int NUMCORES = 2;
 using namespace std;

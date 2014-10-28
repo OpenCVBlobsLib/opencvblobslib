@@ -477,7 +477,7 @@ double CBlob::Mean( IplImage *image )
 	offset.x = -m_boundingBox.x;
 	offset.y = -m_boundingBox.y;
 
-  Mat mask_mat(mask);
+	Mat mask_mat = cvarrToMat(mask);
       
 	//If joined
 	if(isJoined){
@@ -787,9 +787,9 @@ CvBox2D CBlob::GetEllipse()
 void CBlob::FillBlob( IplImage *image, CvScalar color, int offsetX , int offsetY, bool intContours, const IplImage *srcImage) 					  
 {
 	if(srcImage==NULL)
-		FillBlob(Mat(image),color,offsetX,offsetY,intContours,Mat());
+		FillBlob(cvarrToMat(image),color,offsetX,offsetY,intContours,Mat());
 	else
-		FillBlob(Mat(image),color,offsetX,offsetY,intContours,Mat(srcImage));
+		FillBlob(cvarrToMat(image),color,offsetX,offsetY,intContours,cvarrToMat(srcImage));
 }
 void CBlob::FillBlob( Mat image, CvScalar color, int offsetX, int offsetY, bool intContours, const Mat srcImage){
 	CV_FUNCNAME("CBlob::FillBlob");
