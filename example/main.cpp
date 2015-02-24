@@ -92,10 +92,10 @@ void test()
 	RNG random;
 	Mat color_img = imread("opencvblobslibBIG.png");
 	//resize(color_img,color_img,Size(IMSIZE,IMSIZE),0,0,INTER_LINEAR);
-	namedWindow("Color Image",CV_WINDOW_NORMAL);
-	namedWindow("Gray Image",CV_WINDOW_NORMAL);
-	namedWindow("Binary Image",CV_WINDOW_NORMAL);
-	namedWindow("Blobs Image",CV_WINDOW_NORMAL);
+	namedWindow("Color Image", WINDOW_NORMAL);
+	namedWindow("Gray Image", WINDOW_NORMAL);
+	namedWindow("Binary Image", WINDOW_NORMAL);
+	namedWindow("Blobs Image", WINDOW_NORMAL);
 	imshow("Color Image",color_img);
 	Mat binary_img(color_img.size(),CV_8UC1);
 	cvtColor(color_img,binary_img,CV_BGR2GRAY);
@@ -294,8 +294,8 @@ void testJoin(){
 void testRandomImage()
 {
 	cout << "Random test: Press esc to quit"<<endl;
-	namedWindow("Binary Image",CV_WINDOW_NORMAL);
-	namedWindow("Blobs Image",CV_WINDOW_NORMAL);
+	namedWindow("Binary Image", WINDOW_NORMAL);
+	namedWindow("Blobs Image", WINDOW_NORMAL);
 	Mat image(256,256,CV_8UC1),nulMask;
 	Mat out(image.size(),CV_8UC3);
 	RNG rand(0);

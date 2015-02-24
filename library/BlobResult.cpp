@@ -85,12 +85,12 @@ CBlobResult::CBlobResult(IplImage *source, IplImage *mask,int numThreads)
 {
 	if(mask!=NULL){
 		Mat temp = Mat::zeros(Size(source->width,source->height),CV_8UC1);
-		Mat(source).copyTo(temp,Mat(mask));
+		cvarrToMat(source).copyTo(temp, cvarrToMat(mask));
 		compLabeler.set(numThreads,temp);
 		compLabeler.doLabeling(m_blobs);
 	}
 	else{
-		compLabeler.set(numThreads,source);
+		compLabeler.set(numThreads, cvarrToMat(source));
 		compLabeler.doLabeling(m_blobs);
 	}
 }

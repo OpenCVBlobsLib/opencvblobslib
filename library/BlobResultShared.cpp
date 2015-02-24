@@ -29,7 +29,8 @@ CBlobResultShared::CBlobResultShared()
 
 CBlobResultShared::CBlobResultShared(IplImage *source, IplImage *mask,int numThreads)
 {
-    Mat s(source),m(mask);
+	Mat s = cvarrToMat(source);
+	Mat m = cvarrToMat(mask);
     detect(s,m,numThreads);
 //    Blob_vector temp;
 //	if(mask!=NULL){
