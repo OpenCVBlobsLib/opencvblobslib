@@ -11,7 +11,7 @@ set(INSTALL_INCLUDE_DIR include CACHE PATH
 if(WIN32 AND NOT CYGWIN)
   set(DEF_INSTALL_CMAKE_DIR CMake)
 else()
-  set(DEF_INSTALL_CMAKE_DIR lib/CMake/opencvblobslib)
+  set(DEF_INSTALL_CMAKE_DIR share/opencvblobslib)
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
   "Installation directory for CMake files")
@@ -91,5 +91,6 @@ install(FILES
   DESTINATION "/usr/local/share/opencvblobslib" COMPONENT dev)
  
 # Install the export set for use with the install-tree
+message("Install_CMAKE_DIR = "${INSTALL_CMAKE_DIR})
 install(EXPORT opencvblobslibTargets DESTINATION
   "${INSTALL_CMAKE_DIR}" COMPONENT dev)
