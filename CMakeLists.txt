@@ -84,6 +84,11 @@ install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/opencvblobslibConfig.cmake"
   "${PROJECT_BINARY_DIR}/opencvblobslibConfigVersion.cmake"
   DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+
+install(FILES
+  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/opencvblobslibConfig.cmake"
+  "${PROJECT_BINARY_DIR}/opencvblobslibConfigVersion.cmake"
+  DESTINATION "/usr/local/share/opencvblobslib" COMPONENT dev)
  
 # Install the export set for use with the install-tree
 install(EXPORT opencvblobslibTargets DESTINATION
