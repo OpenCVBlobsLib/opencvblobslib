@@ -13,7 +13,7 @@ MODIFICATIONS (Modification, Author, Date):
 **************************************************************************/
 
 //! Disable warnings referred to 255 character truncation for the std:map
-#pragma warning( disable : 4786 ) 
+//#pragma warning( disable : 4786 )
 
 #ifndef CBLOB_INSPECTA_INCLUDED
 #define CBLOB_INSPECTA_INCLUDED

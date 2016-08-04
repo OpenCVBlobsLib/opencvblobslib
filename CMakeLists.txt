@@ -27,6 +27,8 @@ endforeach()
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 set(CMAKE_DEBUG_POSTFIX "_d")
 
+option(BUILD_SHARED_LIBS OFF)
+
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -std=gnu++11")
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic")
 
@@ -72,7 +74,7 @@ set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/library")
 configure_file(opencvblobslibConfig.cmake.in
   "${PROJECT_BINARY_DIR}/opencvblobslibConfig.cmake" @ONLY)
 # ... for the install tree
-set(CONF_INCLUDE_DIRS "\${OPENCVBLOBSLIB_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+set(CONF_INCLUDE_DIRS "${INSTALL_INCLUDE_DIR}/opencvblobslib")
 configure_file(opencvblobslibConfig.cmake.in
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/opencvblobslibConfig.cmake" @ONLY)
 # ... for both
@@ -92,4 +94,4 @@ install(FILES
  
 # Install the export set for use with the install-tree
 install(EXPORT opencvblobslibTargets DESTINATION
-  "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+  "/usr/local/share/opencvblobslib" COMPONENT dev)
