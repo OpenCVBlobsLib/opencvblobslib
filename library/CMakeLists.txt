@@ -7,7 +7,7 @@ source_group("Headers" FILES ${head})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${PTHREADS_INCLUDE_DIR})
 
-add_library(opencvblobslib STATIC ${cpp} ${head})
+add_library(opencvblobslib ${cpp} ${head})
 
 set_target_properties(opencvblobslib PROPERTIES
   PUBLIC_HEADER "${head}")
@@ -16,6 +16,7 @@ install(TARGETS opencvblobslib
   # IMPORTANT: Add the opencvblobslib library to the "export-set"
   EXPORT opencvblobslibTargets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
   PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/opencvblobslib"
     COMPONENT dev)
