@@ -71,7 +71,7 @@ double CBlobGetHullArea::operator()(CBlob &blob)
 	blob.GetConvexHull(convexHull);
 	double area;
 	
-	if( convexHull.size()==0 )
+	if( convexHull.size() )
 		area = fabs(contourArea(convexHull[0],true));
 	else
 		return 0;
