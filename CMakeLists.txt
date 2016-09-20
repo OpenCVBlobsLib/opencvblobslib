@@ -27,7 +27,7 @@ endforeach()
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 set(CMAKE_DEBUG_POSTFIX "_d")
 
-
+option(BUILD_SHARED_LIBS "build with shared libraries" OFF)
 
 find_package( OpenCV REQUIRED )
 
