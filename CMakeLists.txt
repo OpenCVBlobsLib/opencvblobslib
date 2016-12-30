@@ -6,6 +6,7 @@ set(OPENCVBLOBSLIB_VERSION 1.0.1)
 # Offer the user the choice of overriding the installation directories
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
 set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
+set(INSTALL_DATA_DIR share CACHE PATH "Installation directory for data files")
 set(INSTALL_INCLUDE_DIR include CACHE PATH
   "Installation directory for header files")
 if(WIN32 AND NOT CYGWIN)
@@ -17,7 +18,7 @@ set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
   "Installation directory for CMake files")
  
 # Make relative paths absolute (needed later on)
-foreach(p LIB BIN INCLUDE CMAKE)
+foreach(p LIB BIN INCLUDE CMAKE DATA)
   set(var INSTALL_${p}_DIR)
   if(NOT IS_ABSOLUTE "${${var}}")
     set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
@@ -90,9 +91,9 @@ install(FILES
 install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/opencvblobslibConfig.cmake"
   "${PROJECT_BINARY_DIR}/opencvblobslibConfigVersion.cmake"
-  DESTINATION "/usr/local/share/opencvblobslib" COMPONENT dev)
+  DESTINATION "${INSTALL_DATA_DIR}/opencvblobslib" COMPONENT dev)
  
 # Install the export set for use with the install-tree
 message("Install_CMAKE_DIR = "${INSTALL_CMAKE_DIR})
 install(EXPORT opencvblobslibTargets DESTINATION
-  "/usr/local/share/opencvblobslib" COMPONENT dev)
+  "${INSTALL_DATA_DIR}/opencvblobslib" COMPONENT dev)
